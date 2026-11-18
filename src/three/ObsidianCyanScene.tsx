@@ -29,6 +29,8 @@ import {
 interface ObsidianCyanSceneProps {
   scrollProgress: number;
   pedestalMode: PedestalMode;
+  activeArticleIdx: 0 | 1;
+  onSelectArticle?: (idx: 0 | 1) => void;
   cameraResetNonce: number;
   onTelemetryUpdate?: (
     chamberIdx: number,
@@ -49,6 +51,8 @@ const _summitCenter = new THREE.Vector3(0, 1.75, 0);
 const _camGoalPos = new THREE.Vector3();
 const _camGoalTarget = new THREE.Vector3();
 const _dummy = new THREE.Object3D();
+const _raycaster = new THREE.Raycaster();
+const _pickMouse = new THREE.Vector2();
 
 function detectSoftwareWebGL(): boolean {
   try {
@@ -434,20 +438,20 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 4A: Emerge & glide smoothly onto CH.04 Research Archive (y=-48, z=-12) (0.615 -> 0.705)
+  // Segment 4A: Emerge & glide smoothly onto CH.04 Quantum Knowledge (y=-48, z=-12) (0.615 -> 0.705)
   if (p <= DETAILED_CHAMBERS[3].scrollAt) {
     const u = (p - 0.615) / (DETAILED_CHAMBERS[3].scrollAt - 0.615);
     const eased = 1 - Math.pow(1 - u, 2.6);
     if (isMobileLayout) {
-      _vA.set(0.0, -44.2, -1.8);
-      _vB.set(0.0, -45.6, -2.8);
-      _vC.set(0.0, -48.8, -12.0);
-      _vD.set(0.0, -50.1, -12.0);
+      _vA.set(0.0, -44.2, -1.6);
+      _vB.set(0.0, -45.6, -2.4);
+      _vC.set(0.0, -48.4, -12.0);
+      _vD.set(0.0, -48.6, -12.0);
     } else {
-      _vA.set(1.3, -46.2, -3.2);
-      _vB.set(...DETAILED_CHAMBERS[3].camPos); // [2.4, -47.2, -4.4] -> Codex on LEFT, Research card RIGHT
-      _vC.set(1.2, -48.0, -12.0);
-      _vD.set(...DETAILED_CHAMBERS[3].camTarget); // [2.2, -48.1, -12.0]
+      _vA.set(0.0, -46.2, -2.5);
+      _vB.set(...DETAILED_CHAMBERS[3].camPos); // [0.0, -47.2, -3.1] -> Centered Quantum States stage
+      _vC.set(0.0, -48.0, -12.0);
+      _vD.set(...DETAILED_CHAMBERS[3].camTarget); // [0.0, -48.0, -12.0]
     }
     outPos.lerpVectors(_vA, _vB, eased);
     outTarget.lerpVectors(_vC, _vD, eased);
@@ -470,22 +474,22 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 4B: Hold CH.04 Research Codex framed while Articles & Research card shows (0.705 -> 0.77)
+  // Segment 4B: Hold CH.04 Quantum Knowledge framed cleanly while interactive HUD shows (0.705 -> 0.77)
   if (p < 0.77) {
     const t = (p - 0.705) / (0.77 - 0.705);
     const eased = t * t * (3 - 2 * t);
     researchDiveProgress = eased * 0.08;
 
     if (isMobileLayout) {
-      _vA.set(0.0, -45.6, -2.8);
-      _vB.set(0.0, -45.8, -3.1);
-      _vC.set(0.0, -50.1, -12.0);
-      _vD.set(0.0, -49.8, -12.0);
+      _vA.set(0.0, -45.6, -2.4);
+      _vB.set(0.0, -45.75, -2.7);
+      _vC.set(0.0, -48.6, -12.0);
+      _vD.set(0.0, -48.55, -12.0);
     } else {
       _vA.set(...DETAILED_CHAMBERS[3].camPos);
-      _vB.set(2.2, -47.25, -4.8);
+      _vB.set(0.0, -47.25, -3.4);
       _vC.set(...DETAILED_CHAMBERS[3].camTarget);
-      _vD.set(2.0, -48.05, -12.0);
+      _vD.set(0.0, -48.0, -12.0);
     }
     outPos.lerpVectors(_vA, _vB, eased);
     outTarget.lerpVectors(_vC, _vD, eased);
@@ -508,7 +512,7 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 4C: Smooth plunge through Research Codex core into CH.05 Contact Pedestal -> Flash 3 (0.77 -> 0.845)
+  // Segment 4C: Smooth plunge through Quantum Knowledge emitter portal into CH.05 Contact Pedestal -> Flash 3 (0.77 -> 0.845)
   if (p < 0.845) {
     const t = (p - 0.77) / (0.845 - 0.77);
     const eased = t * t * (3 - 2 * t);
@@ -516,13 +520,13 @@ function sampleDetailedFlight(
     researchDiveProgress = 0.08 + eased * 0.92;
 
     if (isMobileLayout) {
-      _vA.set(0.0, -45.8, -3.1);
-      _vMid.set(0.0, -47.2, -7.8);
-      _vC.set(0.0, -49.8, -12.0);
+      _vA.set(0.0, -45.75, -2.7);
+      _vMid.set(0.0, -47.1, -7.8);
+      _vC.set(0.0, -48.55, -12.0);
     } else {
-      _vA.set(2.2, -47.25, -4.8);
-      _vMid.set(0.8, -47.6, -8.8);
-      _vC.set(2.0, -48.05, -12.0);
+      _vA.set(0.0, -47.25, -3.4);
+      _vMid.set(0.0, -47.6, -8.4);
+      _vC.set(0.0, -48.0, -12.0);
     }
     _vB.set(0.0, -47.85, -12.0);
     outPos
@@ -531,7 +535,7 @@ function sampleDetailedFlight(
       .addScaledVector(_vMid, 2 * inv * eased)
       .addScaledVector(_vB, eased * eased);
 
-    _vD.set(0.0, -49.6, -12.0);
+    _vD.set(0.0, -49.2, -12.0);
     outTarget.lerpVectors(_vC, _vD, THREE.MathUtils.smoothstep(t, 0.0, 0.58));
 
     return {
@@ -670,6 +674,8 @@ function sampleDetailedFlight(
 export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
   scrollProgress,
   pedestalMode,
+  activeArticleIdx,
+  onSelectArticle,
   cameraResetNonce,
   onTelemetryUpdate,
 }) => {
@@ -678,6 +684,8 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
   const scrollRef = useRef(scrollProgress);
   const pedestalModeRef = useRef<PedestalMode>(pedestalMode);
+  const activeArticleRef = useRef<0 | 1>(activeArticleIdx);
+  const selectArticleCbRef = useRef(onSelectArticle);
   const userOrbitingRef = useRef(false);
   const orbitScrollAnchorRef = useRef(scrollProgress);
   const isMobileRef = useRef(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
@@ -686,6 +694,14 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
   useEffect(() => {
     telemetryCbRef.current = onTelemetryUpdate;
   }, [onTelemetryUpdate]);
+
+  useEffect(() => {
+    selectArticleCbRef.current = onSelectArticle;
+  }, [onSelectArticle]);
+
+  useEffect(() => {
+    activeArticleRef.current = activeArticleIdx;
+  }, [activeArticleIdx]);
 
   useEffect(() => {
     scrollRef.current = scrollProgress;
@@ -978,10 +994,28 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     }
 
     // -------------------------------------------------------------------------
-    // Pointer & Resize Listeners
+    // Pointer, Quantum Object Picking & Resize Listeners
     // -------------------------------------------------------------------------
     const pointerTarget = new THREE.Vector2(0, 0);
     const pointerSmooth = new THREE.Vector2(0, 0);
+    const pickTargets = researchChamber.getPickTargets();
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let hoveredQuantumState: 0 | 1 | null = null;
+    let lastPickCheckMs = 0;
+    let pointerDownPos = { x: 0, y: 0, dragging: false };
+
+    const raycastQuantumState = (clientX: number, clientY: number): 0 | 1 | null => {
+      if (!researchChamber.root.visible) return null;
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return null;
+      _pickMouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      _pickMouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      _raycaster.setFromCamera(_pickMouse, camera);
+      const hits = _raycaster.intersectObjects(pickTargets, false);
+      if (hits.length === 0) return null;
+      const idx = hits[0].object.userData.quantumStateIndex;
+      return idx === 0 || idx === 1 ? idx : null;
+    };
 
     const onPointerMove = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return;
@@ -989,9 +1023,22 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       if (rect.width <= 0 || rect.height <= 0) return;
       pointerTarget.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       pointerTarget.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      if (researchChamber.root.visible && !pointerDownPos.dragging) {
+        const now = performance.now();
+        if (now - lastPickCheckMs >= 40) {
+          lastPickCheckMs = now;
+          hoveredQuantumState = raycastQuantumState(e.clientX, e.clientY);
+          renderer.domElement.style.cursor =
+            hoveredQuantumState !== null ? 'pointer' : 'grab';
+        }
+      } else if (hoveredQuantumState !== null) {
+        hoveredQuantumState = null;
+      }
     };
 
     const onCapturePointerDown = (e: PointerEvent) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY, dragging: true };
       if (e.pointerType === 'touch') {
         controls.enabled = false;
       } else {
@@ -1000,12 +1047,26 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       }
     };
 
-    const onPointerUp = () => {
-      renderer.domElement.style.cursor = 'grab';
+    const onPointerUp = (e: PointerEvent) => {
+      if (pointerDownPos.dragging && researchChamber.root.visible) {
+        const dx = e.clientX - pointerDownPos.x;
+        const dy = e.clientY - pointerDownPos.y;
+        if (dx * dx + dy * dy < 42) {
+          const picked = raycastQuantumState(e.clientX, e.clientY);
+          if (picked !== null) {
+            selectArticleCbRef.current?.(picked);
+          }
+        }
+      }
+      pointerDownPos.dragging = false;
+      renderer.domElement.style.cursor =
+        hoveredQuantumState !== null && researchChamber.root.visible ? 'pointer' : 'grab';
     };
 
     const onPointerLeave = () => {
       pointerTarget.set(0, 0);
+      hoveredQuantumState = null;
+      renderer.domElement.style.cursor = 'grab';
     };
 
     const onResize = () => {
@@ -1229,7 +1290,17 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
       researchChamber.root.visible = chamberStage === 'research';
       if (researchChamber.root.visible) {
-        researchChamber.update(elapsed, pointerSmooth.x, pointerSmooth.y, researchDiveProgress);
+        researchChamber.update(
+          elapsed,
+          pointerSmooth.x,
+          pointerSmooth.y,
+          researchDiveProgress,
+          activeArticleRef.current,
+          hoveredQuantumState,
+          reducedMotionQuery.matches
+        );
+      } else if (hoveredQuantumState !== null) {
+        hoveredQuantumState = null;
       }
 
       pedestalChamber.root.visible = chamberStage === 'pedestal';

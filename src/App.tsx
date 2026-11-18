@@ -16,6 +16,7 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
+import { ArticleReaderModal } from './components/ArticleReaderModal';
 import { HologramInspectorModal, ScrollCardKind } from './components/HologramInspectorModal';
 import { DeFlagIcon, LanguageSwitch, UkFlagIcon } from './components/LanguageSwitch';
 import { DETAILED_CHAMBERS } from './data/portfolioSections';
@@ -114,6 +115,34 @@ export default function App() {
   const railRef = useRef<HTMLDivElement | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [cvModalOpen, setCvModalOpen] = useState(false);
+  const [activeArticleIdx, setActiveArticleIdx] = useState<0 | 1>(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#/knowledge/state-02') {
+      return 1;
+    }
+    return 0;
+  });
+  const [readingArticleIdx, setReadingArticleIdx] = useState<0 | 1 | null>(() => {
+    if (typeof window === 'undefined') return null;
+    if (window.location.hash === '#/knowledge/state-01') return 0;
+    if (window.location.hash === '#/knowledge/state-02') return 1;
+    return null;
+  });
+
+  useEffect(() => {
+    const onHashChange = () => {
+      if (window.location.hash === '#/knowledge/state-01') {
+        setActiveArticleIdx(0);
+        setReadingArticleIdx(0);
+      } else if (window.location.hash === '#/knowledge/state-02') {
+        setActiveArticleIdx(1);
+        setReadingArticleIdx(1);
+      } else {
+        setReadingArticleIdx(null);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -277,6 +306,31 @@ export default function App() {
     setSoundEnabled(next);
   }, []);
 
+  const handleSelectArticle = useCallback((idx: 0 | 1) => {
+    setActiveArticleIdx((prev) => {
+      if (prev !== idx) ambientAudio.playPulse();
+      return idx;
+    });
+  }, []);
+
+  const handleOpenArticleReader = useCallback((idx: 0 | 1) => {
+    ambientAudio.playPulse();
+    setActiveArticleIdx(idx);
+    setReadingArticleIdx(idx);
+    const nextHash = idx === 0 ? '#/knowledge/state-01' : '#/knowledge/state-02';
+    if (window.location.hash !== nextHash) {
+      window.history.pushState(null, '', nextHash);
+    }
+  }, []);
+
+  const handleCloseArticleReader = useCallback(() => {
+    ambientAudio.playPulse();
+    setReadingArticleIdx(null);
+    if (window.location.hash.startsWith('#/knowledge/')) {
+      window.history.pushState(null, '', window.location.pathname + window.location.search);
+    }
+  }, []);
+
   const resume = useMemo(() => getLocalizedResume(locale), [locale]);
   const activeChamber = resume.chambers[activeChamberIdx] ?? resume.chambers[0];
   const cardState = getScrollCardState(scrollProgress);
@@ -288,6 +342,8 @@ export default function App() {
       <ObsidianCyanScene
         scrollProgress={scrollProgress}
         pedestalMode={pedestalMode}
+        activeArticleIdx={activeArticleIdx}
+        onSelectArticle={handleSelectArticle}
         cameraResetNonce={cameraResetNonce}
         onTelemetryUpdate={handleTelemetryUpdate}
       />
@@ -546,7 +602,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Compact Scroll-Driven Holographic Resume Cards */}
+      {/* Compact Scroll-Driven Holographic Resume Cards & Quantum Knowledge HUD */}
       <HologramInspectorModal
         resume={resume}
         activeCard={cardState.activeCard}
@@ -558,6 +614,17 @@ export default function App() {
           ambientAudio.playPulse();
           setPedestalMode(m);
         }}
+        activeArticleIdx={activeArticleIdx}
+        onSelectArticle={handleSelectArticle}
+        onReadArticle={handleOpenArticleReader}
+      />
+
+      {/* Full-Screen Quantum Knowledge Article Reader */}
+      <ArticleReaderModal
+        resume={resume}
+        articleIdx={readingArticleIdx}
+        onSelectArticle={handleOpenArticleReader}
+        onClose={handleCloseArticleReader}
       />
 
       {/* Touch Darker + Subtle 5-10% Blurred Backdrop & Frosted ~30% Blurred Transparent Neutral Card */}

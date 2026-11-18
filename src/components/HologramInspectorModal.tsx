@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   ArrowUpRight,
-  BookOpen,
   Check,
   Copy,
   Github,
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ResumeData } from '../data/resume';
 import { PedestalMode } from '../three/detailedChambers';
+import { QuantumKnowledgeHud } from './QuantumKnowledgeHud';
 
 export type ScrollCardKind = 'about' | 'experience' | 'research' | 'contact';
 
@@ -25,6 +25,9 @@ interface HologramInspectorModalProps {
   exitT: number;
   pedestalMode: PedestalMode;
   onSelectPedestalMode: (mode: PedestalMode) => void;
+  activeArticleIdx: 0 | 1;
+  onSelectArticle: (idx: 0 | 1) => void;
+  onReadArticle: (idx: 0 | 1) => void;
 }
 
 /**
@@ -96,6 +99,9 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
   exitT,
   pedestalMode,
   onSelectPedestalMode,
+  activeArticleIdx,
+  onSelectArticle,
+  onReadArticle,
 }) => {
   const [copiedField, setCopiedField] = useState<'email' | 'phone' | null>(null);
   const [avatarFailed, setAvatarFailed] = useState(false);
@@ -613,8 +619,21 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
     );
   }
 
+  if (activeCard === 'research') {
+    return (
+      <QuantumKnowledgeHud
+        resume={resume}
+        revealAmount={revealAmount}
+        enterT={enterT}
+        activeArticleIdx={activeArticleIdx}
+        onSelectArticle={onSelectArticle}
+        onReadArticle={onReadArticle}
+      />
+    );
+  }
+
   const cardWidthClass =
-    activeCard === 'experience' || activeCard === 'research'
+    activeCard === 'experience'
       ? 'w-full md:w-[46%] lg:w-[43%] max-w-[530px]'
       : 'w-full md:w-[45%] lg:w-[42%] max-w-[490px]';
 
@@ -641,7 +660,7 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
     willChange: 'transform, opacity',
   };
 
-  const isScrollableInteractive = activeCard === 'experience' || activeCard === 'research';
+  const isScrollableInteractive = activeCard === 'experience';
 
   return (
     <div
@@ -795,83 +814,6 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
           </div>
         )}
 
-        {/* ================================================================= */}
-        {/* CH.04 // ARTICLES & RESEARCH (2 Submitted + 1 Under Review)       */}
-        {/* ================================================================= */}
-        {activeCard === 'research' && (
-          <div className="max-h-[62vh] sm:max-h-[64vh] md:max-h-none overflow-y-auto overflow-x-hidden md:overflow-visible touch-pan-y p-4 md:p-5 space-y-2.5">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-1.5">
-              <div className="inline-flex items-center gap-1.5 font-mono-hud text-[10px] tracking-widest text-[#00FFFF]">
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>{ui.researchHeading}</span>
-              </div>
-              <span className="font-mono-hud text-[9px] tracking-wider text-[#D8FFFF] border border-[#00FFFF]/35 bg-[#00FFFF]/10 px-1.5 py-0.5">
-                {ui.researchSummaryBadge}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {resume.research.map((article) => {
-                const isReview = article.status === 'under_review';
-                return (
-                  <div
-                    key={article.id}
-                    className={`min-w-0 border px-3 py-2 space-y-1 ${
-                      isReview
-                        ? 'border-[#D8FFFF]/40 bg-[#0A141E]/85'
-                        : 'border-[#8A929A]/30 bg-[#090D12]/80'
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span
-                        className={`inline-flex items-center gap-1.5 font-mono-hud text-[9px] tracking-widest px-1.5 py-0.5 border ${
-                          isReview
-                            ? 'border-[#D8FFFF]/60 bg-[#D8FFFF]/12 text-[#D8FFFF]'
-                            : 'border-[#00FFFF]/55 bg-[#00FFFF]/12 text-[#00FFFF]'
-                        }`}
-                      >
-                        <span
-                          aria-hidden="true"
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            isReview ? 'bg-[#D8FFFF] animate-pulse' : 'bg-[#00FFFF]'
-                          }`}
-                        />
-                        {article.statusLabel}
-                      </span>
-                      <span className="font-mono-hud text-[9.5px] text-[#9CA6B0] truncate">
-                        {article.venue} · {article.year}
-                      </span>
-                    </div>
-
-                    <p className="font-display-hud text-xs sm:text-[13.5px] font-medium text-[#FFFFFF] leading-snug break-words">
-                      {article.title}
-                    </p>
-                    <p className="text-[11.5px] leading-snug text-[#CBD5E1] break-words">
-                      {article.summary}
-                    </p>
-
-                    <div className="flex items-center justify-between gap-2 pt-0.5">
-                      <p className="font-mono-hud text-[9.5px] text-[#8A929A] truncate">
-                        {article.keywords}
-                      </p>
-                      {article.url && (
-                        <a
-                          href={article.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 font-mono-hud text-[10px] text-[#00FFFF] hover:text-[#D8FFFF] shrink-0"
-                        >
-                          <span>{ui.readPaper}</span>
-                          <ArrowUpRight className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

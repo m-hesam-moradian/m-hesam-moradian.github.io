@@ -39,11 +39,11 @@ export const DETAILED_CHAMBERS: ChamberConfig[] = [
   {
     index: '04',
     id: 'research',
-    hudTitle: 'CH.04 // RESEARCH',
-    sectionTag: 'ARTICLES & PUBLICATIONS',
+    hudTitle: 'CH.04 // KNOWLEDGE',
+    sectionTag: 'QUANTUM STATES // 02',
     scrollAt: 0.705,
-    camPos: [2.4, -47.2, -4.4],
-    camTarget: [2.2, -48.1, -12.0],
+    camPos: [0.0, -47.2, -3.1],
+    camTarget: [0.0, -48.0, -12.0],
   },
   {
     index: '05',

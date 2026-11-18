@@ -26,14 +26,25 @@ export interface ResumeExperience {
   stack: string;
 }
 
+export interface ResumeArticleSection {
+  heading: string;
+  body: string;
+  isPlaceholder?: boolean;
+}
+
 export interface ResumeResearchArticle {
   id: string;
+  stateNumber: '01' | '02';
   status: 'submitted' | 'under_review';
   statusLabel: string;
   title: string;
   venue: string;
   year: string;
+  readingTime: string;
+  tags: string[];
   summary: string;
+  abstract: string;
+  sections: ResumeArticleSection[];
   keywords: string;
   url: string;
 }
@@ -109,6 +120,13 @@ export interface ResumeUiStrings {
   researchHeading: string;
   researchHeaderTag: string;
   researchSummaryBadge: string;
+  selectAState: string;
+  stateLabel: string;
+  activeLabel: string;
+  readArticle: string;
+  backToKnowledge: string;
+  placeholderNotice: string;
+  externalManuscript: string;
   readPaper: string;
   sendEmail: string;
   copy: string;
