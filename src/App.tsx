@@ -351,6 +351,9 @@ export default function App() {
         scrollProgress={scrollProgress}
         pedestalMode={pedestalMode}
         cameraResetNonce={cameraResetNonce}
+        activeArticleIdx={activeArticleIdx}
+        onSelectArticle={handleSelectArticle}
+        onOpenArticle={handleOpenArticleReader}
         onTelemetryUpdate={handleTelemetryUpdate}
       />
 

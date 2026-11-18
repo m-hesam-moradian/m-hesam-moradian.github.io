@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, BookOpen, X } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { ArrowLeft, ArrowUpRight, Atom, BookOpen, Clock, X } from 'lucide-react';
 import { ResumeData, ResumeResearchArticle } from '../data/resume';
 
 interface ArticleReaderModalProps {
@@ -15,15 +15,9 @@ export const ArticleReaderModal: React.FC<ArticleReaderModalProps> = ({
   onSelectArticle,
   onClose,
 }) => {
-  const [heroFailed, setHeroFailed] = useState(false);
-
   const articles = resume.research;
   const article: ResumeResearchArticle | undefined =
     articleIdx !== null ? articles[articleIdx] : undefined;
-
-  useEffect(() => {
-    setHeroFailed(false);
-  }, [article?.imageUrl]);
 
   useEffect(() => {
     if (articleIdx === null) return;
@@ -95,42 +89,27 @@ export const ArticleReaderModal: React.FC<ArticleReaderModalProps> = ({
 
       {/* Scrollable Article Content Body */}
       <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
-        <article className="mx-auto max-w-[780px] space-y-6">
-          {/* Article Artwork Showcase Banner */}
-          {article.imageUrl && !heroFailed && (
-            <div className="relative aspect-[16/9] w-full overflow-hidden border border-[#00FFFF]/40 bg-[#04080D] shadow-[0_24px_60px_rgba(0,0,0,0.85),0_0_36px_rgba(0,255,255,0.12)]">
-              <img
-                src={article.imageUrl}
-                alt={article.imageAlt || article.title}
-                referrerPolicy="no-referrer"
-                onError={() => setHeroFailed(true)}
-                className="h-full w-full object-cover"
-              />
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute top-0 left-0 h-4 w-4 border-t-2 border-l-2 border-[#00FFFF]"
-              />
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-[#00FFFF]"
-              />
-            </div>
-          )}
+        <article className="mx-auto max-w-[760px] space-y-6">
+          {/* Quantum State Header & Metadata */}
+          <div className="space-y-4 border-b border-[#00FFFF]/20 pb-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="inline-flex items-center gap-2 border border-[#00FFFF]/55 bg-[#00FFFF]/10 px-3 py-1 font-mono-hud text-[10px] tracking-[0.18em] text-[#00FFFF]">
+                <Atom className="w-3.5 h-3.5" />
+                <span>
+                  {ui.articleLabel} {article.stateNumber} · {article.statusLabel}
+                </span>
+              </div>
 
-          {/* Quantum State Header & Clean Unboxed Metadata */}
-          <div className="space-y-3 border-b border-[#00FFFF]/20 pb-6">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono-hud text-[11px] tracking-[0.14em] text-[#9CA6B0]">
-              <span className="font-semibold text-[#00FFFF]">
-                {ui.stateLabel} {article.stateNumber}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span className="text-[#D8FFFF]">{article.statusLabel}</span>
-              <span aria-hidden="true">·</span>
-              <span>{article.venue}</span>
-              <span aria-hidden="true">·</span>
-              <span>{article.year}</span>
-              <span aria-hidden="true">·</span>
-              <span className="text-[#D8FFFF]">{article.readingTime}</span>
+              <div className="inline-flex items-center gap-3 font-mono-hud text-[11px] text-[#9CA6B0]">
+                <span>
+                  {article.venue} · {article.year}
+                </span>
+                <span aria-hidden="true" className="text-[#8A929A]/40">|</span>
+                <span className="inline-flex items-center gap-1.5 text-[#D8FFFF]">
+                  <Clock className="w-3.5 h-3.5 text-[#00FFFF]" />
+                  {article.readingTime}
+                </span>
+              </div>
             </div>
 
             <h1
@@ -154,7 +133,7 @@ export const ArticleReaderModal: React.FC<ArticleReaderModalProps> = ({
             </div>
           )}
 
-          {/* Abstract Section */}
+          {/* Abstract Card */}
           <section className="relative border border-[#00FFFF]/35 bg-[#081018]/90 p-5 sm:p-6 space-y-2">
             <span aria-hidden="true" className="pointer-events-none absolute -top-[1px] -left-[1px] h-3 w-3 border-t-2 border-l-2 border-[#00FFFF]" />
             <span aria-hidden="true" className="pointer-events-none absolute -bottom-[1px] -right-[1px] h-3 w-3 border-b-2 border-r-2 border-[#00FFFF]" />
@@ -173,7 +152,7 @@ export const ArticleReaderModal: React.FC<ArticleReaderModalProps> = ({
                 key={section.heading}
                 className="border border-[#8A929A]/25 bg-[#070C13]/85 p-5 sm:p-6 space-y-2.5"
               >
-                <h2 className="font-mono-hud text-xs tracking-[0.14em] text-[#00FFFF]">
+                <h2 className="font-mono-hud text-xs tracking-[0.16em] text-[#00FFFF]">
                   {section.heading}
                 </h2>
                 <p className="text-sm sm:text-[15px] leading-relaxed text-[#CBD5E1]">

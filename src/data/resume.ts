@@ -42,8 +42,6 @@ export interface ResumeResearchArticle {
   year: string;
   readingTime: string;
   tags: string[];
-  imageUrl: string;
-  imageAlt: string;
   summary: string;
   abstract: string;
   sections: ResumeArticleSection[];
@@ -123,10 +121,10 @@ export interface ResumeUiStrings {
   researchHeaderTag: string;
   researchSummaryBadge: string;
   selectAState: string;
+  exploreArticles: string;
+  articleLabel: string;
   stateLabel: string;
   activeLabel: string;
-  observedLabel: string;
-  unobservedLabel: string;
   readArticle: string;
   backToKnowledge: string;
   placeholderNotice: string;

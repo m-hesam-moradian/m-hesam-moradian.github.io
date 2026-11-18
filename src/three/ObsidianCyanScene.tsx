@@ -30,6 +30,9 @@ interface ObsidianCyanSceneProps {
   scrollProgress: number;
   pedestalMode: PedestalMode;
   cameraResetNonce: number;
+  activeArticleIdx: number;
+  onSelectArticle?: (idx: number) => void;
+  onOpenArticle?: (idx: number) => void;
   onTelemetryUpdate?: (
     chamberIdx: number,
     warpFlash: number,
@@ -439,10 +442,10 @@ function sampleDetailedFlight(
     const u = (p - 0.615) / (DETAILED_CHAMBERS[3].scrollAt - 0.615);
     const eased = 1 - Math.pow(1 - u, 2.6);
     if (isMobileLayout) {
-      _vA.set(0.0, -44.2, -1.6);
-      _vB.set(0.0, -45.6, -2.4);
-      _vC.set(0.0, -48.4, -12.0);
-      _vD.set(0.0, -48.6, -12.0);
+      _vA.set(-1.3, -44.6, 2.0);
+      _vB.set(-1.55, -45.65, 1.35);
+      _vC.set(-1.55, -48.8, -12.0);
+      _vD.set(-1.7, -49.0, -12.0);
     } else {
       _vA.set(0.0, -46.2, -2.5);
       _vB.set(...DETAILED_CHAMBERS[3].camPos); // [0.0, -47.2, -3.1] -> Centered Quantum States stage
@@ -477,10 +480,10 @@ function sampleDetailedFlight(
     researchDiveProgress = eased * 0.08;
 
     if (isMobileLayout) {
-      _vA.set(0.0, -45.6, -2.4);
-      _vB.set(0.0, -45.75, -2.7);
-      _vC.set(0.0, -48.6, -12.0);
-      _vD.set(0.0, -48.55, -12.0);
+      _vA.set(-1.55, -45.65, 1.35);
+      _vB.set(-1.5, -45.75, 1.05);
+      _vC.set(-1.7, -49.0, -12.0);
+      _vD.set(-1.65, -48.95, -12.0);
     } else {
       _vA.set(...DETAILED_CHAMBERS[3].camPos);
       _vB.set(0.0, -47.25, -3.4);
@@ -516,9 +519,9 @@ function sampleDetailedFlight(
     researchDiveProgress = 0.08 + eased * 0.92;
 
     if (isMobileLayout) {
-      _vA.set(0.0, -45.75, -2.7);
-      _vMid.set(0.0, -47.1, -7.8);
-      _vC.set(0.0, -48.55, -12.0);
+      _vA.set(-1.5, -45.75, 1.05);
+      _vMid.set(-0.6, -47.0, -6.4);
+      _vC.set(-1.65, -48.95, -12.0);
     } else {
       _vA.set(0.0, -47.25, -3.4);
       _vMid.set(0.0, -47.6, -8.4);
@@ -671,6 +674,9 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
   scrollProgress,
   pedestalMode,
   cameraResetNonce,
+  activeArticleIdx,
+  onSelectArticle,
+  onOpenArticle,
   onTelemetryUpdate,
 }) => {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -678,14 +684,29 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
   const scrollRef = useRef(scrollProgress);
   const pedestalModeRef = useRef<PedestalMode>(pedestalMode);
+  const activeArticleRef = useRef(activeArticleIdx);
   const userOrbitingRef = useRef(false);
   const orbitScrollAnchorRef = useRef(scrollProgress);
   const isMobileRef = useRef(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const telemetryCbRef = useRef(onTelemetryUpdate);
+  const selectArticleCbRef = useRef(onSelectArticle);
+  const openArticleCbRef = useRef(onOpenArticle);
 
   useEffect(() => {
     telemetryCbRef.current = onTelemetryUpdate;
   }, [onTelemetryUpdate]);
+
+  useEffect(() => {
+    activeArticleRef.current = activeArticleIdx;
+  }, [activeArticleIdx]);
+
+  useEffect(() => {
+    selectArticleCbRef.current = onSelectArticle;
+  }, [onSelectArticle]);
+
+  useEffect(() => {
+    openArticleCbRef.current = onOpenArticle;
+  }, [onOpenArticle]);
 
   useEffect(() => {
     scrollRef.current = scrollProgress;
@@ -978,11 +999,32 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     }
 
     // -------------------------------------------------------------------------
-    // Pointer Parallax & Resize Listeners
+    // Pointer Parallax, Stage 4 Quantum Picking & Resize Listeners
     // -------------------------------------------------------------------------
     const pointerTarget = new THREE.Vector2(0, 0);
     const pointerSmooth = new THREE.Vector2(0, 0);
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const raycaster = new THREE.Raycaster();
+    const pickMouse = new THREE.Vector2();
+    const researchPickTargets = researchChamber.getPickTargets();
+    let hoveredQuantumState: number | null = null;
+    let lastHoverCheckMs = 0;
+    let isPointerDragging = false;
+    let downClientX = 0;
+    let downClientY = 0;
+
+    const pickQuantumStateAt = (clientX: number, clientY: number): number | null => {
+      if (!researchChamber.root.visible) return null;
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return null;
+      pickMouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      pickMouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pickMouse, camera);
+      const hits = raycaster.intersectObjects(researchPickTargets, false);
+      if (hits.length === 0) return null;
+      const idx = hits[0].object.userData.quantumStateIndex;
+      return typeof idx === 'number' ? idx : null;
+    };
 
     const onPointerMove = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return;
@@ -990,9 +1032,28 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       if (rect.width <= 0 || rect.height <= 0) return;
       pointerTarget.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       pointerTarget.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      if (researchChamber.root.visible) {
+        const now = performance.now();
+        if (now - lastHoverCheckMs > 32) {
+          lastHoverCheckMs = now;
+          hoveredQuantumState = pickQuantumStateAt(e.clientX, e.clientY);
+          if (!isPointerDragging) {
+            renderer.domElement.style.cursor = hoveredQuantumState !== null ? 'pointer' : 'grab';
+          }
+        }
+      } else if (hoveredQuantumState !== null) {
+        hoveredQuantumState = null;
+        if (!isPointerDragging) {
+          renderer.domElement.style.cursor = 'grab';
+        }
+      }
     };
 
     const onCapturePointerDown = (e: PointerEvent) => {
+      downClientX = e.clientX;
+      downClientY = e.clientY;
+      isPointerDragging = true;
       if (e.pointerType === 'touch') {
         controls.enabled = false;
       } else {
@@ -1001,12 +1062,30 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       }
     };
 
+    const onCanvasPointerUp = (e: PointerEvent) => {
+      if (!researchChamber.root.visible) return;
+      const dx = e.clientX - downClientX;
+      const dy = e.clientY - downClientY;
+      if (dx * dx + dy * dy > 42) return;
+      const picked = pickQuantumStateAt(e.clientX, e.clientY);
+      if (picked === null) return;
+      if (picked !== activeArticleRef.current) {
+        selectArticleCbRef.current?.(picked);
+      } else {
+        openArticleCbRef.current?.(picked);
+      }
+    };
+
     const onPointerUp = () => {
-      renderer.domElement.style.cursor = 'grab';
+      isPointerDragging = false;
+      renderer.domElement.style.cursor =
+        researchChamber.root.visible && hoveredQuantumState !== null ? 'pointer' : 'grab';
     };
 
     const onPointerLeave = () => {
       pointerTarget.set(0, 0);
+      hoveredQuantumState = null;
+      isPointerDragging = false;
       renderer.domElement.style.cursor = 'grab';
     };
 
@@ -1031,6 +1110,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
     renderer.domElement.addEventListener('pointermove', onPointerMove);
     renderer.domElement.addEventListener('pointerdown', onCapturePointerDown, { capture: true });
+    renderer.domElement.addEventListener('pointerup', onCanvasPointerUp);
     window.addEventListener('pointerup', onPointerUp);
     renderer.domElement.addEventListener('pointerleave', onPointerLeave);
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
@@ -1236,6 +1316,8 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
           pointerSmooth.x,
           pointerSmooth.y,
           researchDiveProgress,
+          activeArticleRef.current,
+          hoveredQuantumState,
           reducedMotionQuery.matches
         );
       }
@@ -1315,6 +1397,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.removeEventListener('pointerdown', onCapturePointerDown, { capture: true });
+      renderer.domElement.removeEventListener('pointerup', onCanvasPointerUp);
       window.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);

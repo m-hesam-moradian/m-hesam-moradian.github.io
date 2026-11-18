@@ -1688,10 +1688,15 @@ export function buildIrisChamber(
 }
 
 /**
- * CH.04 // KNOWLEDGE (QUANTUM SUPERPOSITION):
- * Clean dark sci-fi atmospheric environment (deep black space, drifting subtle particles,
- * dark obsidian terrain horizon & quiet ambient cyan light) that supports the two-image
- * layered Quantum Superposition selector without competing 3D objects.
+ * CH.04 // KNOWLEDGE (QUANTUM KNOWLEDGE FIELD):
+ * Deep scientific quantum environment with reflective dark obsidian surface, undulating
+ * probability-wave wireframe floor, circular holographic energy platform, and two
+ * simultaneous interactive quantum states:
+ * - Article 01: Clean Structured Photon / Atom (glass Fresnel sphere, geodesic filaments,
+ *   4 elliptical orbits, translucent sub-spheres & fine particle comet trails)
+ * - Article 02: Chaotic Unstable Probability Field (2,600 shader-advected morphing particles,
+ *   live deforming curved energy filaments, fragmented geometric node connections & mist lobes)
+ * Supports smooth observation transitions swapping foreground/background depth, focus/blur & brightness.
  */
 export function buildResearchChamber(
   yPos: number,
@@ -1704,103 +1709,980 @@ export function buildResearchChamber(
   const disposables: { dispose: () => void }[] = [];
   const rng = createRng(4404);
 
-  // 1. Subtle drifting quantum atmosphere dust
-  const starCount = 220;
-  const starGeo = new THREE.BufferGeometry();
-  const starPos = new Float32Array(starCount * 3);
-  for (let i = 0; i < starCount; i++) {
-    const r = 4.5 + rng() * 14.5;
+  // Spatial slots: Selected foreground sits centered above the circular platform;
+  // Unselected sits upper-left deep in the quantum field (simultaneously visible).
+  const PRIMARY_POS = new THREE.Vector3(-0.38, 0.28, 0.92);
+  const SECONDARY_POS = new THREE.Vector3(-4.25, 0.72, -3.15);
+
+  // =========================================================================
+  // 1. IMMERSIVE QUANTUM ENVIRONMENT (Particles, Wave Trails, Platform & Terrain)
+  // =========================================================================
+
+  // A. Multi-depth ambient quantum dust particles
+  const ambientCount = 420;
+  const ambientPos = new Float32Array(ambientCount * 3);
+  for (let i = 0; i < ambientCount; i++) {
+    const r = 3.8 + rng() * 15.5;
     const theta = rng() * Math.PI * 2;
     const phi = Math.acos(2 * rng() - 1);
-    starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-    starPos[i * 3 + 1] = r * Math.cos(phi) * 0.65 + 0.3;
-    starPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+    ambientPos[i * 3] = r * Math.sin(phi) * Math.cos(theta) * 1.25;
+    ambientPos[i * 3 + 1] = r * Math.cos(phi) * 0.58 + 0.5;
+    ambientPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta) - 2.0;
   }
-  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-  const starMat = new THREE.PointsMaterial({
+  const ambientGeo = new THREE.BufferGeometry();
+  ambientGeo.setAttribute('position', new THREE.BufferAttribute(ambientPos, 3));
+  const ambientMat = new THREE.PointsMaterial({
     color: 0xa6f7ff,
     map: glowTex,
-    size: 0.058,
+    size: 0.068,
     transparent: true,
-    opacity: 0.38,
+    opacity: 0.42,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  const dustPoints = new THREE.Points(starGeo, starMat);
-  root.add(dustPoints);
-  disposables.push(starGeo, starMat);
+  const ambientDust = new THREE.Points(ambientGeo, ambientMat);
+  root.add(ambientDust);
+  disposables.push(ambientGeo, ambientMat);
 
-  // 2. Quiet ambient cyan ground reflection + faint horizon ring beneath viewport
-  const floorGroup = new THREE.Group();
-  floorGroup.position.set(0, -2.55, 0);
-  root.add(floorGroup);
+  // B. Swirling distant energy wave trails & large subtle bokeh background rings
+  const bgGroup = new THREE.Group();
+  root.add(bgGroup);
+  const bgTrailMats: THREE.LineBasicMaterial[] = [];
+  for (let w = 0; w < 5; w++) {
+    const pts: THREE.Vector3[] = [];
+    const segs = 72;
+    const yBase = -0.6 + w * 0.65;
+    const zDepth = -5.8 - w * 1.15;
+    for (let s = 0; s <= segs; s++) {
+      const u = s / segs;
+      const x = (u - 0.5) * 18.0;
+      const y = yBase + Math.sin(u * Math.PI * (2 + w * 0.45) + w) * (0.95 + w * 0.16);
+      const z = zDepth + Math.cos(u * Math.PI * 2 + w * 1.2) * 1.1;
+      pts.push(new THREE.Vector3(x, y, z));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({
+      color: w % 2 === 0 ? 0x00ffff : 0x6ce8ff,
+      transparent: true,
+      opacity: 0.11,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    bgGroup.add(new THREE.Line(geo, mat));
+    bgTrailMats.push(mat);
+    disposables.push(geo, mat);
+  }
 
-  const poolGeo = new THREE.PlaneGeometry(8.2, 8.2);
-  poolGeo.rotateX(-Math.PI / 2);
-  const poolMat = new THREE.MeshBasicMaterial({
-    map: glowTex,
-    color: 0x00ffff,
+  for (let rIdx = 0; rIdx < 2; rIdx++) {
+    const bgRingGeo = new THREE.RingGeometry(2.3 + rIdx * 0.9, 2.34 + rIdx * 0.9, 96);
+    const bgRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.085,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const bgRing = new THREE.Mesh(bgRingGeo, bgRingMat);
+    bgRing.position.set(rIdx === 0 ? 3.9 : -2.6, 1.35 + rIdx * 0.45, -7.2 - rIdx * 2.2);
+    bgRing.rotation.set(0.45 + rIdx * 0.35, -0.3 + rIdx * 0.4, rIdx * 0.5);
+    bgGroup.add(bgRing);
+    disposables.push(bgRingGeo, bgRingMat);
+  }
+
+  // C. Reflective Dark Surface + Wireframe Quantum Probability Wave Terrain Floor
+  const floorLevelY = -2.22;
+  const reflectFloorGeo = new THREE.PlaneGeometry(34, 24);
+  reflectFloorGeo.rotateX(-Math.PI / 2);
+  const reflectFloorMat = new THREE.MeshStandardMaterial({
+    color: 0x05090e,
+    roughness: 0.24,
+    metalness: 0.86,
+    envMapIntensity: 0.45,
+  });
+  const reflectFloor = new THREE.Mesh(reflectFloorGeo, reflectFloorMat);
+  reflectFloor.position.set(0, floorLevelY - 0.06, -1.5);
+  root.add(reflectFloor);
+  disposables.push(reflectFloorGeo, reflectFloorMat);
+
+  // Undulating wireframe probability-wave mesh receding cleanly from foreground edges
+  const waveCols = 54;
+  const waveRows = 32;
+  const waveW = 24;
+  const waveD = 16;
+  const wavePlaneGeo = new THREE.PlaneGeometry(waveW, waveD, waveCols, waveRows);
+  wavePlaneGeo.rotateX(-Math.PI / 2);
+  const wPos = wavePlaneGeo.attributes.position;
+  for (let i = 0; i < wPos.count; i++) {
+    const x = wPos.getX(i);
+    const z = wPos.getZ(i);
+    const distFromPlatform = Math.hypot(x - PRIMARY_POS.x, z - PRIMARY_POS.z);
+    const flatten = THREE.MathUtils.smoothstep(distFromPlatform, 1.85, 5.2);
+    const ridge =
+      (Math.sin(x * 0.55 + z * 0.38) * 0.42 +
+        Math.cos(x * 0.92 - z * 0.64) * 0.24 +
+        Math.sin(x * 0.24 - z * 0.22) * 0.36) *
+      flatten;
+    wPos.setY(i, Math.max(-0.04, ridge + flatten * 0.22));
+  }
+  const waveWireGeo = new THREE.WireframeGeometry(wavePlaneGeo);
+  const waveWirePos = waveWireGeo.attributes.position;
+  const waveWireColors = new Float32Array(waveWirePos.count * 3);
+  const cEdgeCyan = new THREE.Color(0x00ffff);
+  const cDeepInk = new THREE.Color(0x031119);
+  const cWaveTmp = new THREE.Color();
+  for (let i = 0; i < waveWirePos.count; i++) {
+    const vx = waveWirePos.getX(i);
+    const vy = waveWirePos.getY(i);
+    const vz = waveWirePos.getZ(i);
+    const radial = Math.hypot(vx * 0.72, vz + 0.5);
+    const fade = 1.0 - THREE.MathUtils.smoothstep(radial, 3.2, 11.5);
+    const crest = THREE.MathUtils.clamp(vy * 0.85 + 0.25, 0.1, 1.0);
+    cWaveTmp.copy(cDeepInk).lerp(cEdgeCyan, fade * crest * 0.78);
+    waveWireColors[i * 3] = cWaveTmp.r;
+    waveWireColors[i * 3 + 1] = cWaveTmp.g;
+    waveWireColors[i * 3 + 2] = cWaveTmp.b;
+  }
+  waveWireGeo.setAttribute('color', new THREE.BufferAttribute(waveWireColors, 3));
+  const waveWireMat = new THREE.LineBasicMaterial({
+    vertexColors: true,
     transparent: true,
-    opacity: 0.16,
+    opacity: 0.46,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  floorGroup.add(new THREE.Mesh(poolGeo, poolMat));
-  disposables.push(poolGeo, poolMat);
+  const waveMesh = new THREE.LineSegments(waveWireGeo, waveWireMat);
+  waveMesh.position.set(0, floorLevelY, -1.2);
+  root.add(waveMesh);
+  wavePlaneGeo.dispose();
+  disposables.push(waveWireGeo, waveWireMat);
 
-  const horizonRingGeo = new THREE.RingGeometry(2.68, 2.71, 96);
-  horizonRingGeo.rotateX(-Math.PI / 2);
-  const horizonRingMat = new THREE.MeshBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.18,
-    side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  floorGroup.add(new THREE.Mesh(horizonRingGeo, horizonRingMat));
-  disposables.push(horizonRingGeo, horizonRingMat);
-
-  // 3. Low dark obsidian terrain silhouettes framing deep horizon
-  const rockGeo = new THREE.ConeGeometry(1.2, 0.9, 5);
+  // Subtle low-poly dark rock outcrops along outer left/right edges
+  const rockGeo = new THREE.ConeGeometry(1.1, 0.85, 5);
   const rockMat = new THREE.MeshStandardMaterial({
-    color: 0x090d12,
-    roughness: 0.88,
-    metalness: 0.2,
+    color: 0x090e15,
+    roughness: 0.84,
+    metalness: 0.28,
     flatShading: true,
   });
   disposables.push(rockGeo, rockMat);
-  const rockCount = 24;
+  const rockCount = 22;
   const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
   const dummy = new THREE.Object3D();
   for (let i = 0; i < rockCount; i++) {
-    const a = (i / rockCount) * Math.PI * 2 + (rng() - 0.5) * 0.18;
-    const dist = 5.4 + rng() * 6.8;
-    dummy.position.set(Math.cos(a) * dist, -2.65 + rng() * 0.22, Math.sin(a) * dist - 0.6);
-    dummy.rotation.set((rng() - 0.5) * 0.18, rng() * Math.PI, (rng() - 0.5) * 0.18);
-    dummy.scale.set(0.9 + rng() * 1.5, 0.45 + rng() * 0.85, 0.9 + rng() * 1.4);
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = side * (3.6 + rng() * 5.8);
+    const z = -6.5 + rng() * 9.5;
+    dummy.position.set(x, floorLevelY + 0.08, z);
+    dummy.rotation.set((rng() - 0.5) * 0.25, rng() * Math.PI, (rng() - 0.5) * 0.25);
+    dummy.scale.set(0.8 + rng() * 1.25, 0.4 + rng() * 0.85, 0.8 + rng() * 1.15);
     dummy.updateMatrix();
     rockInst.setMatrixAt(i, dummy.matrix);
   }
   rockInst.instanceMatrix.needsUpdate = true;
   root.add(rockInst);
 
+  // D. Circular Holographic Energy Platform directly beneath PRIMARY_POS
+  const platformGroup = new THREE.Group();
+  platformGroup.position.set(PRIMARY_POS.x, floorLevelY + 0.01, PRIMARY_POS.z);
+  root.add(platformGroup);
+
+  const plinthGeo = new THREE.CylinderGeometry(1.38, 1.56, 0.11, 64);
+  const plinthMat = new THREE.MeshStandardMaterial({
+    color: 0x09131c,
+    roughness: 0.42,
+    metalness: 0.84,
+  });
+  const plinthMesh = new THREE.Mesh(plinthGeo, plinthMat);
+  platformGroup.add(plinthMesh);
+  disposables.push(plinthGeo, plinthMat);
+
+  const poolGeo = new THREE.PlaneGeometry(5.6, 5.6);
+  poolGeo.rotateX(-Math.PI / 2);
+  const poolMat = new THREE.MeshBasicMaterial({
+    map: glowTex,
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.46,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const poolMesh = new THREE.Mesh(poolGeo, poolMat);
+  poolMesh.position.y = 0.07;
+  platformGroup.add(poolMesh);
+  disposables.push(poolGeo, poolMat);
+
+  const platformRings: THREE.Mesh[] = [];
+  const platformRingMats: THREE.MeshBasicMaterial[] = [];
+  [0.64, 1.04, 1.46, 1.88].forEach((radius, idx) => {
+    const rg = new THREE.RingGeometry(radius - 0.024, radius, 96);
+    rg.rotateX(-Math.PI / 2);
+    const rm = new THREE.MeshBasicMaterial({
+      color: idx < 2 ? 0xd8ffff : 0x00ffff,
+      transparent: true,
+      opacity: 0.72 - idx * 0.13,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const rmMesh = new THREE.Mesh(rg, rm);
+    rmMesh.position.y = 0.068 + idx * 0.003;
+    platformGroup.add(rmMesh);
+    platformRings.push(rmMesh);
+    platformRingMats.push(rm);
+    disposables.push(rg, rm);
+  });
+
+  // Fine vertical energy tether beam beneath primary focal spot
+  const beamGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0.08, 0),
+    new THREE.Vector3(0, 1.55, 0),
+  ]);
+  const beamMat = new THREE.LineBasicMaterial({
+    color: 0x7affff,
+    transparent: true,
+    opacity: 0.34,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  platformGroup.add(new THREE.Line(beamGeo, beamMat));
+  disposables.push(beamGeo, beamMat);
+
+  // =========================================================================
+  // Shared Shader Factory for Focus/Blur-Aware Quantum Particle Systems
+  // =========================================================================
+  const createFieldParticleMaterial = (mode: 'photon' | 'chaos') => {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uFocus: { value: mode === 'photon' ? 1.0 : 0.0 },
+        uHover: { value: 0.0 },
+        uPixelRatio: { value: Math.min(window.devicePixelRatio || 1, 2) },
+        uOpacity: { value: 1.0 },
+      },
+      vertexShader: `
+        attribute float aSize;
+        attribute vec3 aSeed;
+        attribute vec3 aColor;
+        uniform float uTime;
+        uniform float uFocus;
+        uniform float uPixelRatio;
+        varying vec3 vColor;
+        varying float vFocus;
+
+        void main() {
+          vColor = aColor;
+          vFocus = uFocus;
+          vec3 pos = position;
+
+          ${
+            mode === 'chaos'
+              ? `
+          // Continuous organic wave evolution — stronger when unobserved, steadier when observed
+          float instability = mix(1.0, 0.56, uFocus);
+          float pulse = 1.0 + 0.14 * sin(uTime * 0.72 + aSeed.x * 6.2831) * instability;
+          pos *= pulse;
+          pos.x += sin(uTime * (0.68 + aSeed.y * 0.55) + pos.y * 2.1 + aSeed.z * 6.28) * 0.25 * instability;
+          pos.y += cos(uTime * (0.62 + aSeed.z * 0.48) + pos.z * 2.2 + aSeed.x * 6.28) * 0.22 * instability;
+          pos.z += sin(uTime * (0.74 + aSeed.x * 0.52) + pos.x * 1.9 + aSeed.y * 6.28) * 0.24 * instability;
+          `
+              : `
+          // Subtle orderly shimmer along photon orbital planes
+          pos += normalize(pos + vec3(0.0001)) * sin(uTime * 1.4 + aSeed.x * 6.283) * 0.018;
+          `
+          }
+
+          vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
+          gl_Position = projectionMatrix * mvPos;
+          float blurExpand = mix(1.65, 0.96, uFocus);
+          gl_PointSize = aSize * uPixelRatio * blurExpand * (290.0 / max(1.0, -mvPos.z));
+        }
+      `,
+      fragmentShader: `
+        uniform float uOpacity;
+        uniform float uHover;
+        varying vec3 vColor;
+        varying float vFocus;
+
+        void main() {
+          vec2 uv = gl_PointCoord - 0.5;
+          float d = length(uv) * 2.0;
+          if (d > 1.0) discard;
+
+          // Unobserved (uFocus=0): soft Gaussian bokeh cloud; Observed (uFocus=1): sharp luminous core
+          float sharpCore = smoothstep(1.0, 0.05, d);
+          float focusPower = mix(1.35, 3.1, vFocus);
+          float radial = pow(max(0.0, 1.0 - d), focusPower);
+          float alpha = radial * mix(0.44 + uHover * 0.22, 1.0, vFocus) * uOpacity;
+          vec3 col = vColor * mix(0.72 + uHover * 0.25, 1.25, vFocus);
+          col += vec3(0.85, 1.0, 1.0) * sharpCore * 0.35 * vFocus;
+
+          gl_FragColor = vec4(col, alpha);
+        }
+      `,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+  };
+
+  // =========================================================================
+  // 2. ARTICLE 01 — CLEAN STRUCTURED PHOTON / ATOM VISUALIZATION
+  // =========================================================================
+  const photonGroup = new THREE.Group();
+  photonGroup.position.copy(PRIMARY_POS);
+  root.add(photonGroup);
+
+  const photonHitGeo = new THREE.SphereGeometry(1.68, 16, 16);
+  const photonHitMat = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    colorWrite: false,
+  });
+  const photonHitMesh = new THREE.Mesh(photonHitGeo, photonHitMat);
+  photonHitMesh.userData.quantumStateIndex = 0;
+  photonGroup.add(photonHitMesh);
+  disposables.push(photonHitGeo, photonHitMat);
+
+  // Translucent outer glass sphere with custom cyan Fresnel edge shell
+  const glassSphereGeo = new THREE.SphereGeometry(0.48, 36, 36);
+  const glassFresnelMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uFocus: { value: 1.0 },
+      uTime: { value: 0 },
+    },
+    vertexShader: `
+      varying vec3 vNormalV;
+      varying vec3 vViewDir;
+      void main() {
+        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+        vNormalV = normalize(normalMatrix * normal);
+        vViewDir = normalize(-mvPos.xyz);
+        gl_Position = projectionMatrix * mvPos;
+      }
+    `,
+    fragmentShader: `
+      uniform float uFocus;
+      uniform float uTime;
+      varying vec3 vNormalV;
+      varying vec3 vViewDir;
+      void main() {
+        float ndotv = clamp(dot(normalize(vNormalV), normalize(vViewDir)), 0.0, 1.0);
+        float fresnel = pow(1.0 - ndotv, 2.35);
+        float innerGlow = pow(ndotv, 2.2) * (0.28 + 0.06 * sin(uTime * 1.8));
+        vec3 col = mix(vec3(0.0, 0.85, 1.0), vec3(0.88, 1.0, 1.0), fresnel * 0.72);
+        float alpha = (fresnel * 0.88 + innerGlow + 0.08) * mix(0.36, 0.96, uFocus);
+        gl_FragColor = vec4(col, alpha);
+      }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const glassSphereMesh = new THREE.Mesh(glassSphereGeo, glassFresnelMat);
+  photonGroup.add(glassSphereMesh);
+  disposables.push(glassSphereGeo, glassFresnelMat);
+
+  // Geodesic luminous filament sphere inside glass shell
+  const geoBase = new THREE.IcosahedronGeometry(0.465, 2);
+  const geoWire = new THREE.WireframeGeometry(geoBase);
+  const geoWireMat = new THREE.LineBasicMaterial({
+    color: 0x6ef8ff,
+    transparent: true,
+    opacity: 0.42,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const geodesicMesh = new THREE.LineSegments(geoWire, geoWireMat);
+  photonGroup.add(geodesicMesh);
+  geoBase.dispose();
+  disposables.push(geoWire, geoWireMat);
+
+  // Inner bright cyan energy nucleus + glow halo sprite
+  const coreGeo = new THREE.SphereGeometry(0.16, 24, 24);
+  const coreMat = new THREE.MeshBasicMaterial({
+    color: 0xe6ffff,
+    transparent: true,
+    opacity: 0.95,
+  });
+  const photonNucleus = new THREE.Mesh(coreGeo, coreMat);
+  photonGroup.add(photonNucleus);
+  disposables.push(coreGeo, coreMat);
+
+  const photonAuraMat = new THREE.SpriteMaterial({
+    map: glowTex,
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.62,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const photonAuraSprite = new THREE.Sprite(photonAuraMat);
+  photonAuraSprite.scale.set(2.05, 2.05, 1);
+  photonGroup.add(photonAuraSprite);
+  disposables.push(photonAuraMat);
+
+  // 4 Clean Elliptical Orbital Trajectories + Translucent Sub-Spheres + Particle Trails
+  const orbitConfigs = [
+    { rx: 1.56, rz: 0.68, rot: [0.32, 0.18, 0.56], speed: 0.72, phase: 0.4 },
+    { rx: 1.56, rz: 0.68, rot: [0.32, 0.18, -0.56], speed: -0.66, phase: 2.3 },
+    { rx: 1.54, rz: 0.66, rot: [0.28, 0.25, 1.54], speed: 0.58, phase: 4.1 },
+    { rx: 1.72, rz: 0.74, rot: [1.34, 0.12, 0.08], speed: 0.48, phase: 1.2 },
+  ];
+
+  const orbitTrackMats: THREE.LineBasicMaterial[] = [];
+  const orbitOuterMats: THREE.LineBasicMaterial[] = [];
+  const orbitParticleMats: THREE.ShaderMaterial[] = [];
+  const orbitGroups: THREE.Group[] = [];
+  const orbitSatellites: {
+    group: THREE.Group;
+    glassMat: THREE.MeshBasicMaterial;
+    sparkSprite: THREE.Sprite;
+    tailPoints: THREE.Points;
+    tailGeo: THREE.BufferGeometry;
+    tailAttr: THREE.BufferAttribute;
+    rx: number;
+    rz: number;
+    speed: number;
+    phase: number;
+  }[] = [];
+
+  const subGeo = new THREE.SphereGeometry(0.068, 16, 16);
+  const subRingGeo = new THREE.RingGeometry(0.066, 0.075, 24);
+  disposables.push(subGeo, subRingGeo);
+
+  const cOrbCyan = new THREE.Color(0x00ffff);
+  const cOrbIce = new THREE.Color(0xd8ffff);
+  const cOrbTmp = new THREE.Color();
+
+  orbitConfigs.forEach((cfg) => {
+    const og = new THREE.Group();
+    og.rotation.set(cfg.rot[0], cfg.rot[1], cfg.rot[2]);
+    photonGroup.add(og);
+    orbitGroups.push(og);
+
+    // Primary razor-sharp orbital path
+    const pts: THREE.Vector3[] = [];
+    const segs = 128;
+    for (let s = 0; s < segs; s++) {
+      const a = (s / segs) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(a) * cfg.rx, 0, Math.sin(a) * cfg.rz));
+    }
+    const trackGeo = new THREE.BufferGeometry().setFromPoints(pts);
+    const trackMat = new THREE.LineBasicMaterial({
+      color: 0x9efaff,
+      transparent: true,
+      opacity: 0.68,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    og.add(new THREE.LineLoop(trackGeo, trackMat));
+    orbitTrackMats.push(trackMat);
+    disposables.push(trackGeo, trackMat);
+
+    // Secondary soft halo orbital ring
+    const ptsOuter = pts.map((p) => p.clone().multiplyScalar(1.015));
+    const outerGeo = new THREE.BufferGeometry().setFromPoints(ptsOuter);
+    const outerMat = new THREE.LineBasicMaterial({
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.28,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    og.add(new THREE.LineLoop(outerGeo, outerMat));
+    orbitOuterMats.push(outerMat);
+    disposables.push(outerGeo, outerMat);
+
+    // Fine orbital particle shimmer dusted delicately along each ellipse
+    const orbDustCount = 190;
+    const dPos = new Float32Array(orbDustCount * 3);
+    const dCol = new Float32Array(orbDustCount * 3);
+    const dSize = new Float32Array(orbDustCount);
+    const dSeed = new Float32Array(orbDustCount * 3);
+    for (let i = 0; i < orbDustCount; i++) {
+      const a = rng() * Math.PI * 2;
+      const spreadR = (rng() - 0.5) * 0.14;
+      const spreadY = (rng() - 0.5) * 0.08;
+      dPos[i * 3] = Math.cos(a) * (cfg.rx + spreadR);
+      dPos[i * 3 + 1] = spreadY;
+      dPos[i * 3 + 2] = Math.sin(a) * (cfg.rz + spreadR * 0.6);
+      cOrbTmp.copy(cOrbCyan).lerp(cOrbIce, rng() * 0.65);
+      dCol[i * 3] = cOrbTmp.r;
+      dCol[i * 3 + 1] = cOrbTmp.g;
+      dCol[i * 3 + 2] = cOrbTmp.b;
+      dSize[i] = 0.045 + rng() * 0.055;
+      dSeed[i * 3] = rng();
+      dSeed[i * 3 + 1] = rng();
+      dSeed[i * 3 + 2] = rng();
+    }
+    const orbDustGeo = new THREE.BufferGeometry();
+    orbDustGeo.setAttribute('position', new THREE.BufferAttribute(dPos, 3));
+    orbDustGeo.setAttribute('aColor', new THREE.BufferAttribute(dCol, 3));
+    orbDustGeo.setAttribute('aSize', new THREE.BufferAttribute(dSize, 1));
+    orbDustGeo.setAttribute('aSeed', new THREE.BufferAttribute(dSeed, 3));
+    const orbDustMat = createFieldParticleMaterial('photon');
+    og.add(new THREE.Points(orbDustGeo, orbDustMat));
+    orbitParticleMats.push(orbDustMat);
+    disposables.push(orbDustGeo, orbDustMat);
+
+    // Translucent glass sub-sphere node + glowing photon spark traveling along the ellipse
+    const satGroup = new THREE.Group();
+    const glassMat = new THREE.MeshBasicMaterial({
+      color: 0x0b2c3b,
+      transparent: true,
+      opacity: 0.72,
+    });
+    const satGlass = new THREE.Mesh(subGeo, glassMat);
+    satGroup.add(satGlass);
+
+    const sparkMat = new THREE.SpriteMaterial({
+      map: glowTex,
+      color: 0xd8ffff,
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const sparkSprite = new THREE.Sprite(sparkMat);
+    sparkSprite.scale.set(0.32, 0.32, 1);
+    satGroup.add(sparkSprite);
+    og.add(satGroup);
+    disposables.push(glassMat, sparkMat);
+
+    // Delicate trailing luminous particle wake behind orbiting electron
+    const tailLen = 18;
+    const tailArr = new Float32Array(tailLen * 3);
+    const tailGeo = new THREE.BufferGeometry();
+    const tailAttr = new THREE.BufferAttribute(tailArr, 3);
+    tailAttr.setUsage(THREE.DynamicDrawUsage);
+    tailGeo.setAttribute('position', tailAttr);
+    const tailMat = new THREE.PointsMaterial({
+      color: 0x8ef9ff,
+      map: glowTex,
+      size: 0.065,
+      transparent: true,
+      opacity: 0.72,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const tailPoints = new THREE.Points(tailGeo, tailMat);
+    og.add(tailPoints);
+    disposables.push(tailGeo, tailMat);
+
+    orbitSatellites.push({
+      group: satGroup,
+      glassMat,
+      sparkSprite,
+      tailPoints,
+      tailGeo,
+      tailAttr,
+      rx: cfg.rx,
+      rz: cfg.rz,
+      speed: cfg.speed,
+      phase: cfg.phase,
+    });
+  });
+
+  // =========================================================================
+  // 3. ARTICLE 02 — CHAOTIC UNSTABLE QUANTUM PROBABILITY FIELD
+  // =========================================================================
+  const chaosGroup = new THREE.Group();
+  chaosGroup.position.copy(SECONDARY_POS);
+  root.add(chaosGroup);
+
+  const chaosHitGeo = new THREE.SphereGeometry(1.62, 16, 16);
+  const chaosHitMat = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    colorWrite: false,
+  });
+  const chaosHitMesh = new THREE.Mesh(chaosHitGeo, chaosHitMat);
+  chaosHitMesh.userData.quantumStateIndex = 1;
+  chaosGroup.add(chaosHitMesh);
+  disposables.push(chaosHitGeo, chaosHitMat);
+
+  // A. 2,600 GPU-Advected Chaotic Quantum Cloud Particles
+  const chaosParticleCount = 2600;
+  const cPos = new Float32Array(chaosParticleCount * 3);
+  const cCol = new Float32Array(chaosParticleCount * 3);
+  const cSize = new Float32Array(chaosParticleCount);
+  const cSeed = new Float32Array(chaosParticleCount * 3);
+  const cDeep = new THREE.Color(0x0b7b9e);
+  const cBright = new THREE.Color(0x00ffff);
+  const cWhite = new THREE.Color(0xe0ffff);
+  const cTmp = new THREE.Color();
+
+  for (let i = 0; i < chaosParticleCount; i++) {
+    // Multi-lobe irregular probability pockets — asymmetric, non-spherical uncertainty
+    const theta = rng() * Math.PI * 2;
+    const phi = Math.acos(2 * rng() - 1);
+    const lobe =
+      0.72 +
+      0.42 * Math.sin(theta * 2.0 + phi * 3.0) +
+      0.26 * Math.cos(theta * 5.0 - phi * 2.0);
+    const radiusBias = i < 500 ? 0.22 + rng() * 0.65 : 0.65 + rng() * 0.72;
+    const rad = Math.max(0.14, lobe * radiusBias);
+
+    cPos[i * 3] = rad * Math.sin(phi) * Math.cos(theta) * 1.15;
+    cPos[i * 3 + 1] = rad * Math.cos(phi) * 0.92;
+    cPos[i * 3 + 2] = rad * Math.sin(phi) * Math.sin(theta);
+
+    const k = rng();
+    cTmp.copy(cDeep).lerp(cBright, k).lerp(cWhite, k * k * 0.48);
+    cCol[i * 3] = cTmp.r;
+    cCol[i * 3 + 1] = cTmp.g;
+    cCol[i * 3 + 2] = cTmp.b;
+
+    cSize[i] = 0.052 + rng() * 0.078;
+    cSeed[i * 3] = rng();
+    cSeed[i * 3 + 1] = rng();
+    cSeed[i * 3 + 2] = rng();
+  }
+  const chaosParticleGeo = new THREE.BufferGeometry();
+  chaosParticleGeo.setAttribute('position', new THREE.BufferAttribute(cPos, 3));
+  chaosParticleGeo.setAttribute('aColor', new THREE.BufferAttribute(cCol, 3));
+  chaosParticleGeo.setAttribute('aSize', new THREE.BufferAttribute(cSize, 1));
+  chaosParticleGeo.setAttribute('aSeed', new THREE.BufferAttribute(cSeed, 3));
+  const chaosParticleMat = createFieldParticleMaterial('chaos');
+  const chaosPoints = new THREE.Points(chaosParticleGeo, chaosParticleMat);
+  chaosGroup.add(chaosPoints);
+  disposables.push(chaosParticleGeo, chaosParticleMat);
+
+  // B. 5 Continuously Morphing Curved Energy Filaments (real vertex-level organic deformation)
+  const filamentCount = 5;
+  const filamentSegs = 56;
+  const morphFilaments: {
+    attr: THREE.BufferAttribute;
+    mat: THREE.LineBasicMaterial;
+    freqA: number;
+    freqB: number;
+    tiltX: number;
+    tiltZ: number;
+    phase: number;
+    radiusBase: number;
+  }[] = [];
+
+  for (let f = 0; f < filamentCount; f++) {
+    const arr = new Float32Array((filamentSegs + 1) * 3);
+    const geo = new THREE.BufferGeometry();
+    const attr = new THREE.BufferAttribute(arr, 3);
+    attr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', attr);
+    const mat = new THREE.LineBasicMaterial({
+      color: f % 2 === 0 ? 0x9cfaff : 0x00ffff,
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const line = new THREE.Line(geo, mat);
+    chaosGroup.add(line);
+    disposables.push(geo, mat);
+
+    morphFilaments.push({
+      attr,
+      mat,
+      freqA: 2 + (f % 3),
+      freqB: 3 + ((f + 1) % 3),
+      tiltX: (rng() - 0.5) * 1.4,
+      tiltZ: (rng() - 0.5) * 1.4,
+      phase: rng() * Math.PI * 2,
+      radiusBase: 0.78 + rng() * 0.58,
+    });
+  }
+
+  // C. Fragmented Shifting Polyhedral Constellation & Intermittent Energy Connections
+  const chaosNodeCount = 18;
+  const chaosNodeAnchors = Array.from({ length: chaosNodeCount }, () => ({
+    base: new THREE.Vector3(
+      (rng() - 0.5) * 2.1,
+      (rng() - 0.5) * 1.85,
+      (rng() - 0.5) * 1.9
+    ),
+    freq: 0.55 + rng() * 0.85,
+    amp: 0.16 + rng() * 0.24,
+    phase: rng() * Math.PI * 2,
+  }));
+  const chaosNodeLivePts = Array.from({ length: chaosNodeCount }, () => new THREE.Vector3());
+
+  const chaosEdgePairs: [number, number, number][] = [];
+  for (let i = 0; i < chaosNodeCount; i++) {
+    for (let j = i + 1; j < chaosNodeCount; j++) {
+      if (chaosNodeAnchors[i].base.distanceTo(chaosNodeAnchors[j].base) < 1.38 && rng() > 0.35) {
+        chaosEdgePairs.push([i, j, rng() * Math.PI * 2]);
+      }
+    }
+  }
+  const chaosSegArr = new Float32Array(chaosEdgePairs.length * 6);
+  const chaosSegGeo = new THREE.BufferGeometry();
+  const chaosSegAttr = new THREE.BufferAttribute(chaosSegArr, 3);
+  chaosSegAttr.setUsage(THREE.DynamicDrawUsage);
+  chaosSegGeo.setAttribute('position', chaosSegAttr);
+  const chaosSegMat = new THREE.LineBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.42,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  chaosGroup.add(new THREE.LineSegments(chaosSegGeo, chaosSegMat));
+  disposables.push(chaosSegGeo, chaosSegMat);
+
+  const chaosNodeSprGeo = new THREE.BufferGeometry();
+  const chaosNodeSprArr = new Float32Array(chaosNodeCount * 3);
+  const chaosNodeSprAttr = new THREE.BufferAttribute(chaosNodeSprArr, 3);
+  chaosNodeSprAttr.setUsage(THREE.DynamicDrawUsage);
+  chaosNodeSprGeo.setAttribute('position', chaosNodeSprAttr);
+  const chaosNodeSprMat = new THREE.PointsMaterial({
+    color: 0xd8ffff,
+    map: glowTex,
+    size: 0.16,
+    transparent: true,
+    opacity: 0.65,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  chaosGroup.add(new THREE.Points(chaosNodeSprGeo, chaosNodeSprMat));
+  disposables.push(chaosNodeSprGeo, chaosNodeSprMat);
+
+  // D. Translucent Mist Energy Lobes inside Unobserved Probability Field
+  const chaosMistLobes: {
+    sprite: THREE.Sprite;
+    mat: THREE.SpriteMaterial;
+    base: THREE.Vector3;
+    speed: number;
+    phase: number;
+  }[] = [];
+  for (let m = 0; m < 6; m++) {
+    const mat = new THREE.SpriteMaterial({
+      map: glowTex,
+      color: m % 2 === 0 ? 0x00e5ff : 0x55ffff,
+      transparent: true,
+      opacity: 0.16,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const sprite = new THREE.Sprite(mat);
+    const base = new THREE.Vector3(
+      (rng() - 0.5) * 1.15,
+      (rng() - 0.5) * 0.95,
+      (rng() - 0.5) * 0.9
+    );
+    sprite.position.copy(base);
+    sprite.scale.set(1.35 + rng() * 0.85, 1.35 + rng() * 0.85, 1);
+    chaosGroup.add(sprite);
+    disposables.push(mat);
+    chaosMistLobes.push({ sprite, mat, base, speed: 0.45 + rng() * 0.5, phase: rng() * Math.PI * 2 });
+  }
+
+  // Smooth damped transition trackers
+  let prevElapsed = 0;
+  let photonFocusMix = 1.0;
+  let chaosFocusMix = 0.0;
+  let photonHoverMix = 0.0;
+  let chaosHoverMix = 0.0;
+
   return {
     root,
+    getPickTargets: () => [photonHitMesh, chaosHitMesh] as THREE.Object3D[],
     update: (
       elapsed: number,
       pointerX: number,
       pointerY: number,
       diveProgress: number,
+      activeState: number = 0,
+      hoveredState: number | null = null,
       reducedMotion = false
     ) => {
-      const animTime = reducedMotion ? elapsed * 0.12 : elapsed;
-      dustPoints.rotation.y = animTime * 0.025 + (reducedMotion ? 0 : pointerX * 0.03);
-      dustPoints.rotation.x = reducedMotion ? 0 : pointerY * 0.02;
+      const dt = Math.min(0.08, Math.max(0.001, elapsed - prevElapsed));
+      prevElapsed = elapsed;
 
-      poolMat.opacity = (0.16 + (reducedMotion ? 0 : Math.sin(animTime * 1.1) * 0.025)) * (1 - diveProgress * 0.5);
-      horizonRingMat.opacity = 0.18 * (1 - diveProgress * 0.65);
-      floorGroup.scale.setScalar(1 + diveProgress * 0.78);
+      const animTime = reducedMotion ? elapsed * 0.12 : elapsed;
+      const dampRate = reducedMotion ? 18 : 3.8;
+
+      const isPhotonSelected = activeState !== 1;
+      photonFocusMix = THREE.MathUtils.damp(photonFocusMix, isPhotonSelected ? 1 : 0, dampRate, dt);
+      chaosFocusMix = THREE.MathUtils.damp(chaosFocusMix, isPhotonSelected ? 0 : 1, dampRate, dt);
+
+      photonHoverMix = THREE.MathUtils.damp(
+        photonHoverMix,
+        hoveredState === 0 && !isPhotonSelected ? 1 : 0,
+        7.5,
+        dt
+      );
+      chaosHoverMix = THREE.MathUtils.damp(
+        chaosHoverMix,
+        hoveredState === 1 && isPhotonSelected ? 1 : 0,
+        7.5,
+        dt
+      );
+
+      const parallaxX = reducedMotion ? 0 : pointerX * 0.14 * (1 - diveProgress * 0.75);
+      const parallaxY = reducedMotion ? 0 : pointerY * 0.08 * (1 - diveProgress * 0.75);
+      const diveExpand = 1 + diveProgress * 0.72;
+
+      // 1. Update Environment
+      ambientDust.rotation.y = animTime * 0.022 + parallaxX * 0.04;
+      ambientDust.rotation.x = parallaxY * 0.025;
+      bgTrailMats.forEach((m, idx) => {
+        m.opacity = 0.09 + Math.sin(animTime * 0.4 + idx) * 0.025;
+      });
+
+      platformGroup.scale.setScalar(1 + diveProgress * 0.78);
+      poolMat.opacity = (0.44 + (reducedMotion ? 0 : Math.sin(animTime * 1.4) * 0.05)) * (1 - diveProgress * 0.5);
+      platformRings.forEach((ring, idx) => {
+        ring.rotation.y = animTime * (0.08 + idx * 0.03) * (idx % 2 === 0 ? 1 : -1);
+        platformRingMats[idx].opacity = (0.72 - idx * 0.13) * (1 - diveProgress * 0.45);
+      });
+
+      // 2. Update ARTICLE 01 — Structured Photon / Atom Visualization
+      const photonFloatY = reducedMotion ? 0 : Math.sin(animTime * 0.95) * 0.055;
+      photonGroup.position.lerpVectors(SECONDARY_POS, PRIMARY_POS, photonFocusMix);
+      photonGroup.position.x += parallaxX * (0.35 + 0.65 * photonFocusMix);
+      photonGroup.position.y += photonFloatY + parallaxY * 0.45;
+      if (diveProgress > 0.05) {
+        photonGroup.position.z += diveProgress * 2.2;
+        photonGroup.position.x *= diveExpand;
+      }
+
+      const photonScale =
+        THREE.MathUtils.lerp(0.64, 1.06, photonFocusMix) *
+        (1 + photonHoverMix * 0.14) *
+        (1 + diveProgress * 0.42);
+      photonGroup.scale.setScalar(photonScale);
+
+      const photonAlpha = THREE.MathUtils.lerp(0.4 + photonHoverMix * 0.34, 1.0, photonFocusMix);
+      glassFresnelMat.uniforms.uFocus.value = photonFocusMix;
+      glassFresnelMat.uniforms.uTime.value = animTime;
+      geodesicMesh.rotation.y = animTime * 0.14;
+      geodesicMesh.rotation.x = animTime * 0.08;
+      geoWireMat.opacity = 0.42 * photonAlpha;
+      coreMat.opacity = 0.96 * photonAlpha;
+      const corePulse = reducedMotion ? 1 : 1 + Math.sin(animTime * 2.1) * 0.06;
+      photonNucleus.scale.setScalar(corePulse);
+      photonAuraMat.opacity = 0.62 * photonAlpha;
+
+      orbitParticleMats.forEach((m) => {
+        m.uniforms.uTime.value = animTime;
+        m.uniforms.uFocus.value = photonFocusMix;
+        m.uniforms.uHover.value = photonHoverMix;
+        m.uniforms.uOpacity.value = photonAlpha;
+      });
+      orbitTrackMats.forEach((m) => {
+        m.opacity = 0.68 * photonAlpha;
+      });
+      orbitOuterMats.forEach((m) => {
+        m.opacity = 0.28 * photonAlpha;
+      });
+
+      orbitSatellites.forEach((sat) => {
+        const ang = sat.phase + animTime * sat.speed;
+        sat.group.position.set(Math.cos(ang) * sat.rx, 0, Math.sin(ang) * sat.rz);
+        sat.glassMat.opacity = 0.72 * photonAlpha;
+        sat.sparkSprite.material.opacity = 0.96 * photonAlpha;
+
+        const tArr = sat.tailAttr.array as Float32Array;
+        const dir = sat.speed >= 0 ? -1 : 1;
+        for (let k = 0; k < 18; k++) {
+          const ta = ang + dir * k * 0.042;
+          tArr[k * 3] = Math.cos(ta) * sat.rx;
+          tArr[k * 3 + 1] = 0;
+          tArr[k * 3 + 2] = Math.sin(ta) * sat.rz;
+        }
+        sat.tailAttr.needsUpdate = true;
+        (sat.tailPoints.material as THREE.PointsMaterial).opacity = 0.72 * photonAlpha;
+      });
+
+      // 3. Update ARTICLE 02 — Chaotic Unstable Quantum Probability Field
+      const chaosFloatY = reducedMotion ? 0 : Math.cos(animTime * 0.78 + 1.1) * 0.06;
+      chaosGroup.position.lerpVectors(SECONDARY_POS, PRIMARY_POS, chaosFocusMix);
+      chaosGroup.position.x += parallaxX * (0.35 + 0.65 * chaosFocusMix);
+      chaosGroup.position.y += chaosFloatY + parallaxY * 0.45;
+      if (diveProgress > 0.05) {
+        chaosGroup.position.z += diveProgress * 2.2;
+        chaosGroup.position.x *= diveExpand;
+      }
+
+      const chaosScale =
+        THREE.MathUtils.lerp(0.7, 1.06, chaosFocusMix) *
+        (1 + chaosHoverMix * 0.14) *
+        (1 + diveProgress * 0.42);
+      chaosGroup.scale.setScalar(chaosScale);
+
+      const chaosAlpha = THREE.MathUtils.lerp(0.46 + chaosHoverMix * 0.34, 1.0, chaosFocusMix);
+      chaosParticleMat.uniforms.uTime.value = animTime;
+      chaosParticleMat.uniforms.uFocus.value = chaosFocusMix;
+      chaosParticleMat.uniforms.uHover.value = chaosHoverMix;
+      chaosParticleMat.uniforms.uOpacity.value = chaosAlpha;
+
+      // Morph curved energy filaments organically over time
+      morphFilaments.forEach((f, idx) => {
+        const arr = f.attr.array as Float32Array;
+        const tWave = animTime * (0.55 + idx * 0.08);
+        for (let s = 0; s <= filamentSegs; s++) {
+          const u = (s / filamentSegs) * Math.PI * 2;
+          const rMod =
+            f.radiusBase +
+            0.34 * Math.sin(u * f.freqA + tWave + f.phase) +
+            0.22 * Math.cos(u * f.freqB - tWave * 0.75);
+          const px = Math.cos(u + Math.sin(tWave * 0.4) * 0.35) * rMod;
+          const py =
+            Math.sin(u * f.freqB + tWave * 0.9 + f.phase) * 0.62 +
+            Math.cos(u * 2.0 - tWave) * 0.18;
+          const pz = Math.sin(u + Math.cos(tWave * 0.35) * 0.35) * rMod * 0.86;
+          arr[s * 3] = px * Math.cos(f.tiltZ) - py * Math.sin(f.tiltZ);
+          arr[s * 3 + 1] = px * Math.sin(f.tiltZ) + py * Math.cos(f.tiltZ);
+          arr[s * 3 + 2] = pz * Math.cos(f.tiltX) - py * Math.sin(f.tiltX) * 0.3;
+        }
+        f.attr.needsUpdate = true;
+        // Filaments subtly brighten and dim intermittently as unobserved states shift
+        const shimmer = 0.3 + 0.35 * (0.5 + 0.5 * Math.sin(animTime * 1.15 + f.phase));
+        f.mat.opacity = shimmer * chaosAlpha;
+      });
+
+      // Evolve fragmented geometric nodes and intermittent wireframe connections
+      const nArr = chaosNodeSprAttr.array as Float32Array;
+      for (let i = 0; i < chaosNodeCount; i++) {
+        const na = chaosNodeAnchors[i];
+        const lx = na.base.x + Math.sin(animTime * na.freq + na.phase) * na.amp;
+        const ly = na.base.y + Math.cos(animTime * na.freq * 0.85 + na.phase * 1.3) * na.amp;
+        const lz = na.base.z + Math.sin(animTime * na.freq * 1.15 - na.phase) * na.amp;
+        chaosNodeLivePts[i].set(lx, ly, lz);
+        nArr[i * 3] = lx;
+        nArr[i * 3 + 1] = ly;
+        nArr[i * 3 + 2] = lz;
+      }
+      chaosNodeSprAttr.needsUpdate = true;
+      chaosNodeSprMat.opacity = (0.48 + chaosFocusMix * 0.35) * chaosAlpha;
+
+      const sArr = chaosSegAttr.array as Float32Array;
+      for (let e = 0; e < chaosEdgePairs.length; e++) {
+        const [aIdx, bIdx] = chaosEdgePairs[e];
+        const pa = chaosNodeLivePts[aIdx];
+        const pb = chaosNodeLivePts[bIdx];
+        sArr[e * 6] = pa.x;
+        sArr[e * 6 + 1] = pa.y;
+        sArr[e * 6 + 2] = pa.z;
+        sArr[e * 6 + 3] = pb.x;
+        sArr[e * 6 + 4] = pb.y;
+        sArr[e * 6 + 5] = pb.z;
+      }
+      chaosSegAttr.needsUpdate = true;
+      chaosSegMat.opacity =
+        (0.24 + 0.2 * Math.sin(animTime * 1.4)) * chaosAlpha * (0.65 + chaosFocusMix * 0.35);
+
+      chaosMistLobes.forEach((lobe) => {
+        lobe.sprite.position.set(
+          lobe.base.x + Math.sin(animTime * lobe.speed + lobe.phase) * 0.28,
+          lobe.base.y + Math.cos(animTime * lobe.speed * 0.8 + lobe.phase) * 0.24,
+          lobe.base.z + Math.sin(animTime * lobe.speed * 0.6 - lobe.phase) * 0.2
+        );
+        lobe.mat.opacity =
+          (0.11 + 0.07 * Math.sin(animTime * 0.9 + lobe.phase)) * chaosAlpha;
+      });
     },
     dispose: () => {
       disposables.forEach((d) => d.dispose());
