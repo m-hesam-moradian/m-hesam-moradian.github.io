@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="maskableBg" cx="50%" cy="46%" r="65%">
+      <stop offset="0%" stop-color="#0E222E" />
+      <stop offset="55%" stop-color="#091118" />
+      <stop offset="100%" stop-color="#05080D" />
+    </radialGradient>
+    <linearGradient id="maskableCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D8FFFF" />
+      <stop offset="50%" stop-color="#00FFFF" />
+      <stop offset="100%" stop-color="#00B8CC" />
+    </linearGradient>
+    <linearGradient id="maskableCubeFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00FFFF" stop-opacity="0.26" />
+      <stop offset="100%" stop-color="#00FFFF" stop-opacity="0.06" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full-bleed solid obsidian canvas for maskable adaptive icon cropping -->
+  <rect x="0" y="0" width="512" height="512" fill="url(#maskableBg)" />
+
+  <!-- Artwork scaled neatly inside central 68% safe zone -->
+  <g transform="translate(256 256) scale(0.68) translate(-256 -256)">
+    <circle
+      cx="256"
+      cy="256"
+      r="192"
+      fill="none"
+      stroke="#00FFFF"
+      stroke-width="7"
+      stroke-opacity="0.34"
+      stroke-dasharray="22 14"
+    />
+
+    <g transform="rotate(-26 256 256)">
+      <ellipse
+        cx="256"
+        cy="256"
+        rx="186"
+        ry="76"
+        fill="none"
+        stroke="#00FFFF"
+        stroke-width="11"
+        stroke-opacity="0.7"
+      />
+      <circle cx="442" cy="256" r="15" fill="#E0FFFF" />
+    </g>
+    <g transform="rotate(26 256 256)">
+      <ellipse
+        cx="256"
+        cy="256"
+        rx="186"
+        ry="76"
+        fill="none"
+        stroke="#9EFFFF"
+        stroke-width="9"
+        stroke-opacity="0.5"
+      />
+      <circle cx="70" cy="256" r="13" fill="#00FFFF" />
+    </g>
+
+    <polygon
+      points="256,120 374,188 374,324 256,392 138,324 138,188"
+      fill="url(#maskableCubeFill)"
+      stroke="url(#maskableCyan)"
+      stroke-width="22"
+      stroke-linejoin="round"
+    />
+    <polyline
+      points="138,188 256,256 374,188"
+      fill="none"
+      stroke="#C8FFFF"
+      stroke-width="17"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <line
+      x1="256"
+      y1="256"
+      x2="256"
+      y2="392"
+      stroke="#C8FFFF"
+      stroke-width="17"
+      stroke-linecap="round"
+    />
+
+    <polygon
+      points="256,212 296,256 256,300 216,256"
+      fill="#00FFFF"
+      stroke="#FFFFFF"
+      stroke-width="8"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>

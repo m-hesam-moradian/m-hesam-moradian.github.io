@@ -30,13 +30,14 @@ export function createPureCyanGlowTexture(): THREE.CanvasTexture {
  * High-DPI 1024x1024 procedural Pedestal Circuit & Telemetry Dial Texture for Chamber 04.
  * Strictly dark graphite (#14171D), brushed steel (#8A929A), and pure cyan (#00FFFF).
  */
-export function createPedestalCircuitTexture(maxAnisotropy: number): THREE.CanvasTexture {
-  const size = 1024;
+export function createPedestalCircuitTexture(maxAnisotropy: number, size = 1024): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
-  const c = size / 2;
+  const scale = size / 1024;
+  ctx.scale(scale, scale);
+  const c = 512;
 
   // Base dark graphite metallic plate
   const baseGrad = ctx.createRadialGradient(c, c, 30, c, c, c);
@@ -44,7 +45,7 @@ export function createPedestalCircuitTexture(maxAnisotropy: number): THREE.Canva
   baseGrad.addColorStop(0.55, '#15181e');
   baseGrad.addColorStop(1.0, '#101216');
   ctx.fillStyle = baseGrad;
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(0, 0, 1024, 1024);
 
   // Concentric technical rings
   const ringRadii = [120, 190, 265, 330, 395, 455, 488];
@@ -107,7 +108,7 @@ export function createPedestalCircuitTexture(maxAnisotropy: number): THREE.Canva
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = Math.min(8, maxAnisotropy || 4);
+  tex.anisotropy = Math.min(4, maxAnisotropy || 1);
   tex.needsUpdate = true;
   return tex;
 }
@@ -126,9 +127,9 @@ export interface PBRSurfaceMaps {
 export function createBasaltPBRTextures(
   maxAnisotropy: number,
   repeatX = 1,
-  repeatY = 2.6
+  repeatY = 2.6,
+  size = 512
 ): PBRSurfaceMaps {
-  const size = 512;
 
   const albedoCanvas = document.createElement('canvas');
   albedoCanvas.width = size;
@@ -270,7 +271,7 @@ export function createBasaltPBRTextures(
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(repeatX, repeatY);
-    tex.anisotropy = Math.min(8, maxAnisotropy || 4);
+    tex.anisotropy = Math.min(4, maxAnisotropy || 1);
     tex.needsUpdate = true;
     return tex;
   };
@@ -299,16 +300,17 @@ export function createObsidianSurfaceTexture(maxAnisotropy: number): THREE.Canva
  */
 export function createBinaryBlockchainBlockTextures(
   maxAnisotropy: number,
-  seedOffset = 0
+  seedOffset = 0,
+  size = 512
 ): {
   map: THREE.CanvasTexture;
   emissiveMap: THREE.CanvasTexture;
 } {
-  const size = 512;
   const cols = 10;
   const rows = 10;
   const cellW = size / cols;
   const cellH = size / rows;
+  const fontPx = Math.max(15, Math.round((31 * size) / 512));
 
   const mapCanvas = document.createElement('canvas');
   mapCanvas.width = size;
@@ -369,11 +371,11 @@ export function createBinaryBlockchainBlockTextures(
   }
 
   // Binary 0 & 1 glyphs with selective pure cyan / white hot bits
-  mCtx.font = 'bold 31px "JetBrains Mono", ui-monospace, monospace';
+  mCtx.font = `bold ${fontPx}px "JetBrains Mono", ui-monospace, monospace`;
   mCtx.textAlign = 'center';
   mCtx.textBaseline = 'middle';
 
-  eCtx.font = 'bold 31px "JetBrains Mono", ui-monospace, monospace';
+  eCtx.font = `bold ${fontPx}px "JetBrains Mono", ui-monospace, monospace`;
   eCtx.textAlign = 'center';
   eCtx.textBaseline = 'middle';
 
@@ -422,12 +424,12 @@ export function createBinaryBlockchainBlockTextures(
 
   const map = new THREE.CanvasTexture(mapCanvas);
   map.colorSpace = THREE.SRGBColorSpace;
-  map.anisotropy = Math.min(8, maxAnisotropy || 4);
+  map.anisotropy = Math.min(4, maxAnisotropy || 1);
   map.needsUpdate = true;
 
   const emissiveMap = new THREE.CanvasTexture(emCanvas);
   emissiveMap.colorSpace = THREE.SRGBColorSpace;
-  emissiveMap.anisotropy = Math.min(8, maxAnisotropy || 4);
+  emissiveMap.anisotropy = Math.min(4, maxAnisotropy || 1);
   emissiveMap.needsUpdate = true;
 
   return { map, emissiveMap };
@@ -478,7 +480,7 @@ export function createNeuralMetricSpriteTexture(
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   tex.magFilter = THREE.LinearFilter;
-  tex.anisotropy = 8;
+  tex.anisotropy = 2;
   tex.needsUpdate = true;
   return { tex, aspect: width / height };
 }
@@ -582,7 +584,7 @@ export function createSkillPlanetLabelTexture(
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   tex.magFilter = THREE.LinearFilter;
-  tex.anisotropy = 8;
+  tex.anisotropy = 2;
   tex.needsUpdate = true;
   return { tex, aspect: width / height };
 }

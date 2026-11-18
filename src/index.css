@@ -16,6 +16,8 @@
     padding: 0;
     overflow-x: hidden;
     overflow-y: auto;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
     background-color: #121417;
     color: #ffffff;
     font-family: var(--font-sans);
@@ -167,3 +169,30 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 255, 255, 0.6);
 }
+
+@keyframes loaderSpinSlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loaderSpinReverse {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.loader-orbit-cw {
+  animation: loaderSpinSlow 14s linear infinite;
+}
+
+.loader-orbit-ccw {
+  animation: loaderSpinReverse 10s linear infinite;
+}
+

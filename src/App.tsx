@@ -8,6 +8,7 @@ import {
   BookOpen,
   Box,
   Briefcase,
+  Compass,
   Download,
   GripHorizontal,
   Network,
@@ -19,6 +20,9 @@ import {
 import { ArticleReaderModal } from './components/ArticleReaderModal';
 import { HologramInspectorModal, ScrollCardKind } from './components/HologramInspectorModal';
 import { DeFlagIcon, LanguageSwitch, UkFlagIcon } from './components/LanguageSwitch';
+import { OfflineIndicator } from './components/OfflineIndicator';
+import { PWAInstallButton } from './components/PWAInstallButton';
+import { QuantumBootLoader } from './components/QuantumBootLoader';
 import { DETAILED_CHAMBERS } from './data/portfolioSections';
 import { getLocalizedResume, LocaleCode } from './data/resume';
 import { PedestalMode } from './three/detailedChambers';
@@ -102,6 +106,13 @@ export default function App() {
   const [cameraResetNonce, setCameraResetNonce] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [hudHidden, setHudHidden] = useState(false);
+  const [mobileLookMode, setMobileLookMode] = useState(false);
+  const [lookHintHighlighted, setLookHintHighlighted] = useState(false);
+  const [showSwipeNotif, setShowSwipeNotif] = useState(false);
+  const swipeHintTimerRef = useRef<number | null>(null);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [loadStageIdx, setLoadStageIdx] = useState(0);
+  const [loaderDone, setLoaderDone] = useState(false);
   const [locale, setLocale] = useState<LocaleCode>(() => {
     try {
       const saved = window.localStorage.getItem('portfolio_lang');
@@ -283,11 +294,107 @@ export default function App() {
         }
       };
 
+      setMobileLookMode(false);
+      setLookHintHighlighted(false);
+      setShowSwipeNotif(false);
       setCameraResetNonce((n) => n + 1);
       jumpAnimRef.current = requestAnimationFrame(step);
     },
     [cancelJumpAnimation]
   );
+
+  // Detect horizontal touch swipe attempts on mobile to illuminate Look-Around button & explain scroll vs 3D look
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+    let triggeredThisGesture = false;
+
+    const clearTimer = () => {
+      if (swipeHintTimerRef.current !== null) {
+        window.clearTimeout(swipeHintTimerRef.current);
+        swipeHintTimerRef.current = null;
+      }
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (
+        !loaderDone ||
+        mobileLookMode ||
+        cvModalOpen ||
+        readingArticleIdx !== null ||
+        window.innerWidth >= 768 ||
+        e.touches.length !== 1
+      ) {
+        tracking = false;
+        return;
+      }
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        target.closest('button, a, input, textarea, [role="slider"]')
+      ) {
+        tracking = false;
+        return;
+      }
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      tracking = true;
+      triggeredThisGesture = false;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!tracking || triggeredThisGesture || e.touches.length !== 1) return;
+      const dx = Math.abs(e.touches[0].clientX - startX);
+      const dy = Math.abs(e.touches[0].clientY - startY);
+      if (dx > 28 && dx > dy * 1.55) {
+        triggeredThisGesture = true;
+        tracking = false;
+        setLookHintHighlighted(true);
+        setShowSwipeNotif(true);
+        clearTimer();
+        swipeHintTimerRef.current = window.setTimeout(() => {
+          setShowSwipeNotif(false);
+          setLookHintHighlighted(false);
+        }, 5500);
+      } else if (dy > 24 && dy > dx * 1.4) {
+        // Native vertical scroll gesture — stop tracking this touch
+        tracking = false;
+      }
+    };
+
+    const onTouchEnd = () => {
+      tracking = false;
+    };
+
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
+      clearTimer();
+    };
+  }, [cvModalOpen, loaderDone, mobileLookMode, readingArticleIdx]);
+
+  const handleToggleMobileLook = useCallback(() => {
+    ambientAudio.playPulse();
+    if (swipeHintTimerRef.current !== null) {
+      window.clearTimeout(swipeHintTimerRef.current);
+      swipeHintTimerRef.current = null;
+    }
+    setShowSwipeNotif(false);
+    setLookHintHighlighted(false);
+    setMobileLookMode((prev) => {
+      if (prev) {
+        setCameraResetNonce((n) => n + 1);
+      }
+      return !prev;
+    });
+  }, []);
 
   const scrubToClientY = useCallback(
     (clientY: number) => {
@@ -340,20 +447,40 @@ export default function App() {
     }
   }, []);
 
+  const handleLoadProgress = useCallback((pct: number, stageIdx: number) => {
+    setLoadProgress(pct);
+    setLoadStageIdx(stageIdx);
+  }, []);
+
+  const handleLoaderComplete = useCallback(() => {
+    setLoaderDone(true);
+  }, []);
+
   const activeChamber = resume.chambers[activeChamberIdx] ?? resume.chambers[0];
   const cardState = getScrollCardState(scrollProgress);
   const genesisCvOpacity = scrollProgress < 0.042 ? 1 - smoothstep(0.014, 0.042, scrollProgress) : 0;
 
   return (
     <div className="relative bg-[#121417] text-[#FFFFFF]">
+      {!loaderDone && (
+        <QuantumBootLoader
+          loadProgress={loadProgress}
+          loadStageIdx={loadStageIdx}
+          locale={locale}
+          onComplete={handleLoaderComplete}
+        />
+      )}
+
       {/* Full-Viewport Obsidian & Pure Cyan 3D Engine */}
       <ObsidianCyanScene
         scrollProgress={scrollProgress}
         pedestalMode={pedestalMode}
         cameraResetNonce={cameraResetNonce}
         activeArticleIdx={activeArticleIdx}
+        mobileLookMode={mobileLookMode}
         onSelectArticle={handleSelectArticle}
         onOpenArticle={handleOpenArticleReader}
+        onLoadProgress={handleLoadProgress}
         onTelemetryUpdate={handleTelemetryUpdate}
       />
 
@@ -389,25 +516,96 @@ export default function App() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5 sm:gap-4 text-right shrink-0">
-              <div className="hidden sm:block space-y-0.5">
-                <p className="font-mono-hud text-[11px] tracking-widest text-[#00FFFF]">
-                  {resume.identity.name.toUpperCase()}
-                </p>
-                <p className="font-mono-hud text-[10px] text-[#8A929A]">
-                  {resume.identity.role}
-                </p>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex items-center gap-2.5 sm:gap-4 text-right">
+                <div className="hidden sm:block space-y-0.5">
+                  <p className="font-mono-hud text-[11px] tracking-widest text-[#00FFFF]">
+                    {resume.identity.name.toUpperCase()}
+                  </p>
+                  <p className="font-mono-hud text-[10px] text-[#8A929A]">
+                    {resume.identity.role}
+                  </p>
+                </div>
+                {isOrbiting && !mobileLookMode && (
+                  <button
+                    type="button"
+                    onClick={() => setCameraResetNonce((n) => n + 1)}
+                    className="pointer-events-auto font-mono-hud text-[10px] tracking-wider border border-[#8A929A]/50 bg-[#121417]/80 px-2 sm:px-2.5 py-1 text-[#FFFFFF] hover:border-[#00FFFF] hover:text-[#00FFFF] transition-colors cursor-pointer"
+                  >
+                    {resume.ui.resetView}
+                  </button>
+                )}
+                <PWAInstallButton locale={locale} />
+                <LanguageSwitch locale={locale} onChange={handleChangeLocale} />
               </div>
-              {isOrbiting && (
+
+              {/* Mobile-Only 3D Look-Around vs Vertical Scroll Switch */}
+              <div className="relative flex flex-col items-end md:hidden">
                 <button
                   type="button"
-                  onClick={() => setCameraResetNonce((n) => n + 1)}
-                  className="pointer-events-auto font-mono-hud text-[10px] tracking-wider border border-[#8A929A]/50 bg-[#121417]/80 px-2 sm:px-2.5 py-1 text-[#FFFFFF] hover:border-[#00FFFF] hover:text-[#00FFFF] transition-colors cursor-pointer"
+                  aria-pressed={mobileLookMode}
+                  onClick={handleToggleMobileLook}
+                  className={`pointer-events-auto inline-flex min-h-[34px] items-center gap-1.5 rounded-full px-3 py-1 font-mono-hud text-[9.5px] font-medium tracking-[0.16em] transition-all duration-200 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#00FFFF] ${
+                    mobileLookMode
+                      ? 'bg-gradient-to-b from-[#3BFFFF] via-[#00E4F2] to-[#00A8BD] text-[#04131B] shadow-[0_0_18px_rgba(0,255,255,0.65),inset_2px_2px_4px_rgba(0,48,60,0.35),inset_-2px_-2px_4px_rgba(255,255,255,0.55)]'
+                      : lookHintHighlighted
+                        ? 'border border-[#00FFFF] bg-[#06242E] text-[#00FFFF] shadow-[0_0_22px_rgba(0,255,255,0.8)] animate-pulse'
+                        : 'border border-white/14 bg-[#0D1218]/92 text-[#A8BCC9] shadow-[6px_8px_18px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-[#00FFFF]/60 hover:text-[#E6FFFF]'
+                  }`}
                 >
-                  {resume.ui.resetView}
+                  <Compass
+                    className={`w-3.5 h-3.5 ${mobileLookMode ? 'text-[#04131B]' : 'text-[#00FFFF]'}`}
+                    strokeWidth={2.2}
+                  />
+                  <span>
+                    {mobileLookMode
+                      ? locale === 'de'
+                        ? 'UMSCHAU AN'
+                        : 'LOOK ON'
+                      : locale === 'de'
+                        ? 'UMSCHAU'
+                        : 'LOOK 3D'}
+                  </span>
                 </button>
-              )}
-              <LanguageSwitch locale={locale} onChange={handleChangeLocale} />
+
+                {/* Horizontal-Swipe Guidance Notification Pointing Up at the Lit-Up Look Button */}
+                {showSwipeNotif && !mobileLookMode && (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="pointer-events-auto relative mt-2.5 w-[248px] rounded-xl border border-[#00FFFF]/75 bg-[#07121A]/96 p-3 text-left shadow-[0_12px_32px_rgba(0,0,0,0.88),0_0_24px_rgba(0,255,255,0.28)]"
+                  >
+                    {/* Upward connector triangle pointing to the Look-Around button */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-1.5 right-6 h-3 w-3 rotate-45 border-l border-t border-[#00FFFF]/75 bg-[#07121A]"
+                    />
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <p className="font-mono-hud text-[9.5px] font-semibold tracking-[0.18em] text-[#00FFFF]">
+                          {locale === 'de' ? 'VERTIKAL SCROLLEN' : 'SCROLL DOWN TO MOVE'}
+                        </p>
+                        <p className="text-[11px] leading-snug text-[#DCEAF2]">
+                          {locale === 'de'
+                            ? 'Scrolle nach unten, um die Kapitel zu wechseln — oder tippe oben auf „UMSCHAU“, um dich frei umzusehen.'
+                            : 'You need to scroll down to move through the world — unless you want to look around, tap this button above.'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={resume.ui.closeModal}
+                        onClick={() => {
+                          setShowSwipeNotif(false);
+                          setLookHintHighlighted(false);
+                        }}
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[#8A929A] hover:text-[#FFFFFF] cursor-pointer"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -416,10 +614,10 @@ export default function App() {
             <div
               aria-hidden="true"
               style={{ opacity: genesisCvOpacity }}
-              className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[62px] sm:top-7 flex items-center gap-2.5 sm:gap-3"
+              className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[96px] sm:top-7 flex items-center gap-2.5 sm:gap-3"
             >
               <span className="hidden sm:block h-[1px] w-10 bg-gradient-to-r from-transparent to-[#00FFFF]/55" />
-              <div className="inline-flex items-center gap-2.5 rounded-full border border-[#00FFFF]/25 bg-[#070D14]/65 px-3.5 py-1.5 backdrop-blur-md shadow-[0_6px_24px_rgba(0,0,0,0.55),0_0_20px_rgba(0,255,255,0.12)]">
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-[#00FFFF]/25 bg-[#070D14]/88 px-3.5 py-1.5 shadow-[0_6px_24px_rgba(0,0,0,0.55),0_0_20px_rgba(0,255,255,0.12)]">
                 <span className="relative flex h-4 w-2.5 items-center justify-center rounded-full border border-[#00FFFF]/75">
                   <span className="scroll-bead-drop h-1.5 w-[2px] rounded-full bg-[#00FFFF] shadow-[0_0_6px_#00FFFF]" />
                 </span>
@@ -456,7 +654,7 @@ export default function App() {
                 />
 
                 {/* Compact Inner Obsidian-Cyan Pill */}
-                <span className="relative z-10 inline-flex items-center gap-2 overflow-hidden rounded-full bg-[#081018]/94 px-3 py-1 sm:px-3.5 sm:py-1.5 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                <span className="relative z-10 inline-flex items-center gap-2 overflow-hidden rounded-full bg-[#081018]/96 px-3 py-1 sm:px-3.5 sm:py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                   {/* Subtle Internal Light Sweep */}
                   <span
                     aria-hidden="true"
@@ -497,10 +695,10 @@ export default function App() {
               </span>
             </button>
 
-            {/* Centered Obsidian-Cyan Glass Pill Capsule Dock (01..05 Icon Switcher) */}
+            {/* Centered Minimal Dark Neumorphic Pill Dock (01..05 Icon Switcher) */}
             <nav
               aria-label="Chapter Navigation"
-              className="pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-0 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#00FFFF]/35 bg-[#081018]/92 px-2 py-1.5 backdrop-blur-xl shadow-[0_12px_36px_rgba(0,0,0,0.84),0_0_24px_rgba(0,255,255,0.14),inset_0_1px_0_rgba(255,255,255,0.08)]"
+              className="pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-0 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/[0.07] bg-[#0D1218]/95 px-2 py-1.5 shadow-[8px_10px_22px_rgba(0,0,0,0.84),-3px_-3px_10px_rgba(255,255,255,0.045),inset_0_1px_0_rgba(255,255,255,0.06)]"
             >
               {DETAILED_CHAMBERS.map((ch, idx) => {
                 const isActive = idx === activeChamberIdx;
@@ -513,19 +711,16 @@ export default function App() {
                     onClick={() => handleJumpChamber(idx)}
                     aria-label={`${localizedCh.hudTitle} (${localizedCh.sectionTag})`}
                     title={localizedCh.hudTitle}
-                    className={`relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full transition-all duration-300 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#00FFFF] ${
+                    className={`relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full transition-all duration-200 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#00FFFF] ${
                       isActive
-                        ? 'bg-[#00FFFF] text-[#050C16] shadow-[0_0_20px_rgba(0,255,255,0.68),inset_0_1px_2px_rgba(255,255,255,0.65)] ring-2 ring-[#D8FFFF]/60 scale-105'
-                        : 'border border-transparent text-[#8FA2B2] hover:border-[#00FFFF]/40 hover:bg-[#00FFFF]/10 hover:text-[#FFFFFF]'
+                        ? 'bg-gradient-to-b from-[#3BFFFF] via-[#00E4F2] to-[#00A8BD] text-[#04131B] shadow-[0_2px_10px_rgba(0,255,255,0.38),inset_2px_2px_5px_rgba(0,48,60,0.38),inset_-2px_-2px_5px_rgba(255,255,255,0.55)]'
+                        : 'text-[#7C8B99] hover:text-[#D8F8FF]'
                     }`}
                   >
-                    <Icon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" strokeWidth={isActive ? 2.35 : 1.75} />
-                    {isActive && (
-                      <span
-                        aria-hidden="true"
-                        className="pointer-events-none absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#D8FFFF] shadow-[0_0_6px_#00FFFF]"
-                      />
-                    )}
+                    <Icon
+                      className="w-4 h-4 sm:w-[17px] sm:h-[17px]"
+                      strokeWidth={isActive ? 2.25 : 1.75}
+                    />
                   </button>
                 );
               })}
@@ -636,6 +831,8 @@ export default function App() {
         onClose={handleCloseArticleReader}
       />
 
+      <OfflineIndicator locale={locale} />
+
       {/* Touch Darker + Subtle 5-10% Blurred Backdrop & Frosted ~30% Blurred Transparent Neutral Card */}
       {cvModalOpen && (
         <div
@@ -643,11 +840,11 @@ export default function App() {
           aria-modal="true"
           aria-labelledby="cv-modal-title"
           onClick={() => setCvModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/28 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/52 md:bg-black/28 md:backdrop-blur-[2px]"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="cv-modal-pop relative w-full max-w-[490px] rounded-2xl border border-white/18 bg-[#121417]/48 p-5 sm:p-6 backdrop-blur-[18px] shadow-[0_24px_64px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.12)]"
+            className="cv-modal-pop relative w-full max-w-[490px] rounded-2xl border border-white/18 bg-[#0C1218]/94 md:bg-[#121417]/48 p-5 sm:p-6 md:backdrop-blur-[18px] shadow-[0_24px_64px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.12)]"
           >
             <div className="flex items-start justify-between gap-4 border-b border-white/12 pb-3.5">
               <div className="space-y-1">
@@ -679,7 +876,7 @@ export default function App() {
                   ambientAudio.playPulse();
                   window.setTimeout(() => setCvModalOpen(false), 180);
                 }}
-                className="group relative flex flex-col justify-between gap-3 rounded-xl border border-white/15 bg-black/28 backdrop-blur-md p-4 transition-all hover:-translate-y-0.5 hover:border-[#00FFFF]/75 hover:bg-white/[0.08] hover:shadow-[0_0_24px_rgba(0,255,255,0.16)] focus-visible:outline-2 focus-visible:outline-[#00FFFF]"
+                className="group relative flex flex-col justify-between gap-3 rounded-xl border border-white/15 bg-[#080E14]/88 md:bg-black/28 md:backdrop-blur-md p-4 transition-all hover:-translate-y-0.5 hover:border-[#00FFFF]/75 hover:bg-white/[0.08] hover:shadow-[0_0_24px_rgba(0,255,255,0.16)] focus-visible:outline-2 focus-visible:outline-[#00FFFF]"
               >
                 <div className="flex items-center justify-between gap-2">
                   <UkFlagIcon className="w-7 h-[18px] shrink-0 rounded-[2px] ring-1 ring-white/25" />
@@ -704,7 +901,7 @@ export default function App() {
                   ambientAudio.playPulse();
                   window.setTimeout(() => setCvModalOpen(false), 180);
                 }}
-                className="group relative flex flex-col justify-between gap-3 rounded-xl border border-white/15 bg-black/28 backdrop-blur-md p-4 transition-all hover:-translate-y-0.5 hover:border-[#00FFFF]/75 hover:bg-white/[0.08] hover:shadow-[0_0_24px_rgba(0,255,255,0.16)] focus-visible:outline-2 focus-visible:outline-[#00FFFF]"
+                className="group relative flex flex-col justify-between gap-3 rounded-xl border border-white/15 bg-[#080E14]/88 md:bg-black/28 md:backdrop-blur-md p-4 transition-all hover:-translate-y-0.5 hover:border-[#00FFFF]/75 hover:bg-white/[0.08] hover:shadow-[0_0_24px_rgba(0,255,255,0.16)] focus-visible:outline-2 focus-visible:outline-[#00FFFF]"
               >
                 <div className="flex items-center justify-between gap-2">
                   <DeFlagIcon className="w-7 h-[18px] shrink-0 rounded-[2px] ring-1 ring-white/25" />

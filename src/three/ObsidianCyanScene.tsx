@@ -2,10 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { DETAILED_CHAMBERS } from '../data/portfolioSections';
 import { RESUME_DATA } from '../data/resume';
 import {
@@ -31,8 +27,10 @@ interface ObsidianCyanSceneProps {
   pedestalMode: PedestalMode;
   cameraResetNonce: number;
   activeArticleIdx: number;
+  mobileLookMode?: boolean;
   onSelectArticle?: (idx: number) => void;
   onOpenArticle?: (idx: number) => void;
+  onLoadProgress?: (progress: number, stageIndex: number) => void;
   onTelemetryUpdate?: (
     chamberIdx: number,
     warpFlash: number,
@@ -135,23 +133,9 @@ function sampleDetailedFlight(
         : 1 - THREE.MathUtils.smoothstep(p, 0.355, 0.377);
   }
 
-  // Flash 2: Iris Singularity -> CH.04 Research Codex (center 0.615)
-  let irisTeleportFlash = 0;
-  if (p >= 0.593 && p <= 0.637) {
-    irisTeleportFlash =
-      p < 0.615
-        ? THREE.MathUtils.smoothstep(p, 0.593, 0.615)
-        : 1 - THREE.MathUtils.smoothstep(p, 0.615, 0.637);
-  }
-
-  // Flash 3: Research Codex -> CH.05 Contact Pedestal (center 0.845)
-  let researchTeleportFlash = 0;
-  if (p >= 0.825 && p <= 0.865) {
-    researchTeleportFlash =
-      p < 0.845
-        ? THREE.MathUtils.smoothstep(p, 0.825, 0.845)
-        : 1 - THREE.MathUtils.smoothstep(p, 0.845, 0.865);
-  }
+  // Flash 2 & 3 disabled around Stage 4 so Quantum Knowledge renders flash-free
+  const irisTeleportFlash = 0;
+  const researchTeleportFlash = 0;
 
   // Flash 4: CH.05 Overhead Halo -> Stage 1 Sky Return (center 0.968)
   let skyTeleportFlash = 0;
@@ -168,9 +152,9 @@ function sampleDetailedFlight(
     const eased = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
 
     if (isMobileLayout) {
-      _vA.set(-12.8, -0.45, 10.4);
+      _vA.set(-12.8, 2.35, 10.4);
       _vB.set(0.0, 1.74, 0.68);
-      _vC.set(0.0, 1.75, 0.0);
+      _vC.set(0.0, 1.55, 0.0);
       _vD.set(0.0, 1.75, 0.0);
     } else {
       _vA.set(...DETAILED_CHAMBERS[0].camPos);
@@ -442,10 +426,10 @@ function sampleDetailedFlight(
     const u = (p - 0.615) / (DETAILED_CHAMBERS[3].scrollAt - 0.615);
     const eased = 1 - Math.pow(1 - u, 2.6);
     if (isMobileLayout) {
-      _vA.set(-1.3, -44.6, 2.0);
-      _vB.set(-1.55, -45.65, 1.35);
-      _vC.set(-1.55, -48.8, -12.0);
-      _vD.set(-1.7, -49.0, -12.0);
+      _vA.set(-1.45, -44.6, 2.3);
+      _vB.set(-1.7, -45.5, 1.85);
+      _vC.set(-1.75, -48.9, -12.0);
+      _vD.set(-1.95, -49.1, -12.0);
     } else {
       _vA.set(0.0, -46.2, -2.5);
       _vB.set(...DETAILED_CHAMBERS[3].camPos); // [0.0, -47.2, -3.1] -> Centered Quantum States stage
@@ -480,10 +464,10 @@ function sampleDetailedFlight(
     researchDiveProgress = eased * 0.08;
 
     if (isMobileLayout) {
-      _vA.set(-1.55, -45.65, 1.35);
-      _vB.set(-1.5, -45.75, 1.05);
-      _vC.set(-1.7, -49.0, -12.0);
-      _vD.set(-1.65, -48.95, -12.0);
+      _vA.set(-1.7, -45.5, 1.85);
+      _vB.set(-1.65, -45.6, 1.55);
+      _vC.set(-1.95, -49.1, -12.0);
+      _vD.set(-1.9, -49.05, -12.0);
     } else {
       _vA.set(...DETAILED_CHAMBERS[3].camPos);
       _vB.set(0.0, -47.25, -3.4);
@@ -519,9 +503,9 @@ function sampleDetailedFlight(
     researchDiveProgress = 0.08 + eased * 0.92;
 
     if (isMobileLayout) {
-      _vA.set(-1.5, -45.75, 1.05);
-      _vMid.set(-0.6, -47.0, -6.4);
-      _vC.set(-1.65, -48.95, -12.0);
+      _vA.set(-1.65, -45.6, 1.55);
+      _vMid.set(-0.7, -47.0, -6.2);
+      _vC.set(-1.9, -49.05, -12.0);
     } else {
       _vA.set(0.0, -47.25, -3.4);
       _vMid.set(0.0, -47.6, -8.4);
@@ -641,8 +625,8 @@ function sampleDetailedFlight(
 
   _vA.set(0.0, 22.5, 25.0);
   if (isMobileLayout) {
-    _vB.set(-12.8, -0.45, 10.4);
-    _vD.set(0.0, 1.75, 0.0);
+    _vB.set(-12.8, 2.35, 10.4);
+    _vD.set(0.0, 1.55, 0.0);
   } else {
     _vB.set(...DETAILED_CHAMBERS[0].camPos);
     _vD.set(...DETAILED_CHAMBERS[0].camTarget);
@@ -675,8 +659,10 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
   pedestalMode,
   cameraResetNonce,
   activeArticleIdx,
+  mobileLookMode = false,
   onSelectArticle,
   onOpenArticle,
+  onLoadProgress,
   onTelemetryUpdate,
 }) => {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -685,16 +671,24 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
   const scrollRef = useRef(scrollProgress);
   const pedestalModeRef = useRef<PedestalMode>(pedestalMode);
   const activeArticleRef = useRef(activeArticleIdx);
+  const mobileLookModeRef = useRef(mobileLookMode);
+  const domCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const orbitControlsRef = useRef<OrbitControls | null>(null);
   const userOrbitingRef = useRef(false);
   const orbitScrollAnchorRef = useRef(scrollProgress);
   const isMobileRef = useRef(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const telemetryCbRef = useRef(onTelemetryUpdate);
   const selectArticleCbRef = useRef(onSelectArticle);
   const openArticleCbRef = useRef(onOpenArticle);
+  const loadProgressCbRef = useRef(onLoadProgress);
 
   useEffect(() => {
     telemetryCbRef.current = onTelemetryUpdate;
   }, [onTelemetryUpdate]);
+
+  useEffect(() => {
+    loadProgressCbRef.current = onLoadProgress;
+  }, [onLoadProgress]);
 
   useEffect(() => {
     activeArticleRef.current = activeArticleIdx;
@@ -710,7 +704,11 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
   useEffect(() => {
     scrollRef.current = scrollProgress;
-    if (userOrbitingRef.current && Math.abs(scrollProgress - orbitScrollAnchorRef.current) > 0.03) {
+    if (
+      !mobileLookModeRef.current &&
+      userOrbitingRef.current &&
+      Math.abs(scrollProgress - orbitScrollAnchorRef.current) > 0.03
+    ) {
       userOrbitingRef.current = false;
     }
   }, [scrollProgress]);
@@ -718,6 +716,19 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
   useEffect(() => {
     pedestalModeRef.current = pedestalMode;
   }, [pedestalMode]);
+
+  useEffect(() => {
+    mobileLookModeRef.current = mobileLookMode;
+    if (domCanvasRef.current) {
+      domCanvasRef.current.style.touchAction = mobileLookMode ? 'none' : 'pan-y';
+    }
+    if (orbitControlsRef.current) {
+      orbitControlsRef.current.enabled = mobileLookMode;
+    }
+    if (!mobileLookMode) {
+      userOrbitingRef.current = false;
+    }
+  }, [mobileLookMode]);
 
   useEffect(() => {
     if (cameraResetNonce > 0) {
@@ -729,26 +740,50 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     const container = mountRef.current;
     if (!container) return;
 
-    const isSoftwareGl = detectSoftwareWebGL();
-    let renderer: THREE.WebGLRenderer;
-
-    try {
-      renderer = new THREE.WebGLRenderer({
-        antialias: !isSoftwareGl,
-        powerPreference: 'high-performance',
-        alpha: false,
+    let disposed = false;
+    const cleanupFns: (() => void)[] = [];
+    const yieldFrame = () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
       });
-    } catch {
-      setWebglError(true);
-      return;
-    }
+
+    void (async () => {
+      const initialWidth = container.clientWidth || window.innerWidth;
+      const mobileLowDetail =
+        initialWidth < 768 || window.matchMedia('(pointer: coarse)').matches;
+
+      loadProgressCbRef.current?.(6, 0);
+      const isSoftwareGl = detectSoftwareWebGL();
+      let renderer: THREE.WebGLRenderer;
+
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: !isSoftwareGl,
+          powerPreference: 'high-performance',
+          alpha: false,
+          precision: mobileLowDetail ? 'mediump' : 'highp',
+        });
+      } catch {
+        setWebglError(true);
+        loadProgressCbRef.current?.(100, 4);
+        return;
+      }
+
+      if (disposed) {
+        renderer.dispose();
+        return;
+      }
 
     const width = container.clientWidth || window.innerWidth;
     const height = container.clientHeight || window.innerHeight;
+    let lastW = width;
+    let lastH = height;
     isMobileRef.current = width < 768;
 
     renderer.setSize(width, height);
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(
+      isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, mobileLowDetail ? 1.15 : 1.5)
+    );
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.94;
@@ -780,7 +815,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       180
     );
     if (isMobileRef.current) {
-      camera.position.set(-12.8, -0.45, 10.4);
+      camera.position.set(-12.8, 2.35, 10.4);
     } else {
       camera.position.set(...DETAILED_CHAMBERS[0].camPos);
     }
@@ -792,13 +827,15 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     controls.enablePan = false;
     controls.rotateSpeed = 0.65;
     if (isMobileRef.current) {
-      controls.target.set(0.0, 1.75, 0.0);
+      controls.target.set(0.0, 1.55, 0.0);
     } else {
       controls.target.set(...DETAILED_CHAMBERS[0].camTarget);
     }
 
-    // Allow native vertical touch swipes to scroll the page while preserving mouse drag orbit
-    renderer.domElement.style.touchAction = 'pan-y';
+    // Allow native vertical touch swipes to scroll unless mobileLookMode is enabled
+    domCanvasRef.current = renderer.domElement;
+    orbitControlsRef.current = controls;
+    renderer.domElement.style.touchAction = mobileLookModeRef.current ? 'none' : 'pan-y';
 
     controls.addEventListener('start', () => {
       userOrbitingRef.current = true;
@@ -833,27 +870,76 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     scene.add(boxGlowLight);
 
     // Procedural PBR & Holographic Textures
-    const maxAniso = renderer.capabilities.getMaxAnisotropy();
+    cleanupFns.push(() => {
+      domCanvasRef.current = null;
+      orbitControlsRef.current = null;
+      controls.dispose();
+      envTarget.dispose();
+      renderer.dispose();
+      if (renderer.domElement.parentNode === container) {
+        container.removeChild(renderer.domElement);
+      }
+    });
+
+    loadProgressCbRef.current?.(18, 0);
+    await yieldFrame();
+    if (disposed) return;
+
+    const maxAniso = mobileLowDetail ? 1 : Math.min(4, renderer.capabilities.getMaxAnisotropy());
+    const texSize = mobileLowDetail ? 256 : 512;
+    const circuitSize = mobileLowDetail ? 512 : 1024;
     const glowTex = createPureCyanGlowTexture();
     const neutralGlowTex = createNeutralGlowTexture();
-    const basaltMaps = createBasaltPBRTextures(maxAniso, 1, 2.6);
-    const terrainBasaltMaps = createBasaltPBRTextures(maxAniso, 16, 16);
-    const circuitTex = createPedestalCircuitTexture(maxAniso);
-    const binaryTexA = createBinaryBlockchainBlockTextures(maxAniso, 1);
-    const binaryTexB = createBinaryBlockchainBlockTextures(maxAniso, 2);
+    const basaltMaps = createBasaltPBRTextures(maxAniso, 1, 2.6, texSize);
+    const terrainBasaltMaps = createBasaltPBRTextures(maxAniso, 16, 16, texSize);
+    const circuitTex = createPedestalCircuitTexture(maxAniso, circuitSize);
+    const binaryTexA = createBinaryBlockchainBlockTextures(maxAniso, 1, texSize);
+    const binaryTexB = createBinaryBlockchainBlockTextures(maxAniso, 2, texSize);
+
+    cleanupFns.push(() => {
+      glowTex.dispose();
+      neutralGlowTex.dispose();
+      basaltMaps.map.dispose();
+      basaltMaps.bumpMap.dispose();
+      basaltMaps.roughnessMap.dispose();
+      terrainBasaltMaps.map.dispose();
+      terrainBasaltMaps.bumpMap.dispose();
+      terrainBasaltMaps.roughnessMap.dispose();
+      circuitTex.dispose();
+      binaryTexA.map.dispose();
+      binaryTexA.emissiveMap.dispose();
+      binaryTexB.map.dispose();
+      binaryTexB.emissiveMap.dispose();
+    });
+
+    loadProgressCbRef.current?.(38, 1);
+    await yieldFrame();
+    if (disposed) return;
 
     // -------------------------------------------------------------------------
     // Build Sculpted Mars/Volcanic Horizon Terrain & All 4 Chambers
     // -------------------------------------------------------------------------
-    const volcanicTerrain = buildVolcanicHorizonTerrain(terrainBasaltMaps);
+    const volcanicTerrain = buildVolcanicHorizonTerrain(terrainBasaltMaps, mobileLowDetail);
     scene.add(volcanicTerrain.root);
 
-    const summitChamber = buildSummitChamber(basaltMaps, glowTex, binaryTexA, binaryTexB);
+    const summitChamber = buildSummitChamber(
+      basaltMaps,
+      glowTex,
+      binaryTexA,
+      binaryTexB,
+      mobileLowDetail
+    );
     scene.add(summitChamber.root);
 
     // Neural Network lives physically INSIDE the Chosen 0/1 Block via chosenAnchor!
-    const driftChamber = buildDriftChamber(glowTex);
+    const driftChamber = buildDriftChamber(glowTex, mobileLowDetail);
     summitChamber.chosenAnchor.add(driftChamber.root);
+
+    cleanupFns.push(() => {
+      volcanicTerrain.dispose();
+      summitChamber.dispose();
+      driftChamber.dispose();
+    });
 
     // Transform local neuron ride waypoints into a unified sweeping CatmullRomCurve3 starting right at the hold pose
     const worldWaypoints = driftChamber.rideWaypoints.map(
@@ -876,27 +962,50 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       0.45
     );
 
+    loadProgressCbRef.current?.(60, 2);
+    await yieldFrame();
+    if (disposed) return;
+
     const irisChamber = buildIrisChamber(
       -24,
       -12,
       basaltMaps.map,
       glowTex,
       neutralGlowTex,
-      RESUME_DATA.keySkills
+      RESUME_DATA.keySkills,
+      mobileLowDetail
     );
     scene.add(irisChamber.root);
 
-    const researchChamber = buildResearchChamber(-48, -12, glowTex);
+    const researchChamber = buildResearchChamber(-48, -12, glowTex, mobileLowDetail);
     scene.add(researchChamber.root);
 
-    const pedestalChamber = buildPedestalChamber(-76, -12, circuitTex, glowTex);
+    cleanupFns.push(() => {
+      irisChamber.dispose();
+      researchChamber.dispose();
+    });
+
+    loadProgressCbRef.current?.(82, 3);
+    await yieldFrame();
+    if (disposed) return;
+
+    const pedestalChamber = buildPedestalChamber(
+      -76,
+      -12,
+      circuitTex,
+      glowTex,
+      mobileLowDetail
+    );
     scene.add(pedestalChamber.root);
+    cleanupFns.push(() => {
+      pedestalChamber.dispose();
+    });
 
     // -------------------------------------------------------------------------
     // Hyperspace Warp Streak Tunnel & Drifting Atmospheric Motes
     // -------------------------------------------------------------------------
     const rng = createRng(8088);
-    const streakCount = 130;
+    const streakCount = mobileLowDetail ? 70 : 130;
     const streakGeo = new THREE.CylinderGeometry(0.016, 0.016, 1.8, 6);
     const streakMat = new THREE.MeshBasicMaterial({
       color: 0x00ffff,
@@ -922,7 +1031,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     scene.add(warpStreaks);
 
     // Lower-chamber drifting dust motes strictly below ground level (y: -14 down to -104)
-    const moteCount = 480;
+    const moteCount = mobileLowDetail ? 200 : 480;
     const moteGeo = new THREE.BufferGeometry();
     const motePos = new Float32Array(moteCount * 3);
     for (let i = 0; i < moteCount; i++) {
@@ -944,7 +1053,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     scene.add(motes);
 
     // Dedicated Celestial Night Sky Starfield placed strictly above volcanic mountain rim (never on ground)
-    const skyStarCount = 320;
+    const skyStarCount = mobileLowDetail ? 180 : 320;
     const skyStarGeo = new THREE.BufferGeometry();
     const skyStarPos = new Float32Array(skyStarCount * 3);
     for (let i = 0; i < skyStarCount; i++) {
@@ -970,31 +1079,8 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     const skyStars = new THREE.Points(skyStarGeo, skyStarMat);
     scene.add(skyStars);
 
-    // Hardware-GPU MSAA EffectComposer so spheres, synapses, rings & basalt edges render silky smooth
-    let composer: EffectComposer | null = null;
-    let msaaTarget: THREE.WebGLRenderTarget | null = null;
+    // Pre-compile scene shaders once up front using native hardware MSAA forward rendering
     if (!isSoftwareGl) {
-      const pr = renderer.getPixelRatio();
-      msaaTarget = new THREE.WebGLRenderTarget(
-        Math.max(1, Math.floor(width * pr)),
-        Math.max(1, Math.floor(height * pr)),
-        {
-          type: THREE.HalfFloatType,
-          samples: renderer.capabilities.isWebGL2 ? 4 : 0,
-        }
-      );
-      composer = new EffectComposer(renderer, msaaTarget);
-      composer.setPixelRatio(pr);
-      composer.setSize(width, height);
-      composer.addPass(new RenderPass(scene, camera));
-      const bloomPass = new UnrealBloomPass(
-        new THREE.Vector2(width, height),
-        0.13,
-        0.2,
-        0.93
-      );
-      composer.addPass(bloomPass);
-      composer.addPass(new OutputPass());
       renderer.compile(scene, camera);
     }
 
@@ -1055,7 +1141,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       downClientY = e.clientY;
       isPointerDragging = true;
       if (e.pointerType === 'touch') {
-        controls.enabled = false;
+        controls.enabled = mobileLookModeRef.current;
       } else {
         controls.enabled = true;
         renderer.domElement.style.cursor = 'grabbing';
@@ -1089,23 +1175,41 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       renderer.domElement.style.cursor = 'grab';
     };
 
+    let contextLost = false;
+    let frameId = 0;
+
     const onResize = () => {
       const w = container.clientWidth || window.innerWidth;
       const h = container.clientHeight || window.innerHeight;
+      // Ignore mobile browser URL bar show/hide height shifts during vertical scroll
+      if (Math.abs(w - lastW) < 2 && Math.abs(h - lastH) < 96) {
+        return;
+      }
+      lastW = w;
+      lastH = h;
       const aspect = w / Math.max(1, h);
       isMobileRef.current = w < 768;
       camera.aspect = aspect;
       camera.fov = getResponsiveFov(aspect);
       camera.updateProjectionMatrix();
-      const pr = isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2);
+      const pr = isSoftwareGl
+        ? 1
+        : Math.min(window.devicePixelRatio || 1, mobileLowDetail || w < 768 ? 1.15 : 1.5);
       renderer.setSize(w, h);
       renderer.setPixelRatio(pr);
-      composer?.setPixelRatio(pr);
-      composer?.setSize(w, h);
     };
 
     const onContextLost = (e: Event) => {
       e.preventDefault();
+      contextLost = true;
+    };
+
+    const onContextRestored = () => {
+      contextLost = false;
+      if (!frameId && !disposed) {
+        clock.getDelta();
+        tick();
+      }
     };
 
     renderer.domElement.addEventListener('pointermove', onPointerMove);
@@ -1114,13 +1218,12 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     window.addEventListener('pointerup', onPointerUp);
     renderer.domElement.addEventListener('pointerleave', onPointerLeave);
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
+    renderer.domElement.addEventListener('webglcontextrestored', onContextRestored);
     window.addEventListener('resize', onResize);
 
     // -------------------------------------------------------------------------
     // Main Animation Loop
     // -------------------------------------------------------------------------
-    let frameId = 0;
-    let disposed = false;
     let lastChamberIdx = -1;
     let lastWarp = -1;
     let lastTeleportFlash = -1;
@@ -1160,8 +1263,19 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       frameId = window.setTimeout(poll, 5);
     }
 
+    const onVisibilityChange = () => {
+      if (!document.hidden && !disposed) {
+        clock.getDelta();
+        if (!frameId) {
+          tick();
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     const tick = () => {
-      if (disposed) return;
+      frameId = 0;
+      if (disposed || document.hidden || contextLost) return;
 
       const delta = Math.min(clock.getDelta(), 0.08);
       const elapsed = clock.elapsedTime;
@@ -1207,8 +1321,8 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
       if (
         chamberIdx !== lastChamberIdx ||
-        Math.abs(warpIntensity - lastWarp) > 0.02 ||
-        Math.abs(teleportFlash - lastTeleportFlash) > 0.015 ||
+        Math.abs(warpIntensity - lastWarp) > 0.035 ||
+        Math.abs(teleportFlash - lastTeleportFlash) > 0.03 ||
         userOrbitingRef.current !== lastOrbit
       ) {
         lastChamberIdx = chamberIdx;
@@ -1284,6 +1398,10 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       const isSummit = chamberStage === 'summit';
       const insideChosenBlock =
         isSummit && neuralRevealProgress > 0.92 && camera.position.distanceTo(_summitCenter) < 0.95;
+      controls.maxPolarAngle =
+        isMobileRef.current && isSummit && !insideChosenBlock && neuralRevealProgress < 0.15
+          ? Math.PI * 0.485
+          : Math.PI;
       volcanicTerrain.root.visible = isSummit && !insideChosenBlock;
       summitChamber.root.visible = isSummit;
       if (summitChamber.root.visible) {
@@ -1309,7 +1427,17 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
         irisChamber.update(elapsed, pointerSmooth.x, pointerSmooth.y, portalFlyProgress);
       }
 
-      researchChamber.root.visible = chamberStage === 'research';
+      const isResearchStage = chamberStage === 'research';
+      (scene.background as THREE.Color).setHex(isResearchStage ? 0x04070c : 0x121417);
+      if (scene.fog instanceof THREE.FogExp2) {
+        scene.fog.color.setHex(isResearchStage ? 0x04070c : 0x121417);
+        scene.fog.density = isResearchStage ? 0.016 : 0.0115;
+      }
+      scene.environmentIntensity = isResearchStage ? 0.12 : 0.42;
+      keyLight.intensity = isResearchStage ? 0.25 : 0.92;
+      cameraSunLight.intensity = isResearchStage ? 0.28 : 1.24;
+
+      researchChamber.root.visible = isResearchStage;
       if (researchChamber.root.visible) {
         researchChamber.update(
           elapsed,
@@ -1375,11 +1503,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
       motes.rotation.y = Math.sin(elapsed * 0.06) * 0.025;
 
-      if (composer) {
-        composer.render();
-      } else {
-        renderer.render(scene, camera);
-      }
+      renderer.render(scene, camera);
 
       if (isSoftwareGl) {
         afterDraw(tick);
@@ -1388,54 +1512,36 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       }
     };
 
-    tick();
-
-    return () => {
-      disposed = true;
+    cleanupFns.push(() => {
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
 
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.removeEventListener('pointerdown', onCapturePointerDown, { capture: true });
       renderer.domElement.removeEventListener('pointerup', onCanvasPointerUp);
       window.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
+      renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
       window.removeEventListener('resize', onResize);
 
-      controls.dispose();
-      composer?.dispose();
-      msaaTarget?.dispose();
-      envTarget.dispose();
-      glowTex.dispose();
-      neutralGlowTex.dispose();
-      basaltMaps.map.dispose();
-      basaltMaps.bumpMap.dispose();
-      basaltMaps.roughnessMap.dispose();
-      terrainBasaltMaps.map.dispose();
-      terrainBasaltMaps.bumpMap.dispose();
-      terrainBasaltMaps.roughnessMap.dispose();
-      circuitTex.dispose();
-      binaryTexA.map.dispose();
-      binaryTexA.emissiveMap.dispose();
-      binaryTexB.map.dispose();
-      binaryTexB.emissiveMap.dispose();
-      volcanicTerrain.dispose();
-      summitChamber.dispose();
-      driftChamber.dispose();
-      irisChamber.dispose();
-      researchChamber.dispose();
-      pedestalChamber.dispose();
       streakGeo.dispose();
       streakMat.dispose();
       moteGeo.dispose();
       moteMat.dispose();
       skyStarGeo.dispose();
       skyStarMat.dispose();
-      renderer.dispose();
+    });
 
-      if (renderer.domElement.parentNode === container) {
-        container.removeChild(renderer.domElement);
+    tick();
+    loadProgressCbRef.current?.(100, 4);
+    })();
+
+    return () => {
+      disposed = true;
+      for (let i = cleanupFns.length - 1; i >= 0; i--) {
+        cleanupFns[i]();
       }
     };
   }, []);

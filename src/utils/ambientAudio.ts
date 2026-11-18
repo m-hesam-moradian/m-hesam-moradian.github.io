@@ -127,7 +127,7 @@ class AmbientAudioEngine {
       this.padFilter.Q.setValueAtTime(0.5, now);
 
       this.padGain = this.ctx.createGain();
-      this.padGain.gain.setValueAtTime(0.16, now);
+      this.padGain.gain.setValueAtTime(0.20, now);
 
       this.padFilter.connect(this.padGain);
       this.padGain.connect(this.delayBus);
@@ -195,7 +195,7 @@ class AmbientAudioEngine {
     filter.frequency.exponentialRampToValueAtTime(280, now + 1.2);
     filter.Q.setValueAtTime(0.45, now);
 
-    const peak = accent ? 0.068 : 0.044;
+    const peak = accent ? 0.095 : 0.062;
     env.gain.setValueAtTime(0.0001, now);
     env.gain.linearRampToValueAtTime(peak, now + 0.032);
     env.gain.exponentialRampToValueAtTime(0.0001, now + 1.45);
@@ -271,8 +271,8 @@ class AmbientAudioEngine {
       const now = this.ctx.currentTime;
       this.masterGain.gain.cancelScheduledValues(now);
       this.masterGain.gain.setValueAtTime(Math.max(0.0001, this.masterGain.gain.value), now);
-      // Very soft, whisper-light ambient master level
-      this.masterGain.gain.exponentialRampToValueAtTime(0.042, now + 2.4);
+      // Warm, clearly audible ambient master level
+      this.masterGain.gain.exponentialRampToValueAtTime(0.12, now + 2.4);
       this.enabled = true;
       this.startMelodySequencer();
       if (withGreeting) {
@@ -342,8 +342,8 @@ class AmbientAudioEngine {
       osc.frequency.setValueAtTime(baseFreq, now);
 
       env.gain.setValueAtTime(0.0001, now);
-      env.gain.linearRampToValueAtTime(0.022, now + 0.032);
-      env.gain.exponentialRampToValueAtTime(0.0001, now + 0.58);
+      env.gain.linearRampToValueAtTime(0.11, now + 0.024);
+      env.gain.exponentialRampToValueAtTime(0.0001, now + 0.62);
 
       osc.connect(env);
       env.connect(this.delayBus);

@@ -275,7 +275,7 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
       >
         {/* Right-Half (desktop) / Lower-Half (mobile) Docked Contact Card */}
         <div className="flex-1 flex items-end md:items-center justify-center md:justify-end md:pr-6 lg:pr-10 min-h-0">
-          <div className="pointer-events-auto relative w-full md:w-[46%] lg:w-[43%] max-w-[490px] border border-[#00FFFF]/45 bg-[#080C12]/86 backdrop-blur-md shadow-[0_14px_48px_rgba(0,0,0,0.78)]">
+          <div className="pointer-events-auto relative w-full md:w-[46%] lg:w-[43%] max-w-[490px] border border-[#00FFFF]/45 bg-[#080C12]/94 shadow-[0_14px_48px_rgba(0,0,0,0.78)]">
             <span aria-hidden="true" className="pointer-events-none absolute -top-[1px] -left-[1px] h-3.5 w-3.5 border-t-2 border-l-2 border-[#00FFFF]" />
             <span aria-hidden="true" className="pointer-events-none absolute -top-[1px] -right-[1px] h-3.5 w-3.5 border-t-2 border-r-2 border-[#00FFFF]" />
             <span aria-hidden="true" className="pointer-events-none absolute -bottom-[1px] -left-[1px] h-3.5 w-3.5 border-b-2 border-l-2 border-[#00FFFF]" />
@@ -669,7 +669,7 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
     >
       <div
         style={animStyle}
-        className={`relative ${cardWidthClass} border border-[#00FFFF]/45 bg-[#080C12]/90 backdrop-blur-md ${
+        className={`relative ${cardWidthClass} border border-[#00FFFF]/45 bg-[#080C12]/94 ${
           isScrollableInteractive ? 'pointer-events-auto md:pointer-events-auto' : 'pointer-events-none'
         } shadow-[0_14px_48px_rgba(0,0,0,0.78)]`}
       >

@@ -109,11 +109,11 @@ export const QuantumKnowledgeHud: React.FC<QuantumKnowledgeHudProps> = ({
             <span className="hidden md:inline-block h-[2px] w-[2px] rounded-full bg-[#00FFFF]/50" />
           </div>
 
-          <div className="relative inline-flex items-center gap-2.5 px-5 py-1.5 sm:px-7 sm:py-2 backdrop-blur-sm">
+          <div className="relative inline-flex items-center gap-2.5 px-5 py-1.5 sm:px-7 sm:py-2">
             <ChamferOutlineSvg
               chamfer={11}
               strokeColor="rgba(0, 255, 255, 0.6)"
-              fillColor="rgba(5, 14, 21, 0.72)"
+              fillColor="rgba(5, 14, 21, 0.88)"
             />
             <Atom className="relative z-10 h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#00FFFF] drop-shadow-[0_0_8px_rgba(0,255,255,0.75)]" />
             <span className="relative z-10 font-mono-hud text-[10px] sm:text-[11px] font-medium tracking-[0.26em] text-[#E6FFFF] whitespace-nowrap">
@@ -133,7 +133,7 @@ export const QuantumKnowledgeHud: React.FC<QuantumKnowledgeHudProps> = ({
       {/* ================================================================= */}
       {/* MIDDLE ZONE: OPEN 3D CANVAS (LEFT/CENTER) + ARTICLE INFO (RIGHT)  */}
       {/* ================================================================= */}
-      <div className="relative flex flex-1 items-end md:items-center justify-center md:justify-end md:pr-10 lg:pr-14 min-h-0">
+      <div className="relative flex flex-1 items-end md:items-end justify-center md:justify-end md:pr-10 lg:pr-14 md:pb-5 lg:pb-7 min-h-0">
         {/* Subtle bottom scrim on mobile only so lower panel copy stays crisp over 3D floor */}
         <div
           aria-hidden="true"
@@ -142,7 +142,7 @@ export const QuantumKnowledgeHud: React.FC<QuantumKnowledgeHudProps> = ({
 
         <div
           key={activeArticle.id}
-          className="pointer-events-auto w-full max-w-[400px] md:w-[340px] lg:w-[382px] pb-3 md:pb-0 space-y-2.5 sm:space-y-3.5 transition-opacity duration-300 motion-reduce:transition-none"
+          className="pointer-events-auto w-full max-w-[400px] md:w-[340px] lg:w-[382px] pb-3 md:pb-0 space-y-2.5 sm:space-y-3 transition-opacity duration-300 motion-reduce:transition-none"
         >
           {/* Chamfered Article State Stamp + HUD Elbow Leader Line */}
           <div className="flex items-center gap-2.5">
@@ -254,12 +254,12 @@ export const QuantumKnowledgeHud: React.FC<QuantumKnowledgeHudProps> = ({
           <div
             role="group"
             aria-label={ui.selectAState}
-            className="pointer-events-auto relative inline-flex min-h-[40px] items-center px-3 sm:px-4 py-1 backdrop-blur-md"
+            className="pointer-events-auto relative inline-flex min-h-[40px] items-center px-3 sm:px-4 py-1"
           >
             <ChamferOutlineSvg
               chamfer={11}
               strokeColor="rgba(0, 255, 255, 0.5)"
-              fillColor="rgba(5, 13, 20, 0.82)"
+              fillColor="rgba(5, 13, 20, 0.9)"
             />
 
             <div className="relative z-10 flex items-center">

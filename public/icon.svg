@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="obsidianBg" cx="50%" cy="42%" r="68%">
+      <stop offset="0%" stop-color="#0E1D28" />
+      <stop offset="58%" stop-color="#091017" />
+      <stop offset="100%" stop-color="#05080C" />
+    </radialGradient>
+    <linearGradient id="cyanEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D8FFFF" />
+      <stop offset="45%" stop-color="#00FFFF" />
+      <stop offset="100%" stop-color="#00B8CC" />
+    </linearGradient>
+    <linearGradient id="cubeFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00FFFF" stop-opacity="0.24" />
+      <stop offset="100%" stop-color="#00FFFF" stop-opacity="0.06" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded Obsidian Monolith Plate -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#obsidianBg)" />
+  <rect
+    x="22"
+    y="22"
+    width="468"
+    height="468"
+    rx="106"
+    fill="none"
+    stroke="url(#cyanEdge)"
+    stroke-width="10"
+    stroke-opacity="0.82"
+  />
+
+  <!-- Outer Quantum Calibration Ring -->
+  <circle
+    cx="256"
+    cy="256"
+    r="184"
+    fill="none"
+    stroke="#00FFFF"
+    stroke-width="6"
+    stroke-opacity="0.28"
+    stroke-dasharray="22 14"
+  />
+
+  <!-- Quantum Orbital Ellipse + Orbital Nodes -->
+  <g transform="rotate(-26 256 256)">
+    <ellipse
+      cx="256"
+      cy="256"
+      rx="186"
+      ry="76"
+      fill="none"
+      stroke="#00FFFF"
+      stroke-width="10"
+      stroke-opacity="0.65"
+    />
+    <circle cx="442" cy="256" r="14" fill="#E0FFFF" />
+  </g>
+  <g transform="rotate(26 256 256)">
+    <ellipse
+      cx="256"
+      cy="256"
+      rx="186"
+      ry="76"
+      fill="none"
+      stroke="#9EFFFF"
+      stroke-width="8"
+      stroke-opacity="0.45"
+    />
+    <circle cx="70" cy="256" r="12" fill="#00FFFF" />
+  </g>
+
+  <!-- Center Isometric Blockchain Monolith Cube -->
+  <polygon
+    points="256,120 374,188 374,324 256,392 138,324 138,188"
+    fill="url(#cubeFill)"
+    stroke="url(#cyanEdge)"
+    stroke-width="20"
+    stroke-linejoin="round"
+  />
+  <polyline
+    points="138,188 256,256 374,188"
+    fill="none"
+    stroke="#C8FFFF"
+    stroke-width="16"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <line
+    x1="256"
+    y1="256"
+    x2="256"
+    y2="392"
+    stroke="#C8FFFF"
+    stroke-width="16"
+    stroke-linecap="round"
+  />
+
+  <!-- Quantum Core Singularity Diamond -->
+  <polygon
+    points="256,214 294,256 256,298 218,256"
+    fill="#00FFFF"
+    stroke="#FFFFFF"
+    stroke-width="7"
+    stroke-linejoin="round"
+  />
+</svg>
