@@ -1688,11 +1688,10 @@ export function buildIrisChamber(
 }
 
 /**
- * CH.04 // KNOWLEDGE (QUANTUM STATES // 02):
- * Interactive full-screen two-state holographic quantum environment:
- * - State 01: Luminous Quantum Probability Cloud (wavefunction particle lobes, twisted fluid filaments, orbital eigenstate rings)
- * - State 02: Geometric Quantum Lattice (3D interconnected cyan crystal matrix, vertex nodes, orbital traces)
- * - Smooth damped spatial swap, hover prominence boost, entanglement particle bridge, and emitter floor pool
+ * CH.04 // KNOWLEDGE (QUANTUM SUPERPOSITION):
+ * Clean dark sci-fi atmospheric environment (deep black space, drifting subtle particles,
+ * dark obsidian terrain horizon & quiet ambient cyan light) that supports the two-image
+ * layered Quantum Superposition selector without competing 3D objects.
  */
 export function buildResearchChamber(
   yPos: number,
@@ -1705,560 +1704,103 @@ export function buildResearchChamber(
   const disposables: { dispose: () => void }[] = [];
   const rng = createRng(4404);
 
-  // 1. Atmospheric quantum space particles
-  const starCount = 260;
+  // 1. Subtle drifting quantum atmosphere dust
+  const starCount = 220;
   const starGeo = new THREE.BufferGeometry();
   const starPos = new Float32Array(starCount * 3);
   for (let i = 0; i < starCount; i++) {
-    const r = 4.2 + rng() * 14.0;
+    const r = 4.5 + rng() * 14.5;
     const theta = rng() * Math.PI * 2;
     const phi = Math.acos(2 * rng() - 1);
     starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-    starPos[i * 3 + 1] = r * Math.cos(phi) * 0.65 + 0.4;
+    starPos[i * 3 + 1] = r * Math.cos(phi) * 0.65 + 0.3;
     starPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
   }
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
   const starMat = new THREE.PointsMaterial({
-    color: 0xb6faff,
+    color: 0xa6f7ff,
     map: glowTex,
-    size: 0.065,
+    size: 0.058,
     transparent: true,
-    opacity: 0.45,
+    opacity: 0.38,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  root.add(new THREE.Points(starGeo, starMat));
+  const dustPoints = new THREE.Points(starGeo, starMat);
+  root.add(dustPoints);
   disposables.push(starGeo, starMat);
 
-  // 2. Ground Holographic Emitter Pad + Dark Obsidian Terrain Frame
+  // 2. Quiet ambient cyan ground reflection + faint horizon ring beneath viewport
   const floorGroup = new THREE.Group();
-  floorGroup.position.set(-0.22, -2.08, 0.85);
+  floorGroup.position.set(0, -2.55, 0);
   root.add(floorGroup);
 
-  const poolGeo = new THREE.PlaneGeometry(6.8, 6.8);
+  const poolGeo = new THREE.PlaneGeometry(8.2, 8.2);
   poolGeo.rotateX(-Math.PI / 2);
   const poolMat = new THREE.MeshBasicMaterial({
     map: glowTex,
     color: 0x00ffff,
     transparent: true,
-    opacity: 0.34,
+    opacity: 0.16,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  const poolMesh = new THREE.Mesh(poolGeo, poolMat);
-  floorGroup.add(poolMesh);
+  floorGroup.add(new THREE.Mesh(poolGeo, poolMat));
   disposables.push(poolGeo, poolMat);
 
-  const emitterRings: THREE.Mesh[] = [];
-  const emitterMats: THREE.MeshBasicMaterial[] = [];
-  const ringRadii = [0.58, 1.02, 1.54, 2.12, 2.75];
-  ringRadii.forEach((r, idx) => {
-    const rg = new THREE.RingGeometry(r - 0.028, r, 72);
-    rg.rotateX(-Math.PI / 2);
-    const rm = new THREE.MeshBasicMaterial({
-      color: idx < 2 ? 0xd8ffff : 0x00ffff,
-      transparent: true,
-      opacity: 0.65 - idx * 0.1,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const mesh = new THREE.Mesh(rg, rm);
-    mesh.position.y = 0.01 + idx * 0.004;
-    floorGroup.add(mesh);
-    emitterRings.push(mesh);
-    emitterMats.push(rm);
-    disposables.push(rg, rm);
+  const horizonRingGeo = new THREE.RingGeometry(2.68, 2.71, 96);
+  horizonRingGeo.rotateX(-Math.PI / 2);
+  const horizonRingMat = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.18,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
+  floorGroup.add(new THREE.Mesh(horizonRingGeo, horizonRingMat));
+  disposables.push(horizonRingGeo, horizonRingMat);
 
-  // Low dark obsidian terrain silhouettes framing the foreground horizon
-  const rockGeo = new THREE.ConeGeometry(1.15, 0.95, 5);
+  // 3. Low dark obsidian terrain silhouettes framing deep horizon
+  const rockGeo = new THREE.ConeGeometry(1.2, 0.9, 5);
   const rockMat = new THREE.MeshStandardMaterial({
-    color: 0x0b1016,
-    roughness: 0.85,
-    metalness: 0.25,
+    color: 0x090d12,
+    roughness: 0.88,
+    metalness: 0.2,
     flatShading: true,
   });
   disposables.push(rockGeo, rockMat);
-  const rockCount = 26;
+  const rockCount = 24;
   const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
   const dummy = new THREE.Object3D();
   for (let i = 0; i < rockCount; i++) {
-    const a = (i / rockCount) * Math.PI * 2 + (rng() - 0.5) * 0.16;
-    const dist = 4.4 + rng() * 6.2;
-    dummy.position.set(Math.cos(a) * dist, -2.28 + rng() * 0.2, Math.sin(a) * dist - 0.5);
-    dummy.rotation.set((rng() - 0.5) * 0.2, rng() * Math.PI, (rng() - 0.5) * 0.2);
-    dummy.scale.set(0.9 + rng() * 1.4, 0.5 + rng() * 0.9, 0.9 + rng() * 1.3);
+    const a = (i / rockCount) * Math.PI * 2 + (rng() - 0.5) * 0.18;
+    const dist = 5.4 + rng() * 6.8;
+    dummy.position.set(Math.cos(a) * dist, -2.65 + rng() * 0.22, Math.sin(a) * dist - 0.6);
+    dummy.rotation.set((rng() - 0.5) * 0.18, rng() * Math.PI, (rng() - 0.5) * 0.18);
+    dummy.scale.set(0.9 + rng() * 1.5, 0.45 + rng() * 0.85, 0.9 + rng() * 1.4);
     dummy.updateMatrix();
     rockInst.setMatrixAt(i, dummy.matrix);
   }
   rockInst.instanceMatrix.needsUpdate = true;
   root.add(rockInst);
 
-  // Spatial slots: Active sits center-left foreground above emitter rings; Inactive sits deeper right
-  const PRIMARY_POS = new THREE.Vector3(-0.22, 0.28, 0.85);
-  const SECONDARY_POS = new THREE.Vector3(2.85, 0.42, -1.65);
-
-  // =========================================================================
-  // 3. STATE 01 — LUMINOUS QUANTUM PROBABILITY CLOUD
-  // =========================================================================
-  const cloudGroup = new THREE.Group();
-  cloudGroup.position.copy(PRIMARY_POS);
-  root.add(cloudGroup);
-
-  // Invisible hit proxy for reliable Raycaster click/hover
-  const hitGeoA = new THREE.SphereGeometry(1.55, 16, 16);
-  const hitMatA = new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0,
-    depthWrite: false,
-    colorWrite: false,
-  });
-  const cloudHitMesh = new THREE.Mesh(hitGeoA, hitMatA);
-  cloudHitMesh.userData.quantumStateIndex = 0;
-  cloudGroup.add(cloudHitMesh);
-  disposables.push(hitGeoA, hitMatA);
-
-  // Particle probability cloud along spherical harmonic orbital lobes
-  const cloudParticleCount = 2600;
-  const cloudPos = new Float32Array(cloudParticleCount * 3);
-  const cloudCol = new Float32Array(cloudParticleCount * 3);
-  const cCyan = new THREE.Color(0x00ffff);
-  const cIce = new THREE.Color(0xd8ffff);
-  const cDeep = new THREE.Color(0x0882a8);
-  const cTmp = new THREE.Color();
-
-  for (let i = 0; i < cloudParticleCount; i++) {
-    const u = rng();
-    const v = rng();
-    const theta = u * Math.PI * 2;
-    const phi = Math.acos(2 * v - 1);
-
-    // Multi-lobe wavefunction density modulation
-    const harmonic =
-      Math.sin(phi * 3.0) * Math.cos(theta * 2.0) * 0.36 +
-      Math.cos(phi * 2.0 + theta * 3.0) * 0.22;
-    const shellBias = i < 420 ? 0.25 + rng() * 0.55 : 0.72 + rng() * 0.52;
-    const rad = Math.max(0.18, (0.98 + harmonic) * shellBias);
-
-    cloudPos[i * 3] = rad * Math.sin(phi) * Math.cos(theta);
-    cloudPos[i * 3 + 1] = rad * Math.cos(phi) * 0.92;
-    cloudPos[i * 3 + 2] = rad * Math.sin(phi) * Math.sin(theta);
-
-    const mixFactor = THREE.MathUtils.clamp(1.25 - rad * 0.65, 0, 1);
-    cTmp.copy(cDeep).lerp(cCyan, mixFactor).lerp(cIce, mixFactor * 0.55);
-    cloudCol[i * 3] = cTmp.r;
-    cloudCol[i * 3 + 1] = cTmp.g;
-    cloudCol[i * 3 + 2] = cTmp.b;
-  }
-
-  const cloudGeo = new THREE.BufferGeometry();
-  cloudGeo.setAttribute('position', new THREE.BufferAttribute(cloudPos, 3));
-  cloudGeo.setAttribute('color', new THREE.BufferAttribute(cloudCol, 3));
-  const cloudParticleMat = new THREE.PointsMaterial({
-    size: 0.088,
-    map: glowTex,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.92,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const cloudPoints = new THREE.Points(cloudGeo, cloudParticleMat);
-  cloudGroup.add(cloudPoints);
-  disposables.push(cloudGeo, cloudParticleMat);
-
-  // Core soft bloom aura inside Probability Cloud
-  const cloudCoreMat = new THREE.SpriteMaterial({
-    map: glowTex,
-    color: 0x55ffff,
-    transparent: true,
-    opacity: 0.55,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const cloudCoreSprite = new THREE.Sprite(cloudCoreMat);
-  cloudCoreSprite.scale.set(2.3, 2.3, 1);
-  cloudGroup.add(cloudCoreSprite);
-  disposables.push(cloudCoreMat);
-
-  // Fluid abstract glowing wavefunction filaments (closed Lissajous ribbons)
-  const cloudFilamentMats: THREE.MeshBasicMaterial[] = [];
-  const cloudFilaments: THREE.Mesh[] = [];
-  for (let f = 0; f < 4; f++) {
-    const pts: THREE.Vector3[] = [];
-    const segs = 96;
-    const freqA = 2 + (f % 2);
-    const freqB = 3 + f;
-    const phase = f * 1.15;
-    for (let s = 0; s < segs; s++) {
-      const a = (s / segs) * Math.PI * 2;
-      const rLoop = 0.88 + 0.34 * Math.sin(a * freqA + phase);
-      pts.push(
-        new THREE.Vector3(
-          Math.cos(a) * rLoop,
-          Math.sin(a * freqB + phase) * 0.56,
-          Math.sin(a) * rLoop * (0.82 + 0.18 * Math.cos(a * 2.0))
-        )
-      );
-    }
-    const curve = new THREE.CatmullRomCurve3(pts, true);
-    const tubeGeo = new THREE.TubeGeometry(curve, 110, 0.014, 6, true);
-    const tubeMat = new THREE.MeshBasicMaterial({
-      color: f % 2 === 0 ? 0xd8ffff : 0x00ffff,
-      transparent: true,
-      opacity: 0.62,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
-    tubeMesh.rotation.set(f * 0.55, f * 0.8, f * 0.32);
-    cloudGroup.add(tubeMesh);
-    cloudFilaments.push(tubeMesh);
-    cloudFilamentMats.push(tubeMat);
-    disposables.push(tubeGeo, tubeMat);
-  }
-
-  // Fine tilted orbital eigenstate rings + luminous electron nodes around Probability Cloud
-  const cloudOrbitMats: THREE.LineBasicMaterial[] = [];
-  const cloudOrbitGroups: THREE.Group[] = [];
-  const cloudOrbitBeads: THREE.Sprite[] = [];
-  const orbitTilts = [
-    [0.52, 0.25, -0.35],
-    [-0.48, 0.95, 0.42],
-    [0.85, -0.62, 0.18],
-  ];
-  orbitTilts.forEach((tilt, idx) => {
-    const og = new THREE.Group();
-    og.rotation.set(tilt[0], tilt[1], tilt[2]);
-    const rOrb = 1.42 + idx * 0.16;
-    const pts: THREE.Vector3[] = [];
-    for (let s = 0; s <= 72; s++) {
-      const a = (s / 72) * Math.PI * 2;
-      pts.push(new THREE.Vector3(Math.cos(a) * rOrb, 0, Math.sin(a) * rOrb * 0.78));
-    }
-    const oGeo = new THREE.BufferGeometry().setFromPoints(pts);
-    const oMat = new THREE.LineBasicMaterial({
-      color: 0x00ffff,
-      transparent: true,
-      opacity: 0.42,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    og.add(new THREE.Line(oGeo, oMat));
-
-    const beadMat = new THREE.SpriteMaterial({
-      map: glowTex,
-      color: 0xd8ffff,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const bead = new THREE.Sprite(beadMat);
-    bead.scale.set(0.2, 0.2, 1);
-    og.add(bead);
-
-    cloudGroup.add(og);
-    cloudOrbitGroups.push(og);
-    cloudOrbitMats.push(oMat);
-    cloudOrbitBeads.push(bead);
-    disposables.push(oGeo, oMat, beadMat);
-  });
-
-  // =========================================================================
-  // 4. STATE 02 — GEOMETRIC QUANTUM LATTICE
-  // =========================================================================
-  const latticeGroup = new THREE.Group();
-  latticeGroup.position.copy(SECONDARY_POS);
-  root.add(latticeGroup);
-
-  // Invisible hit proxy for reliable Raycaster click/hover
-  const hitGeoB = new THREE.SphereGeometry(1.42, 16, 16);
-  const hitMatB = new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0,
-    depthWrite: false,
-    colorWrite: false,
-  });
-  const latticeHitMesh = new THREE.Mesh(hitGeoB, hitMatB);
-  latticeHitMesh.userData.quantumStateIndex = 1;
-  latticeGroup.add(latticeHitMesh);
-  disposables.push(hitGeoB, hitMatB);
-
-  const latticeBodyGroup = new THREE.Group();
-  latticeGroup.add(latticeBodyGroup);
-
-  // 3x3x3 interconnected quantum lattice coordinates
-  const step = 0.68;
-  const gridVerts: THREE.Vector3[] = [];
-  for (let ix = -1; ix <= 1; ix++) {
-    for (let iy = -1; iy <= 1; iy++) {
-      for (let iz = -1; iz <= 1; iz++) {
-        gridVerts.push(new THREE.Vector3(ix * step, iy * step, iz * step));
-      }
-    }
-  }
-
-  const latticeSegPts: THREE.Vector3[] = [];
-  for (let i = 0; i < gridVerts.length; i++) {
-    for (let j = i + 1; j < gridVerts.length; j++) {
-      const d = gridVerts[i].distanceTo(gridVerts[j]);
-      // Connect orthogonal grid links + face diagonals + core star struts
-      const touchesCenter = i === 13 || j === 13;
-      if (d <= step * 1.46 || (touchesCenter && d <= step * 1.8)) {
-        latticeSegPts.push(gridVerts[i], gridVerts[j]);
-      }
-    }
-  }
-  const latticeLineGeo = new THREE.BufferGeometry().setFromPoints(latticeSegPts);
-  const latticeLineMat = new THREE.LineBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.48,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  latticeBodyGroup.add(new THREE.LineSegments(latticeLineGeo, latticeLineMat));
-  disposables.push(latticeLineGeo, latticeLineMat);
-
-  // Outer crisp polyhedral quantum cube wireframe
-  const outerBoxGeo = new THREE.BoxGeometry(step * 2.15, step * 2.15, step * 2.15);
-  const outerBoxEdgeGeo = new THREE.EdgesGeometry(outerBoxGeo);
-  const outerBoxEdgeMat = new THREE.LineBasicMaterial({
-    color: 0xd8ffff,
-    transparent: true,
-    opacity: 0.56,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  latticeBodyGroup.add(new THREE.LineSegments(outerBoxEdgeGeo, outerBoxEdgeMat));
-  disposables.push(outerBoxGeo, outerBoxEdgeGeo, outerBoxEdgeMat);
-
-  // Glowing cyan vertex nodes across the 27 lattice points
-  const nodeSphereGeo = new THREE.SphereGeometry(0.038, 10, 10);
-  const nodeSphereMat = new THREE.MeshBasicMaterial({
-    color: 0xd8ffff,
-    transparent: true,
-    opacity: 0.82,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const latticeNodesInst = new THREE.InstancedMesh(nodeSphereGeo, nodeSphereMat, gridVerts.length);
-  gridVerts.forEach((pt, idx) => {
-    const isCenter = idx === 13;
-    dummy.position.copy(pt);
-    dummy.rotation.set(0, 0, 0);
-    dummy.scale.setScalar(isCenter ? 1.8 : 1.0);
-    dummy.updateMatrix();
-    latticeNodesInst.setMatrixAt(idx, dummy.matrix);
-  });
-  latticeNodesInst.instanceMatrix.needsUpdate = true;
-  latticeBodyGroup.add(latticeNodesInst);
-  disposables.push(nodeSphereGeo, nodeSphereMat);
-
-  // Core glow inside lattice
-  const latticeCoreMat = new THREE.SpriteMaterial({
-    map: glowTex,
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.42,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const latticeCoreSprite = new THREE.Sprite(latticeCoreMat);
-  latticeCoreSprite.scale.set(1.85, 1.85, 1);
-  latticeBodyGroup.add(latticeCoreSprite);
-  disposables.push(latticeCoreMat);
-
-  // Subtle surrounding orbital traces on Lattice
-  const latticeOrbitMat = new THREE.LineBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.28,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const latticeOrbits: THREE.Line[] = [];
-  for (let o = 0; o < 2; o++) {
-    const rOrb = 1.28 + o * 0.18;
-    const pts: THREE.Vector3[] = [];
-    for (let s = 0; s <= 64; s++) {
-      const a = (s / 64) * Math.PI * 2;
-      pts.push(new THREE.Vector3(Math.cos(a) * rOrb, 0, Math.sin(a) * rOrb * 0.85));
-    }
-    const oGeo = new THREE.BufferGeometry().setFromPoints(pts);
-    const line = new THREE.Line(oGeo, latticeOrbitMat);
-    line.rotation.set(o === 0 ? 0.55 : -0.62, o * 0.8, o === 0 ? -0.35 : 0.45);
-    latticeGroup.add(line);
-    latticeOrbits.push(line);
-    disposables.push(oGeo);
-  }
-  disposables.push(latticeOrbitMat);
-
-  // =========================================================================
-  // 5. QUANTUM ENTANGLEMENT PARTICLE STREAM CONNECTING BOTH STATES
-  // =========================================================================
-  const bridgeCount = 90;
-  const bridgePositions = new Float32Array(bridgeCount * 3);
-  const bridgeGeo = new THREE.BufferGeometry();
-  const bridgeAttr = new THREE.BufferAttribute(bridgePositions, 3);
-  bridgeAttr.setUsage(THREE.DynamicDrawUsage);
-  bridgeGeo.setAttribute('position', bridgeAttr);
-  const bridgeMat = new THREE.PointsMaterial({
-    color: 0x66ffff,
-    map: glowTex,
-    size: 0.055,
-    transparent: true,
-    opacity: 0.52,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const bridgePoints = new THREE.Points(bridgeGeo, bridgeMat);
-  root.add(bridgePoints);
-  disposables.push(bridgeGeo, bridgeMat);
-
-  const bridgeOffsets = Array.from({ length: bridgeCount }, () => ({
-    t: rng(),
-    speed: 0.06 + rng() * 0.09,
-    jitterY: (rng() - 0.5) * 0.34,
-    jitterZ: (rng() - 0.5) * 0.34,
-  }));
-
-  // Smooth damped animation state
-  let prevElapsed = 0;
-  let cloudFocusMix = 1.0; // 1 = active in primary focus, 0 = inactive secondary depth
-  let latticeFocusMix = 0.0;
-  let cloudHoverMix = 0.0;
-  let latticeHoverMix = 0.0;
-
   return {
     root,
-    getPickTargets: () => [cloudHitMesh, latticeHitMesh] as THREE.Object3D[],
     update: (
       elapsed: number,
       pointerX: number,
       pointerY: number,
       diveProgress: number,
-      activeState: 0 | 1 = 0,
-      hoveredState: 0 | 1 | null = null,
       reducedMotion = false
     ) => {
-      const dt = Math.min(0.08, Math.max(0.001, elapsed - prevElapsed));
-      prevElapsed = elapsed;
+      const animTime = reducedMotion ? elapsed * 0.12 : elapsed;
+      dustPoints.rotation.y = animTime * 0.025 + (reducedMotion ? 0 : pointerX * 0.03);
+      dustPoints.rotation.x = reducedMotion ? 0 : pointerY * 0.02;
 
-      const animTime = reducedMotion ? elapsed * 0.15 : elapsed;
-      const dampRate = reducedMotion ? 18 : 4.8;
-
-      const cloudTargetMix = activeState === 0 ? 1 : 0;
-      const latticeTargetMix = activeState === 1 ? 1 : 0;
-      cloudFocusMix = THREE.MathUtils.damp(cloudFocusMix, cloudTargetMix, dampRate, dt);
-      latticeFocusMix = THREE.MathUtils.damp(latticeFocusMix, latticeTargetMix, dampRate, dt);
-
-      cloudHoverMix = THREE.MathUtils.damp(
-        cloudHoverMix,
-        hoveredState === 0 && activeState !== 0 ? 1 : 0,
-        7.5,
-        dt
-      );
-      latticeHoverMix = THREE.MathUtils.damp(
-        latticeHoverMix,
-        hoveredState === 1 && activeState !== 1 ? 1 : 0,
-        7.5,
-        dt
-      );
-
-      // Smooth spatial dive expansion when scrolling out toward CH.05
-      const diveExpand = 1 + diveProgress * 0.65;
-      const parallaxX = reducedMotion ? 0 : pointerX * 0.14 * (1 - diveProgress * 0.8);
-      const parallaxY = reducedMotion ? 0 : pointerY * 0.08 * (1 - diveProgress * 0.8);
-
-      // Update State 01: Probability Cloud position, scale, luminosity & ambient wobble
-      const cloudFloatY = reducedMotion ? 0 : Math.sin(animTime * 0.9) * 0.07;
-      cloudGroup.position.lerpVectors(SECONDARY_POS, PRIMARY_POS, cloudFocusMix);
-      cloudGroup.position.x += parallaxX * (0.4 + 0.6 * cloudFocusMix);
-      cloudGroup.position.y += cloudFloatY + parallaxY * 0.5;
-      if (diveProgress > 0.05) {
-        cloudGroup.position.x *= diveExpand;
-      }
-
-      const cloudScale =
-        THREE.MathUtils.lerp(0.66, 1.1, cloudFocusMix) *
-        (1 + cloudHoverMix * 0.14) *
-        (1 + diveProgress * 0.45);
-      cloudGroup.scale.setScalar(cloudScale);
-
-      const cloudLum = Math.max(cloudFocusMix, 0.36 + cloudHoverMix * 0.38);
-      cloudParticleMat.opacity = 0.92 * cloudLum;
-      cloudCoreMat.opacity = 0.52 * cloudLum;
-      cloudFilamentMats.forEach((m, idx) => {
-        m.opacity = (0.58 + Math.sin(animTime * 1.4 + idx) * 0.08) * cloudLum;
-      });
-      cloudFilaments.forEach((mesh, idx) => {
-        mesh.rotation.y = animTime * (0.14 + idx * 0.04) * (idx % 2 === 0 ? 1 : -1);
-        mesh.rotation.x = idx * 0.55 + animTime * 0.07;
-      });
-      cloudPoints.rotation.y = animTime * 0.11;
-      cloudPoints.rotation.x = Math.sin(animTime * 0.25) * 0.08;
-      cloudOrbitGroups.forEach((og, idx) => {
-        const a = animTime * (0.48 + idx * 0.16) * (idx % 2 === 0 ? 1 : -1);
-        const rOrb = 1.42 + idx * 0.16;
-        cloudOrbitBeads[idx].position.set(Math.cos(a) * rOrb, 0, Math.sin(a) * rOrb * 0.78);
-        cloudOrbitMats[idx].opacity = 0.42 * cloudLum;
-      });
-
-      // Update State 02: Geometric Lattice position, scale, luminosity & ambient rotation
-      const latticeFloatY = reducedMotion ? 0 : Math.cos(animTime * 0.82 + 1.4) * 0.065;
-      latticeGroup.position.lerpVectors(SECONDARY_POS, PRIMARY_POS, latticeFocusMix);
-      latticeGroup.position.x += parallaxX * (0.4 + 0.6 * latticeFocusMix);
-      latticeGroup.position.y += latticeFloatY + parallaxY * 0.5;
-      if (diveProgress > 0.05) {
-        latticeGroup.position.x *= diveExpand;
-      }
-
-      const latticeScale =
-        THREE.MathUtils.lerp(0.68, 1.08, latticeFocusMix) *
-        (1 + latticeHoverMix * 0.15) *
-        (1 + diveProgress * 0.45);
-      latticeGroup.scale.setScalar(latticeScale);
-
-      const latticeLum = Math.max(latticeFocusMix, 0.42 + latticeHoverMix * 0.4);
-      latticeLineMat.opacity = 0.54 * latticeLum;
-      outerBoxEdgeMat.opacity = 0.62 * latticeLum;
-      nodeSphereMat.opacity = 0.88 * latticeLum;
-      latticeCoreMat.opacity = 0.48 * latticeLum;
-      latticeOrbitMat.opacity = 0.34 * latticeLum;
-
-      latticeBodyGroup.rotation.y = 0.62 + animTime * 0.18;
-      latticeBodyGroup.rotation.x = 0.36 + Math.sin(animTime * 0.4) * 0.08;
-      latticeOrbits.forEach((orb, idx) => {
-        orb.rotation.z = animTime * (0.22 - idx * 0.34);
-      });
-
-      // Emitter floor ring pulse & scale on dive
-      poolMat.opacity = 0.3 + (reducedMotion ? 0 : Math.sin(animTime * 1.5) * 0.04);
-      floorGroup.scale.setScalar(1 + diveProgress * 0.72);
-      emitterRings.forEach((ring, idx) => {
-        ring.rotation.y = animTime * (0.06 + idx * 0.025) * (idx % 2 === 0 ? 1 : -1);
-        emitterMats[idx].opacity = (0.64 - idx * 0.09) * (1 - diveProgress * 0.4);
-      });
-
-      // Entanglement particle stream bridging live positions of both Quantum States
-      const posArr = bridgeAttr.array as Float32Array;
-      for (let i = 0; i < bridgeCount; i++) {
-        const b = bridgeOffsets[i];
-        const t = (b.t + animTime * b.speed) % 1;
-        const arch = Math.sin(t * Math.PI) * 0.42;
-        posArr[i * 3] = THREE.MathUtils.lerp(cloudGroup.position.x, latticeGroup.position.x, t);
-        posArr[i * 3 + 1] =
-          THREE.MathUtils.lerp(cloudGroup.position.y, latticeGroup.position.y, t) +
-          b.jitterY * Math.sin(t * Math.PI) +
-          arch * 0.35;
-        posArr[i * 3 + 2] =
-          THREE.MathUtils.lerp(cloudGroup.position.z, latticeGroup.position.z, t) +
-          b.jitterZ * Math.sin(t * Math.PI);
-      }
-      bridgeAttr.needsUpdate = true;
+      poolMat.opacity = (0.16 + (reducedMotion ? 0 : Math.sin(animTime * 1.1) * 0.025)) * (1 - diveProgress * 0.5);
+      horizonRingMat.opacity = 0.18 * (1 - diveProgress * 0.65);
+      floorGroup.scale.setScalar(1 + diveProgress * 0.78);
     },
     dispose: () => {
       disposables.forEach((d) => d.dispose());

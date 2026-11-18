@@ -115,30 +115,33 @@ export default function App() {
   const railRef = useRef<HTMLDivElement | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [cvModalOpen, setCvModalOpen] = useState(false);
-  const [activeArticleIdx, setActiveArticleIdx] = useState<0 | 1>(() => {
-    if (typeof window !== 'undefined' && window.location.hash === '#/knowledge/state-02') {
-      return 1;
-    }
-    return 0;
+  const [activeArticleIdx, setActiveArticleIdx] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0;
+    const match = /^#\/knowledge\/([a-z0-9-]+)$/i.exec(window.location.hash);
+    if (!match) return 0;
+    const found = getLocalizedResume('en').research.findIndex((a) => a.id === match[1]);
+    return found >= 0 ? found : 0;
   });
-  const [readingArticleIdx, setReadingArticleIdx] = useState<0 | 1 | null>(() => {
+  const [readingArticleIdx, setReadingArticleIdx] = useState<number | null>(() => {
     if (typeof window === 'undefined') return null;
-    if (window.location.hash === '#/knowledge/state-01') return 0;
-    if (window.location.hash === '#/knowledge/state-02') return 1;
-    return null;
+    const match = /^#\/knowledge\/([a-z0-9-]+)$/i.exec(window.location.hash);
+    if (!match) return null;
+    const found = getLocalizedResume('en').research.findIndex((a) => a.id === match[1]);
+    return found >= 0 ? found : null;
   });
 
   useEffect(() => {
     const onHashChange = () => {
-      if (window.location.hash === '#/knowledge/state-01') {
-        setActiveArticleIdx(0);
-        setReadingArticleIdx(0);
-      } else if (window.location.hash === '#/knowledge/state-02') {
-        setActiveArticleIdx(1);
-        setReadingArticleIdx(1);
-      } else {
-        setReadingArticleIdx(null);
+      const match = /^#\/knowledge\/([a-z0-9-]+)$/i.exec(window.location.hash);
+      if (match) {
+        const found = getLocalizedResume('en').research.findIndex((a) => a.id === match[1]);
+        if (found >= 0) {
+          setActiveArticleIdx(found);
+          setReadingArticleIdx(found);
+          return;
+        }
       }
+      setReadingArticleIdx(null);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
@@ -306,22 +309,28 @@ export default function App() {
     setSoundEnabled(next);
   }, []);
 
-  const handleSelectArticle = useCallback((idx: 0 | 1) => {
+  const resume = useMemo(() => getLocalizedResume(locale), [locale]);
+
+  const handleSelectArticle = useCallback((idx: number) => {
     setActiveArticleIdx((prev) => {
       if (prev !== idx) ambientAudio.playPulse();
       return idx;
     });
   }, []);
 
-  const handleOpenArticleReader = useCallback((idx: 0 | 1) => {
-    ambientAudio.playPulse();
-    setActiveArticleIdx(idx);
-    setReadingArticleIdx(idx);
-    const nextHash = idx === 0 ? '#/knowledge/state-01' : '#/knowledge/state-02';
-    if (window.location.hash !== nextHash) {
-      window.history.pushState(null, '', nextHash);
-    }
-  }, []);
+  const handleOpenArticleReader = useCallback(
+    (idx: number) => {
+      ambientAudio.playPulse();
+      setActiveArticleIdx(idx);
+      setReadingArticleIdx(idx);
+      const id = resume.research[idx]?.id ?? `state-0${idx + 1}`;
+      const nextHash = `#/knowledge/${id}`;
+      if (window.location.hash !== nextHash) {
+        window.history.pushState(null, '', nextHash);
+      }
+    },
+    [resume.research]
+  );
 
   const handleCloseArticleReader = useCallback(() => {
     ambientAudio.playPulse();
@@ -331,7 +340,6 @@ export default function App() {
     }
   }, []);
 
-  const resume = useMemo(() => getLocalizedResume(locale), [locale]);
   const activeChamber = resume.chambers[activeChamberIdx] ?? resume.chambers[0];
   const cardState = getScrollCardState(scrollProgress);
   const genesisCvOpacity = scrollProgress < 0.042 ? 1 - smoothstep(0.014, 0.042, scrollProgress) : 0;
@@ -342,8 +350,6 @@ export default function App() {
       <ObsidianCyanScene
         scrollProgress={scrollProgress}
         pedestalMode={pedestalMode}
-        activeArticleIdx={activeArticleIdx}
-        onSelectArticle={handleSelectArticle}
         cameraResetNonce={cameraResetNonce}
         onTelemetryUpdate={handleTelemetryUpdate}
       />

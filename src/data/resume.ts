@@ -34,7 +34,7 @@ export interface ResumeArticleSection {
 
 export interface ResumeResearchArticle {
   id: string;
-  stateNumber: '01' | '02';
+  stateNumber: string;
   status: 'submitted' | 'under_review';
   statusLabel: string;
   title: string;
@@ -42,6 +42,8 @@ export interface ResumeResearchArticle {
   year: string;
   readingTime: string;
   tags: string[];
+  imageUrl: string;
+  imageAlt: string;
   summary: string;
   abstract: string;
   sections: ResumeArticleSection[];
@@ -123,6 +125,8 @@ export interface ResumeUiStrings {
   selectAState: string;
   stateLabel: string;
   activeLabel: string;
+  observedLabel: string;
+  unobservedLabel: string;
   readArticle: string;
   backToKnowledge: string;
   placeholderNotice: string;

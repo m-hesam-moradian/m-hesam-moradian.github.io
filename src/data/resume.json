@@ -154,21 +154,23 @@
           "year": "2025",
           "readingTime": "6 MIN",
           "tags": ["APPLIED AI", "XAI", "MANUSCRIPT 01"],
+          "imageUrl": "/src/assets/images/article_neural_prism_1794994837434.jpg",
+          "imageAlt": "Translucent dark obsidian glass prism illuminated by glowing cyan fiber-optic neural pathways",
           "summary": "Placeholder summary for your first submitted research article. Ready to populate with exact title, abstract, and DOI.",
           "abstract": "Placeholder abstract for Research Article 01. Replace this block in src/data/resume.json with your final manuscript abstract, methodology overview, and publication details.",
           "sections": [
             {
-              "heading": "01 // INTRODUCTION & CONTEXT (PLACEHOLDER)",
+              "heading": "01. INTRODUCTION & CONTEXT (PLACEHOLDER)",
               "body": "[Placeholder content for Article 01] This section is reserved for the full introduction of your first research manuscript. Update src/data/resume.json with your original opening narrative, problem statement, and research objectives.",
               "isPlaceholder": true
             },
             {
-              "heading": "02 // ARCHITECTURE & METHODOLOGY (PLACEHOLDER)",
+              "heading": "02. ARCHITECTURE & METHODOLOGY (PLACEHOLDER)",
               "body": "[Placeholder content for Article 01] Reserve this block for system architecture diagrams, model formulation, evaluation setup, and experimental design details once ready to publish.",
               "isPlaceholder": true
             },
             {
-              "heading": "03 // FINDINGS & CONCLUSION (PLACEHOLDER)",
+              "heading": "03. FINDINGS & CONCLUSION (PLACEHOLDER)",
               "body": "[Placeholder content for Article 01] Reserve this closing section for empirical results, key takeaways, and external DOI/PDF citation links.",
               "isPlaceholder": true
             }
@@ -186,21 +188,23 @@
           "year": "2026",
           "readingTime": "8 MIN",
           "tags": ["SYSTEMS", "WEBGL", "MANUSCRIPT 02"],
+          "imageUrl": "/src/assets/images/article_systems_monolith_1794994836896.jpg",
+          "imageAlt": "Interlocking matte dark slate and titanium geometric monolith with glowing turquoise laser seams",
           "summary": "Placeholder summary for your second research manuscript currently in submission / peer review.",
           "abstract": "Placeholder abstract for Research Article 02. Replace this block in src/data/resume.json with your second paper's abstract, co-authors, and target venue.",
           "sections": [
             {
-              "heading": "01 // PROBLEM SPACE & MOTIVATION (PLACEHOLDER)",
+              "heading": "01. PROBLEM SPACE & MOTIVATION (PLACEHOLDER)",
               "body": "[Placeholder content for Article 02] This section is reserved for the full background and motivation of your second article. Replace cleanly inside src/data/resume.json.",
               "isPlaceholder": true
             },
             {
-              "heading": "02 // SYSTEM DESIGN & EVALUATION (PLACEHOLDER)",
+              "heading": "02. SYSTEM DESIGN & EVALUATION (PLACEHOLDER)",
               "body": "[Placeholder content for Article 02] Add technical specifications, benchmarks, reproducible pipeline details, or code excerpts here.",
               "isPlaceholder": true
             },
             {
-              "heading": "03 // DISCUSSION & FUTURE WORK (PLACEHOLDER)",
+              "heading": "03. DISCUSSION & FUTURE WORK (PLACEHOLDER)",
               "body": "[Placeholder content for Article 02] Add limitations, peer-review updates, and final manuscript links once published.",
               "isPlaceholder": true
             }
@@ -236,7 +240,9 @@
         "researchSummaryBadge": "02 QUANTUM STATES",
         "selectAState": "SELECT A STATE",
         "stateLabel": "STATE",
-        "activeLabel": "ACTIVE",
+        "activeLabel": "OBSERVED",
+        "observedLabel": "Observed State",
+        "unobservedLabel": "Unobserved · Observe",
         "readArticle": "READ ARTICLE",
         "backToKnowledge": "BACK TO KNOWLEDGE",
         "placeholderNotice": "DRAFT PLACEHOLDER — READY FOR FINAL MANUSCRIPT CONTENT IN RESUME.JSON",
@@ -395,21 +401,23 @@
           "year": "2025",
           "readingTime": "6 MIN",
           "tags": ["ANGEWANDTE KI", "XAI", "MANUSKRIPT 01"],
+          "imageUrl": "/src/assets/images/article_neural_prism_1794994837434.jpg",
+          "imageAlt": "Transluzentes Obsidian-Glasprisma mit leuchtenden cyanfarbenen Glasfaserpfaden im dunklen Raum",
           "summary": "Platzhalter-Zusammenfassung für Ihren ersten eingereichten Forschungsartikel. Bereit für den finalen Titel, Abstract und DOI-Link.",
           "abstract": "Platzhalter-Abstract für Forschungsartikel 01. Ersetzen Sie diesen Block in src/data/resume.json durch Ihren finalen Abstract und Publikationsdetails.",
           "sections": [
             {
-              "heading": "01 // EINLEITUNG & KONTEXT (PLATZHALTER)",
+              "heading": "01. EINLEITUNG & KONTEXT (PLATZHALTER)",
               "body": "[Platzhalter für Artikel 01] Dieser Bereich ist für die vollständige Einleitung Ihres ersten Forschungsmanuskripts reserviert. Aktualisieren Sie src/data/resume.json mit Ihrer Problemstellung und Zielsetzung.",
               "isPlaceholder": true
             },
             {
-              "heading": "02 // ARCHITEKTUR & METHODIK (PLATZHALTER)",
+              "heading": "02. ARCHITEKTUR & METHODIK (PLATZHALTER)",
               "body": "[Platzhalter für Artikel 01] Reservierter Bereich für Systemarchitektur, Modellaufbau, Evaluationsmethodik und Experimentdesign.",
               "isPlaceholder": true
             },
             {
-              "heading": "03 // ERGEBNISSE & FAZIT (PLATZHALTER)",
+              "heading": "03. ERGEBNISSE & FAZIT (PLATZHALTER)",
               "body": "[Platzhalter für Artikel 01] Abschließender Bereich für empirische Resultate, Erkenntnisse und DOI/PDF-Verweise.",
               "isPlaceholder": true
             }
@@ -427,21 +435,23 @@
           "year": "2026",
           "readingTime": "8 MIN",
           "tags": ["SYSTEME", "WEBGL", "MANUSKRIPT 02"],
+          "imageUrl": "/src/assets/images/article_systems_monolith_1794994836896.jpg",
+          "imageAlt": "Ineinandergreifender Monolith aus dunklem Schiefer und Titan mit türkisfarbenen Laserfugen",
           "summary": "Platzhalter-Zusammenfassung für Ihren zweiten Forschungsartikel im Einreichungs- bzw. Peer-Review-Verfahren.",
           "abstract": "Platzhalter-Abstract für Forschungsartikel 02. Ersetzen Sie diesen Block in src/data/resume.json durch Abstract, Co-Autoren und Zieljournal.",
           "sections": [
             {
-              "heading": "01 // PROBLEMSTELLUNG & MOTIVATION (PLATZHALTER)",
+              "heading": "01. PROBLEMSTELLUNG & MOTIVATION (PLATZHALTER)",
               "body": "[Platzhalter für Artikel 02] Reservierter Bereich für Hintergrund und Motivation Ihres zweiten Artikels.",
               "isPlaceholder": true
             },
             {
-              "heading": "02 // SYSTEMDESIGN & EVALUATION (PLATZHALTER)",
+              "heading": "02. SYSTEMDESIGN & EVALUATION (PLATZHALTER)",
               "body": "[Platzhalter für Artikel 02] Platz für technische Spezifikationen, Benchmarks und reproduzierbare Pipeline-Details.",
               "isPlaceholder": true
             },
             {
-              "heading": "03 // DISKUSSION & AUSBLICK (PLATZHALTER)",
+              "heading": "03. DISKUSSION & AUSBLICK (PLATZHALTER)",
               "body": "[Platzhalter für Artikel 02] Platz für Limitationen, Review-Updates und finale Manuskript-Links.",
               "isPlaceholder": true
             }
@@ -477,7 +487,9 @@
         "researchSummaryBadge": "02 QUANTENZUSTÄNDE",
         "selectAState": "ZUSTAND WÄHLEN",
         "stateLabel": "ZUSTAND",
-        "activeLabel": "AKTIV",
+        "activeLabel": "BEOBACHTET",
+        "observedLabel": "Beobachteter Zustand",
+        "unobservedLabel": "Unbeobachtet · Auswählen",
         "readArticle": "ARTIKEL LESEN",
         "backToKnowledge": "ZURÜCK ZU WISSEN",
         "placeholderNotice": "ENTWURF-PLATZHALTER — BEREIT FÜR FINALEN ARTIKELTEXT IN RESUME.JSON",

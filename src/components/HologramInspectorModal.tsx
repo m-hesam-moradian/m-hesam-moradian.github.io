@@ -25,9 +25,9 @@ interface HologramInspectorModalProps {
   exitT: number;
   pedestalMode: PedestalMode;
   onSelectPedestalMode: (mode: PedestalMode) => void;
-  activeArticleIdx: 0 | 1;
-  onSelectArticle: (idx: 0 | 1) => void;
-  onReadArticle: (idx: 0 | 1) => void;
+  activeArticleIdx: number;
+  onSelectArticle: (idx: number) => void;
+  onReadArticle: (idx: number) => void;
 }
 
 /**
