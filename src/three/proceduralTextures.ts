@@ -112,46 +112,184 @@ export function createPedestalCircuitTexture(maxAnisotropy: number): THREE.Canva
   return tex;
 }
 
+export interface PBRSurfaceMaps {
+  map: THREE.CanvasTexture;
+  bumpMap: THREE.CanvasTexture;
+  roughnessMap: THREE.CanvasTexture;
+}
+
 /**
- * Subtle brushed obsidian/graphite noise map for basalt & obsidian cube blocks.
+ * Procedural 512x512 Volcanic Columnar Basalt PBR Texture Set (map + bumpMap + roughnessMap).
+ * Generates pitted stone porosity, vertical cooling striations, joint fractures, and subtle
+ * obsidian mineral flecks so basalt plinth columns & terrain ridges have genuine rock relief.
  */
-export function createObsidianSurfaceTexture(maxAnisotropy: number): THREE.CanvasTexture {
-  const size = 256;
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d')!;
+export function createBasaltPBRTextures(
+  maxAnisotropy: number,
+  repeatX = 1,
+  repeatY = 2.6
+): PBRSurfaceMaps {
+  const size = 512;
 
-  ctx.fillStyle = '#181b21';
-  ctx.fillRect(0, 0, size, size);
+  const albedoCanvas = document.createElement('canvas');
+  albedoCanvas.width = size;
+  albedoCanvas.height = size;
+  const aCtx = albedoCanvas.getContext('2d')!;
 
-  // Subtle crystalline micro-fracture lines
+  const bumpCanvas = document.createElement('canvas');
+  bumpCanvas.width = size;
+  bumpCanvas.height = size;
+  const bCtx = bumpCanvas.getContext('2d')!;
+
+  const roughCanvas = document.createElement('canvas');
+  roughCanvas.width = size;
+  roughCanvas.height = size;
+  const rCtx = roughCanvas.getContext('2d')!;
+
+  const aImg = aCtx.createImageData(size, size);
+  const bImg = bCtx.createImageData(size, size);
+  const rImg = rCtx.createImageData(size, size);
+
+  // Fast seamless hash noise helpers (periodic in tile size so RepeatWrapping has zero seams)
+  const hash2 = (ix: number, iy: number, seed: number): number => {
+    const x = ((ix % 256) + 256) % 256;
+    const y = ((iy % 256) + 256) % 256;
+    let h = (x * 374761393 + y * 668265263 + seed * 1442695041) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+  };
+
+  const smoothNoise = (u: number, v: number, freq: number, seed: number): number => {
+    const fx = u * freq;
+    const fy = v * freq;
+    const ix = Math.floor(fx);
+    const iy = Math.floor(fy);
+    const tx = fx - ix;
+    const ty = fy - iy;
+    const sx = tx * tx * (3 - 2 * tx);
+    const sy = ty * ty * (3 - 2 * ty);
+    const n00 = hash2(ix % freq, iy % freq, seed);
+    const n10 = hash2((ix + 1) % freq, iy % freq, seed);
+    const n01 = hash2(ix % freq, (iy + 1) % freq, seed);
+    const n11 = hash2((ix + 1) % freq, (iy + 1) % freq, seed);
+    const nx0 = n00 + (n10 - n00) * sx;
+    const nx1 = n01 + (n11 - n01) * sx;
+    return nx0 + (nx1 - nx0) * sy;
+  };
+
+  for (let py = 0; py < size; py++) {
+    const v = py / size;
+    for (let px = 0; px < size; px++) {
+      const u = px / size;
+
+      // Multi-scale volcanic basalt grain + stretched vertical columnar cooling flutes
+      const macro = smoothNoise(u, v, 8, 11);
+      const verticalFlute = smoothNoise(u * 2.5, v * 0.5, 16, 23);
+      const midGrain = smoothNoise(u, v, 32, 37);
+      const finePores = smoothNoise(u, v, 96, 53);
+      const microGrit = hash2(px, py, 71);
+
+      // Pitted volcanic vesicles (tiny recessed rock pits)
+      const pitRaw = smoothNoise(u, v, 48, 89);
+      const pitMask = pitRaw < 0.22 ? (0.22 - pitRaw) / 0.22 : 0;
+
+      // Subtle rock ridge stratification + height value
+      const ridge =
+        macro * 0.34 +
+        verticalFlute * 0.26 +
+        midGrain * 0.22 +
+        finePores * 0.12 +
+        microGrit * 0.06;
+      const heightVal = Math.max(0, Math.min(1, ridge - pitMask * 0.42));
+
+      // Dark volcanic basalt stone palette (deep charcoal-slate with slight mineral contrast)
+      const baseLum = 18 + heightVal * 26 + (microGrit > 0.96 ? 12 : 0);
+      const rCol = Math.round(baseLum * 0.94);
+      const gCol = Math.round(baseLum * 1.01);
+      const bCol = Math.round(baseLum * 1.09);
+
+      const idx = (py * size + px) * 4;
+      aImg.data[idx] = rCol;
+      aImg.data[idx + 1] = gCol;
+      aImg.data[idx + 2] = bCol;
+      aImg.data[idx + 3] = 255;
+
+      const bumpByte = Math.round(heightVal * 255);
+      bImg.data[idx] = bumpByte;
+      bImg.data[idx + 1] = bumpByte;
+      bImg.data[idx + 2] = bumpByte;
+      bImg.data[idx + 3] = 255;
+
+      // Higher roughness in recessed pores/pits (~235), slightly lower on fractured ridges (~165)
+      const roughVal = Math.max(
+        130,
+        Math.min(250, Math.round(238 - heightVal * 72 + pitMask * 35))
+      );
+      rImg.data[idx] = roughVal;
+      rImg.data[idx + 1] = roughVal;
+      rImg.data[idx + 2] = roughVal;
+      rImg.data[idx + 3] = 255;
+    }
+  }
+
+  aCtx.putImageData(aImg, 0, 0);
+  bCtx.putImageData(bImg, 0, 0);
+  rCtx.putImageData(rImg, 0, 0);
+
+  // Subtle horizontal & diagonal natural cleavage fractures
   let seed = 42019;
   const rnd = () => {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 42; i++) {
     const x1 = rnd() * size;
     const y1 = rnd() * size;
-    const len = 18 + rnd() * 64;
-    const ang = rnd() * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 + Math.cos(ang) * len, y1 + Math.sin(ang) * len);
-    ctx.lineWidth = 0.8 + rnd() * 1.1;
-    ctx.strokeStyle = rnd() > 0.7 ? 'rgba(0, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.06)';
-    ctx.stroke();
+    const len = 28 + rnd() * 90;
+    const ang = (rnd() > 0.35 ? 0 : Math.PI * 0.48) + (rnd() - 0.5) * 0.28;
+    const x2 = x1 + Math.cos(ang) * len;
+    const y2 = y1 + Math.sin(ang) * len;
+
+    aCtx.beginPath();
+    aCtx.moveTo(x1, y1);
+    aCtx.lineTo(x2, y2);
+    aCtx.lineWidth = 1.1 + rnd() * 1.4;
+    aCtx.strokeStyle = rnd() > 0.84 ? 'rgba(0, 215, 225, 0.09)' : 'rgba(6, 8, 11, 0.65)';
+    aCtx.stroke();
+
+    bCtx.beginPath();
+    bCtx.moveTo(x1, y1);
+    bCtx.lineTo(x2, y2);
+    bCtx.lineWidth = 1.4 + rnd() * 1.5;
+    bCtx.strokeStyle = 'rgba(20, 20, 20, 0.72)';
+    bCtx.stroke();
   }
 
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.wrapS = THREE.RepeatWrapping;
-  tex.wrapT = THREE.RepeatWrapping;
-  tex.anisotropy = Math.min(8, maxAnisotropy || 4);
-  tex.needsUpdate = true;
-  return tex;
+  const configureTex = (canvas: HTMLCanvasElement, isColor: boolean): THREE.CanvasTexture => {
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = isColor ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(repeatX, repeatY);
+    tex.anisotropy = Math.min(8, maxAnisotropy || 4);
+    tex.needsUpdate = true;
+    return tex;
+  };
+
+  return {
+    map: configureTex(albedoCanvas, true),
+    bumpMap: configureTex(bumpCanvas, false),
+    roughnessMap: configureTex(roughCanvas, false),
+  };
+}
+
+/**
+ * Legacy helper kept compatible if single obsidian map is requested.
+ */
+export function createObsidianSurfaceTexture(maxAnisotropy: number): THREE.CanvasTexture {
+  const { map, bumpMap, roughnessMap } = createBasaltPBRTextures(maxAnisotropy, 1, 2);
+  bumpMap.dispose();
+  roughnessMap.dispose();
+  return map;
 }
 
 /**
@@ -303,14 +441,14 @@ export function createNeuralMetricSpriteTexture(
   label: string,
   highlight = false
 ): { tex: THREE.CanvasTexture; aspect: number } {
-  const height = 64;
+  const height = 128;
   const measureCanvas = document.createElement('canvas');
   const mCtx = measureCanvas.getContext('2d')!;
-  const font = 'bold 24px "JetBrains Mono", ui-monospace, monospace';
+  const font = '600 44px "JetBrains Mono", ui-monospace, monospace';
   mCtx.font = font;
   const textWidth = Math.ceil(mCtx.measureText(label).width);
 
-  const width = Math.max(180, textWidth + 72);
+  const width = Math.max(360, textWidth + 136);
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -318,26 +456,29 @@ export function createNeuralMetricSpriteTexture(
 
   ctx.clearRect(0, 0, width, height);
 
-  // Dark graphite backing with sharp hairline cyan border (zero rounded pills)
-  ctx.fillStyle = 'rgba(14, 17, 22, 0.84)';
-  ctx.fillRect(8, 10, width - 16, height - 20);
+  // Dark graphite backing with sharp hairline cyan border
+  ctx.fillStyle = 'rgba(11, 15, 21, 0.88)';
+  ctx.fillRect(14, 18, width - 28, height - 36);
 
-  ctx.strokeStyle = highlight ? 'rgba(0, 255, 255, 0.9)' : 'rgba(0, 255, 255, 0.5)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(8, 10, width - 16, height - 20);
+  ctx.strokeStyle = highlight ? 'rgba(0, 255, 255, 0.92)' : 'rgba(0, 255, 255, 0.55)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(14, 18, width - 28, height - 36);
 
   // Tiny square anchor dot on left edge
   ctx.fillStyle = '#00FFFF';
-  ctx.fillRect(18, height / 2 - 4, 8, 8);
+  ctx.fillRect(34, height / 2 - 7, 14, 14);
 
   ctx.font = font;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = highlight ? '#FFFFFF' : '#00FFFF';
-  ctx.fillText(label, 36, height / 2 + 1);
+  ctx.fillText(label, 68, height / 2 + 2);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.anisotropy = 8;
   tex.needsUpdate = true;
   return { tex, aspect: width / height };
 }
@@ -376,14 +517,14 @@ export function createSkillPlanetLabelTexture(
   label: string,
   accentHex: string
 ): { tex: THREE.CanvasTexture; aspect: number } {
-  const height = 56;
+  const height = 112;
   const measureCanvas = document.createElement('canvas');
   const mCtx = measureCanvas.getContext('2d')!;
-  const font = '600 22px "JetBrains Mono", ui-monospace, monospace';
+  const font = '600 42px "JetBrains Mono", ui-monospace, monospace';
   mCtx.font = font;
   const textWidth = Math.ceil(mCtx.measureText(label).width);
 
-  const width = Math.max(150, textWidth + 62);
+  const width = Math.max(300, textWidth + 120);
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -391,26 +532,29 @@ export function createSkillPlanetLabelTexture(
 
   ctx.clearRect(0, 0, width, height);
 
-  ctx.fillStyle = 'rgba(11, 15, 21, 0.84)';
-  ctx.fillRect(6, 8, width - 12, height - 16);
+  ctx.fillStyle = 'rgba(11, 15, 21, 0.88)';
+  ctx.fillRect(12, 16, width - 24, height - 32);
 
   ctx.strokeStyle = accentHex;
-  ctx.globalAlpha = 0.72;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(6, 8, width - 12, height - 16);
+  ctx.globalAlpha = 0.78;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(12, 16, width - 24, height - 32);
 
   ctx.globalAlpha = 1.0;
   ctx.fillStyle = accentHex;
-  ctx.fillRect(16, height / 2 - 4, 8, 8);
+  ctx.fillRect(32, height / 2 - 7, 14, 14);
 
   ctx.font = font;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#F1F5F9';
-  ctx.fillText(label, 34, height / 2 + 1);
+  ctx.fillText(label, 64, height / 2 + 2);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.anisotropy = 8;
   tex.needsUpdate = true;
   return { tex, aspect: width / height };
 }

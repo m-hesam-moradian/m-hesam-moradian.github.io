@@ -3,6 +3,7 @@ import { ResumeKeySkill } from '../data/resume';
 import {
   createNeuralMetricSpriteTexture,
   createSkillPlanetLabelTexture,
+  PBRSurfaceMaps,
 } from './proceduralTextures';
 
 export type PedestalMode = 'email' | 'phone' | 'github' | 'linkedin' | 'form';
@@ -20,14 +21,14 @@ export function createRng(seed: number) {
 /**
  * Shared Sculpted Mars/Volcanic Dark Mountain Landscape spanning CH.01 and CH.02
  */
-export function buildVolcanicHorizonTerrain(): {
+export function buildVolcanicHorizonTerrain(basaltTerrainMaps?: PBRSurfaceMaps): {
   root: THREE.Group;
   dispose: () => void;
 } {
   const root = new THREE.Group();
   root.position.set(0, -2.5, 0);
 
-  const terrainGeo = new THREE.PlaneGeometry(140, 140, 104, 104);
+  const terrainGeo = new THREE.PlaneGeometry(140, 140, 112, 112);
   terrainGeo.rotateX(-Math.PI / 2);
   const pos = terrainGeo.attributes.position;
 
@@ -51,10 +52,14 @@ export function buildVolcanicHorizonTerrain(): {
   terrainGeo.computeVertexNormals();
 
   const terrainMat = new THREE.MeshStandardMaterial({
-    color: 0x0e1116,
-    roughness: 0.96,
-    metalness: 0.04,
-    envMapIntensity: 0.15,
+    color: 0x242a32,
+    map: basaltTerrainMaps?.map ?? null,
+    bumpMap: basaltTerrainMaps?.bumpMap ?? null,
+    bumpScale: 0.16,
+    roughnessMap: basaltTerrainMaps?.roughnessMap ?? null,
+    roughness: 0.92,
+    metalness: 0.08,
+    envMapIntensity: 0.22,
     flatShading: true,
   });
   root.add(new THREE.Mesh(terrainGeo, terrainMat));
@@ -93,7 +98,7 @@ export interface BinaryTexPair {
  * and expands so the camera flies straight INSIDE it into CH.02!
  */
 export function buildSummitChamber(
-  obsidianTex: THREE.CanvasTexture,
+  basaltMaps: PBRSurfaceMaps,
   _glowTex: THREE.CanvasTexture,
   binaryTexA: BinaryTexPair,
   binaryTexB: BinaryTexPair
@@ -104,18 +109,23 @@ export function buildSummitChamber(
   const disposables: { dispose: () => void }[] = [];
   const rng = createRng(1001);
 
-  // 1. Stepped Columnar Hexagonal Basalt Plinth
+  // 1. Stepped Columnar Hexagonal Basalt Plinth with Volcanic Rock PBR Relief & Chamfered Caps
   const basaltCount = 46;
-  const hexGeo = new THREE.CylinderGeometry(0.45, 0.49, 3.6, 6);
+  const hexGeo = new THREE.CylinderGeometry(0.45, 0.49, 3.6, 6, 4);
+  const capGeo = new THREE.CylinderGeometry(0.39, 0.452, 0.12, 6, 1);
   const hexMat = new THREE.MeshStandardMaterial({
-    color: 0x12151a,
-    map: obsidianTex,
-    roughness: 0.84,
-    metalness: 0.16,
-    envMapIntensity: 0.22,
+    color: 0x9aa6b2,
+    map: basaltMaps.map,
+    bumpMap: basaltMaps.bumpMap,
+    bumpScale: 0.075,
+    roughnessMap: basaltMaps.roughnessMap,
+    roughness: 0.9,
+    metalness: 0.14,
+    envMapIntensity: 0.28,
     flatShading: true,
   });
   const basaltCols = new THREE.InstancedMesh(hexGeo, hexMat, basaltCount);
+  const basaltCaps = new THREE.InstancedMesh(capGeo, hexMat, basaltCount);
   const dummy = new THREE.Object3D();
 
   for (let i = 0; i < basaltCount; i++) {
@@ -125,15 +135,28 @@ export function buildSummitChamber(
     const rad =
       ring === 0 ? 0.95 + rng() * 0.65 : ring === 1 ? 1.85 + rng() * 0.7 : 2.85 + rng() * 0.85;
     const hScale = ring === 0 ? 1.15 : ring === 1 ? 0.82 + rng() * 0.3 : 0.45 + rng() * 0.32;
-    dummy.position.set(Math.cos(angle) * rad, -2.5 + hScale * 1.1, Math.sin(angle) * rad);
-    dummy.rotation.set(0, rng() * Math.PI, 0);
-    dummy.scale.set(0.88 + rng() * 0.35, hScale, 0.88 + rng() * 0.35);
+    const px = Math.cos(angle) * rad;
+    const py = -2.5 + hScale * 1.1;
+    const pz = Math.sin(angle) * rad;
+    const rotY = rng() * Math.PI;
+    const sxz = 0.88 + rng() * 0.35;
+
+    dummy.position.set(px, py, pz);
+    dummy.rotation.set(0, rotY, 0);
+    dummy.scale.set(sxz, hScale, sxz);
     dummy.updateMatrix();
     basaltCols.setMatrixAt(i, dummy.matrix);
+
+    // Chamfered stone crown resting flush atop each hexagonal pillar
+    dummy.position.set(px, py + 1.8 * hScale + 0.055, pz);
+    dummy.scale.set(sxz, 1.0, sxz);
+    dummy.updateMatrix();
+    basaltCaps.setMatrixAt(i, dummy.matrix);
   }
   basaltCols.instanceMatrix.needsUpdate = true;
-  root.add(basaltCols);
-  disposables.push(hexGeo, hexMat);
+  basaltCaps.instanceMatrix.needsUpdate = true;
+  root.add(basaltCols, basaltCaps);
+  disposables.push(hexGeo, capGeo, hexMat);
 
   // 2. Full 3x3x3 + Capstone Chained Binary Blockchain Cluster (NO strings/tendrils — inside is a block too!)
   const monumentGroup = new THREE.Group();
@@ -607,37 +630,40 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
     layerIndices.push(indices);
   });
 
-  // 1. Round Spherical Neuron Somas + Inner Nucleus + Delicate Halo Rings (crisp, non-blinding)
-  const somaGeo = new THREE.SphereGeometry(0.36, 20, 16);
-  const somaMat = new THREE.MeshStandardMaterial({
-    color: 0x071920,
+  // 1. High-Res Translucent Obsidian-Glass Spherical Neuron Somas + Inner Nucleus + Smooth Halo Rings
+  const somaGeo = new THREE.SphereGeometry(0.35, 36, 28);
+  const somaMat = new THREE.MeshPhysicalMaterial({
+    color: 0x051118,
     emissive: new THREE.Color(0x00ffff),
-    emissiveIntensity: 0.22,
-    roughness: 0.28,
-    metalness: 0.35,
+    emissiveIntensity: 0.12,
+    roughness: 0.08,
+    metalness: 0.18,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.06,
+    envMapIntensity: 1.15,
     transparent: true,
-    opacity: 0.88,
+    opacity: 0.62,
     depthWrite: false,
   });
   const somaInstanced = new THREE.InstancedMesh(somaGeo, somaMat, neurons.length);
   somaInstanced.frustumCulled = false;
   root.add(somaInstanced);
 
-  const nucleusGeo = new THREE.SphereGeometry(0.095, 14, 12);
+  const nucleusGeo = new THREE.SphereGeometry(0.11, 20, 16);
   const nucleusMat = new THREE.MeshBasicMaterial({
-    color: 0x00ffff,
+    color: 0xb8ffff,
     transparent: true,
-    opacity: 0.9,
+    opacity: 0.94,
   });
   const nucleusInstanced = new THREE.InstancedMesh(nucleusGeo, nucleusMat, neurons.length);
   nucleusInstanced.frustumCulled = false;
   root.add(nucleusInstanced);
 
-  const ringGeo = new THREE.TorusGeometry(0.44, 0.013, 8, 32);
+  const ringGeo = new THREE.TorusGeometry(0.43, 0.015, 14, 56);
   const ringMat = new THREE.MeshBasicMaterial({
     color: 0x00ffff,
     transparent: true,
-    opacity: 0.55,
+    opacity: 0.56,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -646,12 +672,12 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
   root.add(ringInstanced);
 
   // Subtle Soft Pure Cyan aura behind every Round Neuron (kept low so neurons stay sharp)
-  const auraPlaneGeo = new THREE.PlaneGeometry(1.05, 1.05);
+  const auraPlaneGeo = new THREE.PlaneGeometry(1.12, 1.12);
   const auraPlaneMat = new THREE.MeshBasicMaterial({
     map: glowTex,
     color: 0x00ffff,
     transparent: true,
-    opacity: 0.16,
+    opacity: 0.2,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     side: THREE.DoubleSide,
@@ -666,16 +692,18 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
   const heroGroup = new THREE.Group();
   root.add(heroGroup);
 
-  const heroOuterGeo = new THREE.SphereGeometry(0.68, 28, 22);
+  const heroOuterGeo = new THREE.SphereGeometry(0.68, 40, 32);
   const heroOuterMat = new THREE.MeshPhysicalMaterial({
-    color: 0x071a22,
+    color: 0x06161e,
     emissive: new THREE.Color(0x00ffff),
-    emissiveIntensity: 0.18,
-    roughness: 0.14,
-    metalness: 0.25,
+    emissiveIntensity: 0.14,
+    roughness: 0.1,
+    metalness: 0.22,
     clearcoat: 1.0,
+    clearcoatRoughness: 0.06,
+    envMapIntensity: 1.1,
     transparent: true,
-    opacity: 0.26,
+    opacity: 0.3,
     depthWrite: false,
     side: THREE.DoubleSide,
   });
@@ -683,11 +711,11 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
   heroOuterSphere.renderOrder = 6;
   heroGroup.add(heroOuterSphere);
 
-  const heroRingAGeo = new THREE.TorusGeometry(0.76, 0.012, 10, 48);
+  const heroRingAGeo = new THREE.TorusGeometry(0.76, 0.013, 14, 64);
   const heroRingAMat = new THREE.MeshBasicMaterial({
     color: 0x00ffff,
     transparent: true,
-    opacity: 0.62,
+    opacity: 0.65,
     blending: THREE.AdditiveBlending,
   });
   const heroRingA = new THREE.Mesh(heroRingAGeo, heroRingAMat);
@@ -697,11 +725,11 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
   heroRingC.rotation.y = Math.PI / 2;
   heroGroup.add(heroRingA, heroRingB, heroRingC);
 
-  const heroCoreGeo = new THREE.SphereGeometry(0.15, 18, 14);
+  const heroCoreGeo = new THREE.SphereGeometry(0.15, 24, 18);
   const heroCoreMat = new THREE.MeshBasicMaterial({
-    color: 0x00ffff,
+    color: 0xb8ffff,
     transparent: true,
-    opacity: 0.82,
+    opacity: 0.88,
   });
   heroGroup.add(new THREE.Mesh(heroCoreGeo, heroCoreMat));
 
@@ -709,7 +737,7 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
     map: glowTex,
     color: 0x00ffff,
     transparent: true,
-    opacity: 0.32,
+    opacity: 0.34,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -719,7 +747,7 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
 
   disposables.push(heroOuterGeo, heroOuterMat, heroRingAGeo, heroRingAMat, heroCoreGeo, heroCoreMat, heroGlowMat);
 
-  // 3. Weighted Synaptic Paths connecting adjacent layers
+  // 3. Weighted Synaptic Paths (smooth 3D volumetric cylinders instead of aliased 1px WebGL lines!)
   interface Synapse {
     a: number;
     b: number;
@@ -742,20 +770,22 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
     });
   }
 
-  const synPosArr = new Float32Array(synapses.length * 6);
-  const synGeo = new THREE.BufferGeometry();
-  const synAttr = new THREE.BufferAttribute(synPosArr, 3);
-  synAttr.setUsage(THREE.DynamicDrawUsage);
-  synGeo.setAttribute('position', synAttr);
-  const synMat = new THREE.LineBasicMaterial({
+  const synGeo = new THREE.CylinderGeometry(0.015, 0.015, 1, 8, 1, true);
+  const synMat = new THREE.MeshBasicMaterial({
     color: 0x00ffff,
     transparent: true,
-    opacity: 0.42,
+    opacity: 0.36,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  root.add(new THREE.LineSegments(synGeo, synMat));
+  const synInstanced = new THREE.InstancedMesh(synGeo, synMat, synapses.length);
+  synInstanced.frustumCulled = false;
+  root.add(synInstanced);
   disposables.push(synGeo, synMat);
+  const _synDir = new THREE.Vector3();
+  const _synMid = new THREE.Vector3();
+  const _synUp = new THREE.Vector3(0, 1, 0);
+  const _synQuat = new THREE.Quaternion();
 
   // 4. Visible Neural Weights, Biases, & Activation Number Sprites
   interface MetricSpriteLink {
@@ -938,19 +968,19 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
       neuralSimTime += delta * (1 - pause * 0.94);
 
       const tiltScale = (1 - enter * 0.92) * (1 - pause * 0.65);
-      const sideScale = 1 - pause * 0.22;
+      const sideScale = 1 - pause * 0.04;
       root.scale.setScalar((0.84 + reveal * 0.16) * sideScale);
       root.rotation.y = pointerX * 0.14 * tiltScale;
       root.rotation.x = pointerY * 0.08 * tiltScale;
 
-      // Smooth fade-in across all neural parts (stays crisp beside the right-half About Me card)
-      const activeDim = 1 - pause * 0.1;
-      somaMat.opacity = 0.88 * reveal * activeDim;
-      nucleusMat.opacity = 0.9 * reveal * activeDim;
-      ringMat.opacity = 0.55 * reveal * activeDim;
-      auraPlaneMat.opacity = 0.16 * reveal * activeDim;
-      energyHeadMat.opacity = 0.92 * reveal * (1 - pause * 0.32);
-      energyAuraMat.opacity = 0.58 * reveal * (1 - pause * 0.32);
+      // Smooth fade-in across all neural parts (stays crisp beside the About Me card)
+      const activeDim = 1 - pause * 0.08;
+      somaMat.opacity = 0.62 * reveal * activeDim;
+      nucleusMat.opacity = 0.94 * reveal * activeDim;
+      ringMat.opacity = 0.56 * reveal * activeDim;
+      auraPlaneMat.opacity = 0.2 * reveal * activeDim;
+      energyHeadMat.opacity = 0.92 * reveal * (1 - pause * 0.25);
+      energyAuraMat.opacity = 0.58 * reveal * (1 - pause * 0.25);
       rideLineMat.opacity = THREE.MathUtils.smoothstep(enter, 0.02, 0.22) * 0.72 * reveal;
 
       for (let i = 0; i < neurons.length; i++) {
@@ -1007,25 +1037,29 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
         heroRingA.rotation.z = neuralSimTime * 0.5;
         heroRingB.rotation.y = -neuralSimTime * 0.4;
         heroRingC.rotation.x = neuralSimTime * 0.34;
-        heroOuterMat.opacity = 0.26 * reveal * activeDim;
-        heroRingAMat.opacity = 0.62 * reveal * activeDim;
-        heroCoreMat.opacity = 0.82 * reveal * activeDim;
-        heroGlowMat.opacity = 0.32 * reveal * activeDim;
+        heroOuterMat.opacity = 0.3 * reveal * activeDim;
+        heroRingAMat.opacity = 0.65 * reveal * activeDim;
+        heroCoreMat.opacity = 0.88 * reveal * activeDim;
+        heroGlowMat.opacity = 0.34 * reveal * activeDim;
       }
 
-      // Sync synaptic connections
+      // Sync smooth 3D cylindrical synaptic filaments
       for (let s = 0; s < synapses.length; s++) {
         const syn = synapses[s];
         const a = neurons[syn.a].livePos;
         const b = neurons[syn.b].livePos;
-        synPosArr[s * 6] = a.x;
-        synPosArr[s * 6 + 1] = a.y;
-        synPosArr[s * 6 + 2] = a.z;
-        synPosArr[s * 6 + 3] = b.x;
-        synPosArr[s * 6 + 4] = b.y;
-        synPosArr[s * 6 + 5] = b.z;
+        _synDir.subVectors(b, a);
+        const len = Math.max(0.001, _synDir.length());
+        _synDir.divideScalar(len);
+        _synMid.addVectors(a, b).multiplyScalar(0.5);
+        _synQuat.setFromUnitVectors(_synUp, _synDir);
+        dummy.position.copy(_synMid);
+        dummy.quaternion.copy(_synQuat);
+        dummy.scale.set(1.0, len, 1.0);
+        dummy.updateMatrix();
+        synInstanced.setMatrixAt(s, dummy.matrix);
       }
-      synAttr.needsUpdate = true;
+      synInstanced.instanceMatrix.needsUpdate = true;
       synMat.opacity = Math.max(0, 0.34 - enter * 0.08) * reveal * activeDim;
 
       // Update floating weight & activation number sprites
@@ -1501,7 +1535,7 @@ export function buildPedestalChamber(
   arcGroup.position.set(0, 0.45, 0);
   root.add(arcGroup);
 
-  const arcGeo = new THREE.TorusGeometry(2.65, 0.026, 10, 40, Math.PI * 0.55);
+  const arcGeo = new THREE.TorusGeometry(2.65, 0.024, 14, 64, Math.PI * 0.55);
   const arcMat = new THREE.MeshBasicMaterial({
     color: 0x00ffff,
     transparent: true,
@@ -1518,7 +1552,7 @@ export function buildPedestalChamber(
   disposables.push(arcGeo, arcMat);
 
   // Overhead Teleport Return Halo Gate (portal back to Stage 1 Sky)
-  const topHaloGeo = new THREE.TorusGeometry(2.45, 0.034, 12, 72);
+  const topHaloGeo = new THREE.TorusGeometry(2.45, 0.03, 16, 96);
   topHaloGeo.rotateX(Math.PI / 2);
   const topHalo = new THREE.Mesh(topHaloGeo, cyanRingMat);
   topHalo.position.set(0, 2.95, 0);
@@ -1905,11 +1939,11 @@ export function buildPedestalChamber(
   particleGeo.setAttribute('position', posAttr);
 
   const particleMat = new THREE.PointsMaterial({
-    size: 0.125,
+    size: 0.078,
     map: glowTex,
     color: 0x00ffff,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.78,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     sizeAttenuation: true,

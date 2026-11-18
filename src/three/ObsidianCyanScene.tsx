@@ -18,9 +18,9 @@ import {
   PedestalMode,
 } from './detailedChambers';
 import {
+  createBasaltPBRTextures,
   createBinaryBlockchainBlockTextures,
   createNeutralGlowTexture,
-  createObsidianSurfaceTexture,
   createPedestalCircuitTexture,
   createPureCyanGlowTexture,
 } from './proceduralTextures';
@@ -420,15 +420,15 @@ function sampleDetailedFlight(
     const eased = 1 - Math.pow(1 - enterT, 3);
 
     if (isMobileLayout) {
-      _vA.set(0.0, -44.4, 2.2);
-      _vB.set(0.0, -45.8, 3.8);
-      _vC.set(0.0, -56.4, -12.0);
-      _vD.set(0.0, -58.0, -12.0);
+      _vA.set(0.0, -47.2, -0.5);
+      _vB.set(0.0, -48.3, 1.4);
+      _vC.set(0.0, -54.0, -12.0);
+      _vD.set(0.0, -55.4, -12.0);
     } else {
-      _vA.set(1.5, -47.2, -5.2);
-      _vB.set(...DETAILED_CHAMBERS[3].camPos); // [3.4, -49.05, -2.0] -> frames Pedestal Figure cleanly in LEFT HALF
-      _vC.set(1.4, -51.1, -12.0);
-      _vD.set(...DETAILED_CHAMBERS[3].camTarget); // [3.2, -51.1, -12.0]
+      _vA.set(1.3, -48.9, -5.6);
+      _vB.set(...DETAILED_CHAMBERS[3].camPos); // [2.75, -49.95, -3.5] -> more direct & larger LEFT HALF framing
+      _vC.set(1.2, -51.3, -12.0);
+      _vD.set(...DETAILED_CHAMBERS[3].camTarget); // [2.6, -51.35, -12.0]
     }
     outPos.lerpVectors(_vA, _vB, eased);
     outTarget.lerpVectors(_vC, _vD, eased);
@@ -460,12 +460,12 @@ function sampleDetailedFlight(
     const inv = 1 - eased;
 
     if (isMobileLayout) {
-      _vA.set(0.0, -45.8, 3.8);
-      _vMid.set(0.0, -47.8, -7.2);
-      _vC.set(0.0, -58.0, -12.0);
+      _vA.set(0.0, -48.3, 1.4);
+      _vMid.set(0.0, -48.6, -7.2);
+      _vC.set(0.0, -55.4, -12.0);
     } else {
-      _vA.set(...DETAILED_CHAMBERS[3].camPos); // [3.4, -49.05, -2.0]
-      _vMid.set(1.4, -49.3, -9.2);
+      _vA.set(...DETAILED_CHAMBERS[3].camPos);
+      _vMid.set(1.2, -49.6, -9.2);
       _vC.set(...DETAILED_CHAMBERS[3].camTarget);
     }
     _vB.set(0.0, -47.2, -12.0); // straight through overhead Halo Ring at y = -49.05, z = -12
@@ -664,11 +664,12 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     horizonRim.position.set(0, 7, -62);
     scene.add(horizonRim);
 
-    // Procedural Textures
+    // Procedural PBR & Holographic Textures
     const maxAniso = renderer.capabilities.getMaxAnisotropy();
     const glowTex = createPureCyanGlowTexture();
     const neutralGlowTex = createNeutralGlowTexture();
-    const obsidianTex = createObsidianSurfaceTexture(maxAniso);
+    const basaltMaps = createBasaltPBRTextures(maxAniso, 1, 2.6);
+    const terrainBasaltMaps = createBasaltPBRTextures(maxAniso, 16, 16);
     const circuitTex = createPedestalCircuitTexture(maxAniso);
     const binaryTexA = createBinaryBlockchainBlockTextures(maxAniso, 1);
     const binaryTexB = createBinaryBlockchainBlockTextures(maxAniso, 2);
@@ -676,10 +677,10 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     // -------------------------------------------------------------------------
     // Build Sculpted Mars/Volcanic Horizon Terrain & All 4 Chambers
     // -------------------------------------------------------------------------
-    const volcanicTerrain = buildVolcanicHorizonTerrain();
+    const volcanicTerrain = buildVolcanicHorizonTerrain(terrainBasaltMaps);
     scene.add(volcanicTerrain.root);
 
-    const summitChamber = buildSummitChamber(obsidianTex, glowTex, binaryTexA, binaryTexB);
+    const summitChamber = buildSummitChamber(basaltMaps, glowTex, binaryTexA, binaryTexB);
     scene.add(summitChamber.root);
 
     // Neural Network lives physically INSIDE the Chosen 0/1 Block via chosenAnchor!
@@ -710,7 +711,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     const irisChamber = buildIrisChamber(
       -24,
       -12,
-      obsidianTex,
+      basaltMaps.map,
       glowTex,
       neutralGlowTex,
       RESUME_DATA.keySkills
@@ -767,10 +768,22 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     const motes = new THREE.Points(moteGeo, moteMat);
     scene.add(motes);
 
-    // Hardware-GPU UnrealBloomPass tuned crisp so dark graphite stays deep charcoal
+    // Hardware-GPU MSAA EffectComposer so spheres, synapses, rings & basalt edges render silky smooth
     let composer: EffectComposer | null = null;
+    let msaaTarget: THREE.WebGLRenderTarget | null = null;
     if (!isSoftwareGl) {
-      composer = new EffectComposer(renderer);
+      const pr = renderer.getPixelRatio();
+      msaaTarget = new THREE.WebGLRenderTarget(
+        Math.max(1, Math.floor(width * pr)),
+        Math.max(1, Math.floor(height * pr)),
+        {
+          type: THREE.HalfFloatType,
+          samples: renderer.capabilities.isWebGL2 ? 4 : 0,
+        }
+      );
+      composer = new EffectComposer(renderer, msaaTarget);
+      composer.setPixelRatio(pr);
+      composer.setSize(width, height);
       composer.addPass(new RenderPass(scene, camera));
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(width, height),
@@ -822,8 +835,10 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       camera.aspect = aspect;
       camera.fov = getResponsiveFov(aspect);
       camera.updateProjectionMatrix();
+      const pr = isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2);
       renderer.setSize(w, h);
-      renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(pr);
+      composer?.setPixelRatio(pr);
       composer?.setSize(w, h);
     };
 
@@ -1081,10 +1096,16 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
       controls.dispose();
       composer?.dispose();
+      msaaTarget?.dispose();
       envTarget.dispose();
       glowTex.dispose();
       neutralGlowTex.dispose();
-      obsidianTex.dispose();
+      basaltMaps.map.dispose();
+      basaltMaps.bumpMap.dispose();
+      basaltMaps.roughnessMap.dispose();
+      terrainBasaltMaps.map.dispose();
+      terrainBasaltMaps.bumpMap.dispose();
+      terrainBasaltMaps.roughnessMap.dispose();
       circuitTex.dispose();
       binaryTexA.map.dispose();
       binaryTexA.emissiveMap.dispose();
