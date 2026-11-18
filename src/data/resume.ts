@@ -1,33 +1,21 @@
 /**
  * ============================================================================
- * SINGLE-FILE RESUME & PORTFOLIO CONFIGURATION
+ * BILINGUAL RESUME & PORTFOLIO CONFIGURATION (EN / DE)
  * ============================================================================
- * Edit ONLY this file to update all personal info, bio, portrait photo,
- * projects, experience, and contact details across the entire 3D website.
- *
- * HOW TO ADD YOUR FACE IMAGE:
- * 1. Place your image inside the `/public/` folder (e.g. `/public/profile.jpg`)
- * 2. Set `avatarUrl: '/profile.jpg'` below (or paste an image URL).
- *    Leave `avatarUrl: ''` to display the procedural cyan wireframe hologram.
+ * All localized resume content lives in `/src/data/resume.json`.
+ * Edit `src/data/resume.json` to update personal info, portrait path,
+ * experience, research articles, CV files, and contact relay settings.
  * ============================================================================
  */
+
+import resumeJson from './resume.json';
+
+export type LocaleCode = 'en' | 'de';
 
 export interface ResumeCapability {
   code: string;
   label: string;
   value: string;
-}
-
-export interface ResumeProject {
-  id: string;
-  title: string;
-  category: string;
-  year: string;
-  latency: string;
-  throughput: string;
-  efficiency: string;
-  summary: string;
-  stack: string;
 }
 
 export interface ResumeExperience {
@@ -36,6 +24,18 @@ export interface ResumeExperience {
   company: string;
   detail: string;
   stack: string;
+}
+
+export interface ResumeResearchArticle {
+  id: string;
+  status: 'submitted' | 'under_review';
+  statusLabel: string;
+  title: string;
+  venue: string;
+  year: string;
+  summary: string;
+  keywords: string;
+  url: string;
 }
 
 export interface ResumeTelemetryRow {
@@ -51,11 +51,98 @@ export interface ResumeKeySkill {
 
 export interface ResumeStageFigureInfo {
   label: string;
+  shortLabel: string;
   title: string;
   description: string;
+  preview?: string;
+}
+
+export interface ResumeChamberLabel {
+  id: 'summit' | 'drift' | 'iris' | 'research' | 'pedestal';
+  hudTitle: string;
+  sectionTag: string;
+}
+
+export interface ResumeEducation {
+  degree: string;
+  institution: string;
+  institutionUrl: string;
+  period: string;
+  location: string;
+  equivalency: string;
+}
+
+export interface ResumeCertificate {
+  title: string;
+  issuer: string;
+  date: string;
+  credentialId: string;
+}
+
+export interface ResumeLanguageProficiency {
+  name: string;
+  level: string;
+}
+
+export interface ResumeUiStrings {
+  resetView: string;
+  scrollToExplore: string;
+  audioOn: string;
+  audioOff: string;
+  downloadCv: string;
+  downloadCvBadge: string;
+  cvModalTag: string;
+  cvModalTitle: string;
+  cvModalSubtitle: string;
+  cvEnTitle: string;
+  cvEnDesc: string;
+  cvDeTitle: string;
+  cvDeDesc: string;
+  downloadEnCv: string;
+  downloadDeCv: string;
+  closeModal: string;
+  educationLabel: string;
+  certificateLabel: string;
+  languagesLabel: string;
+  experienceHeading: string;
+  experienceHeaderTag: string;
+  researchHeading: string;
+  researchHeaderTag: string;
+  researchSummaryBadge: string;
+  readPaper: string;
+  sendEmail: string;
+  copy: string;
+  copyAddressSuffix: string;
+  copyNumberSuffix: string;
+  copied: string;
+  callNumber: string;
+  openSourceTag: string;
+  openGithubProfile: string;
+  connectOnLinkedin: string;
+  yourEmailLabel: string;
+  emailPlaceholder: string;
+  messageLabel: string;
+  messagePlaceholder: string;
+  sendMessage: string;
+  sendingMessage: string;
+  invalidEmailError: string;
+  emptyMessageError: string;
+  messagePreparedFor: string;
+  draftOpenedNotice: string;
+  sendErrorFallback: string;
+  openInEmailApp: string;
+  sendAnotherMessage: string;
 }
 
 export interface ResumeData {
+  cvDownloads: {
+    enUrl: string;
+    deUrl: string;
+  };
+  contactForm: {
+    endpoint: string;
+    web3formsAccessKey: string;
+  };
   identity: {
     name: string;
     role: string;
@@ -74,12 +161,17 @@ export interface ResumeData {
   about: {
     headline: string;
     summary: string;
+    education: ResumeEducation;
+    certificate: ResumeCertificate;
+    languages: ResumeLanguageProficiency[];
     telemetry: ResumeTelemetryRow[];
     capabilities: ResumeCapability[];
   };
-  /** Dynamic key skills rendered as orbiting planets in CH.03 (count & colors auto-adapt) */
+  /** Dynamic key skills rendered as orbiting planets in CH.03 */
   keySkills: ResumeKeySkill[];
-  /** Descriptive captions for the 5 contact-linked 3D figures on the CH.04 Pedestal */
+  /** Localized HUD chapter headers & subtitles (01..05) */
+  chambers: ResumeChamberLabel[];
+  /** Descriptive captions for the 5 contact-linked 3D figures on the CH.05 Pedestal */
   stageFigures: {
     email: ResumeStageFigureInfo;
     phone: ResumeStageFigureInfo;
@@ -87,144 +179,36 @@ export interface ResumeData {
     linkedin: ResumeStageFigureInfo;
     form: ResumeStageFigureInfo;
   };
-  projects: ResumeProject[];
   experience: ResumeExperience[];
+  research: ResumeResearchArticle[];
+  ui: ResumeUiStrings;
 }
 
-export const RESUME_DATA: ResumeData = {
-  identity: {
-    name: 'Alex Mercer',
-    role: 'Applied AI & Distributed Systems Engineer',
-    manifesto: 'Neural inference pipelines & decentralized consensus architectures.',
-    location: 'San Francisco · Remote',
-    availability: 'Open for Roles',
-    avatarUrl: '', // Drop photo in /public/profile.jpg and set '/profile.jpg'
-    avatarCaption: 'ID_01',
-    email: 'hello@alexmercer.example',
-    phone: '+1 (415) 555-0194',
-    githubHandle: '@m-hesam-moradian',
-    githubUrl: 'https://github.com/m-hesam-moradian',
-    linkedinHandle: 'in/alex-mercer-systems',
-    linkedinUrl: 'https://linkedin.com',
-  },
-  about: {
-    headline: 'Obsidian Architecture & Neural Consensus',
-    summary:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Building low-latency quantized inference engines, zero-knowledge consensus protocols, and real-time 3D WebGL systems.',
-    telemetry: [
-      { label: 'LEVEL', value: 'STAFF ARCHITECT', highlight: true },
-      { label: 'FOCUS', value: 'AI + WEB3 + WEBGL' },
-      { label: 'UPTIME', value: '99.98% PROD' },
-    ],
-    capabilities: [
-      {
-        code: '01',
-        label: 'NEURAL RUNTIME',
-        value: 'PyTorch · CUDA · TensorRT',
-      },
-      {
-        code: '02',
-        label: 'PROTOCOL MESH',
-        value: 'Rust · libp2p · ZK-Consensus',
-      },
-      {
-        code: '03',
-        label: 'SPATIAL WEBGL',
-        value: 'Three.js · GLSL · WebGPU',
-      },
-    ],
-  },
-  keySkills: [
-    { name: 'AI / PyTorch', color: '#00FFFF' },
-    { name: 'Rust Systems', color: '#D8FFFF' },
-    { name: 'Three.js / GLSL', color: '#00D4E8' },
-    { name: 'ZK Consensus', color: '#8A929A' },
-    { name: 'CUDA Inference', color: '#00FFFF' },
-    { name: 'TypeScript', color: '#FFFFFF' },
-  ],
-  stageFigures: {
-    email: {
-      label: 'Email',
-      title: 'Direct Email',
-      description: 'Send inquiries, architecture briefs, or role opportunities directly via email.',
-    },
-    phone: {
-      label: 'Phone',
-      title: 'Direct Phone Line',
-      description: 'Call directly or copy the phone number for quick technical interviews and scheduling.',
-    },
-    github: {
-      label: 'GitHub',
-      title: 'GitHub Repositories',
-      description: 'Explore open-source AI runtimes, distributed consensus protocols, and WebGL tools.',
-    },
-    linkedin: {
-      label: 'LinkedIn',
-      title: 'LinkedIn Profile',
-      description: 'Connect for engineering leadership, advisory roles, and systems architecture.',
-    },
-    form: {
-      label: 'Contact Form',
-      title: 'Direct Message',
-      description: 'Write a quick note below to start a conversation or share project details.',
-    },
-  },
-  projects: [
-    {
-      id: 'SYNAPSE_CHAIN',
-      title: 'SynapseChain Runtime',
-      category: 'DISTRIBUTED AI',
-      year: '2026',
-      latency: '1.2ms',
-      throughput: '125k req/s',
-      efficiency: '99.9%',
-      summary: 'Verifiable quantized neural inference across decentralized peer nodes.',
-      stack: 'Rust · WebGL · CUDA',
-    },
-    {
-      id: 'OBSIDIAN_MESH',
-      title: 'Obsidian Mesh Explorer',
-      category: 'SPATIAL TELEMETRY',
-      year: '2025',
-      latency: '0.8ms',
-      throughput: '60fps @ 25k',
-      efficiency: '99.7%',
-      summary: 'Real-time 3D WebGL telemetry visualizer for high-throughput graphs.',
-      stack: 'Three.js · GLSL · TS',
-    },
-    {
-      id: 'PRISM_CONSENSUS',
-      title: 'Consensus Prism SDK',
-      category: 'PROTOCOL ENGINE',
-      year: '2024',
-      latency: '18ms',
-      throughput: '42k tx/s',
-      efficiency: '99.98%',
-      summary: 'Deterministic state finality toolkit for multi-region validator clusters.',
-      stack: 'Go · gRPC · Rust',
-    },
-  ],
-  experience: [
-    {
-      period: '2024 — NOW',
-      role: 'Staff Systems Engineer',
-      company: 'Lorem Lattice Labs',
-      detail: 'Cut cross-node finality latency 42% across 180+ validator clusters.',
-      stack: 'Rust · TS · WebGL',
-    },
-    {
-      period: '2021 — 2024',
-      role: 'Senior ML Infra Engineer',
-      company: 'Ipsum Neural Core',
-      detail: 'Built deterministic embedding retrieval serving 14M+ daily queries.',
-      stack: 'Python · PyTorch · CUDA',
-    },
-    {
-      period: '2019 — 2021',
-      role: 'Creative Technologist',
-      company: 'Dolor Spatial Studio',
-      detail: 'Shipped interactive 60fps 3D spatial interfaces and GPU shaders.',
-      stack: 'Three.js · GLSL · React',
-    },
-  ],
-};
+interface RawResumeFile {
+  defaultLocale: LocaleCode;
+  cvDownloads: {
+    enUrl: string;
+    deUrl: string;
+  };
+  contactForm: {
+    endpoint: string;
+    web3formsAccessKey: string;
+  };
+  keySkills: ResumeKeySkill[];
+  locales: Record<LocaleCode, Omit<ResumeData, 'keySkills' | 'cvDownloads' | 'contactForm'>>;
+}
+
+const typedResumeJson = resumeJson as RawResumeFile;
+
+export function getLocalizedResume(locale: LocaleCode): ResumeData {
+  const safeLocale: LocaleCode = locale === 'de' ? 'de' : 'en';
+  return {
+    cvDownloads: typedResumeJson.cvDownloads,
+    contactForm: typedResumeJson.contactForm,
+    keySkills: typedResumeJson.keySkills,
+    ...typedResumeJson.locales[safeLocale],
+  };
+}
+
+export const RESUME_JSON = typedResumeJson;
+export const RESUME_DATA: ResumeData = getLocalizedResume(typedResumeJson.defaultLocale);

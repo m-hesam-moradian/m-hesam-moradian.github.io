@@ -1,0 +1,435 @@
+{
+  "defaultLocale": "en",
+  "cvDownloads": {
+    "enUrl": "/cv/Sam_Moradian_CV_EN.pdf",
+    "deUrl": "/cv/Sam_Moradian_CV_DE.pdf"
+  },
+  "contactForm": {
+    "endpoint": "https://formsubmit.co/ajax/m.hesam.moradian@gmail.com",
+    "web3formsAccessKey": ""
+  },
+  "keySkills": [
+    { "name": "PyTorch / XAI", "color": "#00FFFF" },
+    { "name": "Next.js / React", "color": "#D8FFFF" },
+    { "name": "TypeScript", "color": "#00D4E8" },
+    { "name": "tRPC / GraphQL", "color": "#8A929A" },
+    { "name": "Docker / CI/CD", "color": "#00FFFF" },
+    { "name": "Three.js / WebGL", "color": "#FFFFFF" }
+  ],
+  "technicalSkills": {
+    "programmingLanguages": ["JavaScript (ES6+)", "TypeScript", "Python", "C++", "SQL", "Solidity"],
+    "frontend": ["React.js", "Next.js", "Tailwind CSS", "ShadCN", "Radix UI", "MUI", "Three.js", "TanStack Query", "Zod"],
+    "backendAndApis": ["Node.js", "NestJS", "Express.js", "tRPC", "Apollo GraphQL", "RESTful APIs", "IAM/SSO", "OAuth2/JWT"],
+    "databasesAndOrm": ["Apache CouchDB", "PostgreSQL", "MySQL", "MongoDB", "Redis", "Prisma ORM"],
+    "aiAndMl": ["PyTorch", "TensorFlow", "JAX", "Transformers", "LLMs (LoRA, RLHF, DPO)", "RAG", "Vector DBs"],
+    "infraAndTools": ["Docker", "Docker Compose", "Traefik", "CI/CD", "Git", "pnpm Monorepos", "Vitest", "Linux/SSL"]
+  },
+  "locales": {
+    "en": {
+      "identity": {
+        "name": "Sam Moradian",
+        "role": "Fullstack AI Developer",
+        "manifesto": "AI integration, scalable web platforms & type-safe API architectures.",
+        "location": "Ardabil, Iran · Remote",
+        "availability": "Open for Roles",
+        "avatarUrl": "/profile.png",
+        "avatarCaption": "SAM_01",
+        "email": "m.hesam.moradian@gmail.com",
+        "phone": "+1 (805) 900-7207",
+        "githubHandle": "@m-hesam-moradian",
+        "githubUrl": "https://github.com/m-hesam-moradian",
+        "linkedinHandle": "Sam Moradian",
+        "linkedinUrl": "https://www.linkedin.com"
+      },
+      "about": {
+        "headline": "Fullstack Engineering & Applied AI",
+        "summary": "Experienced Fullstack Developer focused on AI integration and scalable web applications. 4+ years building reliable web platforms, ML/DL pipelines (PyTorch, TensorFlow), Explainable AI (SHAP, LIME), modular IAM/SSO microservices, type-safe API gateways (tRPC, GraphQL), and Next.js/React frontends. Harvard CS50x certified with a strong foundation in clean architecture.",
+        "education": {
+          "degree": "B.Sc. Computer Engineering",
+          "institution": "Islamic Azad University (IAU)",
+          "institutionUrl": "https://iau.ir/en",
+          "period": "Sep 2021 — May 2025",
+          "location": "Ardabil",
+          "equivalency": "18.5/20 (IR) · ≈ 3.8 GPA (US) · 1.5 Very Good (DE · Anabin H+)"
+        },
+        "certificate": {
+          "title": "CS50x: Computer Science",
+          "issuer": "Harvard University",
+          "date": "Jan 2024",
+          "credentialId": "fe673d2f-6a44-46b..."
+        },
+        "languages": [
+          { "name": "English", "level": "B2" },
+          { "name": "German", "level": "A2" },
+          { "name": "Turkish", "level": "C1" },
+          { "name": "Persian", "level": "C2" }
+        ],
+        "telemetry": [
+          { "label": "EXPERIENCE", "value": "4+ YEARS", "highlight": true },
+          { "label": "FOCUS", "value": "AI + FULLSTACK" },
+          { "label": "DEGREE", "value": "B.SC. (1.5 DE)" }
+        ],
+        "capabilities": [
+          {
+            "code": "01",
+            "label": "AI & XAI PIPELINES",
+            "value": "PyTorch · TensorFlow · SHAP · LIME · RAG"
+          },
+          {
+            "code": "02",
+            "label": "API & IAM SYSTEMS",
+            "value": "tRPC · Apollo GraphQL · OAuth2/JWT · IAM/SSO"
+          },
+          {
+            "code": "03",
+            "label": "WEB & CLOUD STACK",
+            "value": "Next.js · React · TypeScript · Docker · PostgreSQL"
+          }
+        ]
+      },
+      "chambers": [
+        { "id": "summit", "hudTitle": "CH.01 // GENESIS", "sectionTag": "BLOCKCHAIN MONUMENT" },
+        { "id": "drift", "hudTitle": "CH.02 // ABOUT ME", "sectionTag": "NEURAL CORE" },
+        { "id": "iris", "hudTitle": "CH.03 // EXPERIENCE", "sectionTag": "CAREER TIMELINE" },
+        { "id": "research", "hudTitle": "CH.04 // RESEARCH", "sectionTag": "ARTICLES & PUBLICATIONS" },
+        { "id": "pedestal", "hudTitle": "CH.05 // CONTACT", "sectionTag": "DIRECT UPLINK" }
+      ],
+      "stageFigures": {
+        "email": {
+          "label": "Email",
+          "shortLabel": "Email",
+          "title": "Direct Email",
+          "description": "Send engineering inquiries, fullstack/AI opportunities, or research briefs directly via email."
+        },
+        "phone": {
+          "label": "Phone",
+          "shortLabel": "Phone",
+          "title": "Direct Phone Line",
+          "description": "Call directly or copy the phone number for interviews, scheduling, and remote coordination."
+        },
+        "github": {
+          "label": "GitHub",
+          "shortLabel": "GitHub",
+          "title": "GitHub Repositories",
+          "description": "Explore repositories, fullstack architectures, and interactive WebGL/AI implementations."
+        },
+        "linkedin": {
+          "label": "LinkedIn",
+          "shortLabel": "LinkedIn",
+          "title": "LinkedIn Profile",
+          "description": "Connect professionally for fullstack & AI engineering roles and technical collaboration."
+        },
+        "form": {
+          "label": "Contact Form",
+          "shortLabel": "Form",
+          "title": "Direct Message",
+          "preview": "Send a message",
+          "description": "Write a message below and send it directly to Sam Moradian's inbox."
+        }
+      },
+      "experience": [
+        {
+          "period": "May 2021 — Present",
+          "role": "Fullstack & AI Developer",
+          "company": "Sustainable Energy OWJ Company, Ardabil, Iran",
+          "detail": "Migrated legacy JS web platforms to React/Tailwind CSS paired with scalable Node.js/Express microservices. Deployed statistical TensorFlow & PyTorch ML/DL pipelines with Explainable AI (SHAP, LIME), type-safe tRPC/GraphQL APIs, PostgreSQL/Redis databases, and Clean Architecture with strict Zod validation.",
+          "stack": "React · Tailwind · Node.js · Express · PyTorch · TensorFlow · SHAP · LIME · tRPC · GraphQL · PostgreSQL · Redis · Zod"
+        },
+        {
+          "period": "July 2023 — Present",
+          "role": "Fullstack Developer (Volunteer / Part-Time)",
+          "company": "The Million Project, Germany (Remote)",
+          "detail": "Built a high-traffic social media MVP under tight deadlines with end-to-end ownership from implementation and automated Vitest suites to Docker CI/CD. Designed secure, scalable tRPC/Apollo GraphQL/REST APIs, crafted accessible Next.js/React/TypeScript/Tailwind UIs with strict Zod validation, and mentored junior developers.",
+          "stack": "Next.js · React · TypeScript · Tailwind · tRPC · Apollo GraphQL · REST · Vitest · Docker · CI/CD · Zod"
+        }
+      ],
+      "research": [
+        {
+          "id": "ART_SUB_01",
+          "status": "submitted",
+          "statusLabel": "SUBMITTED",
+          "title": "Submitted Research Article #1 — Title Pending",
+          "venue": "Journal / Conference Submission",
+          "year": "2025",
+          "summary": "Awaiting your exact paper title, co-authors, venue, abstract, and manuscript link.",
+          "keywords": "Submitted · Research Manuscript 01",
+          "url": ""
+        },
+        {
+          "id": "ART_SUB_02",
+          "status": "submitted",
+          "statusLabel": "SUBMITTED",
+          "title": "Submitted Research Article #2 — Title Pending",
+          "venue": "Journal / Conference Submission",
+          "year": "2025",
+          "summary": "Awaiting your second submitted article title, venue, abstract, and PDF/DOI link.",
+          "keywords": "Submitted · Research Manuscript 02",
+          "url": ""
+        },
+        {
+          "id": "ART_REV_01",
+          "status": "under_review",
+          "statusLabel": "UNDER REVIEW",
+          "title": "Research Manuscript #3 — Under Peer Review",
+          "venue": "Peer Review in Progress",
+          "year": "2026",
+          "summary": "Manuscript currently under peer review. Ready to update with exact title, target venue, and abstract.",
+          "keywords": "Under Review · Applied AI & Systems",
+          "url": ""
+        }
+      ],
+      "ui": {
+        "resetView": "RESET VIEW",
+        "scrollToExplore": "SCROLL TO EXPLORE",
+        "audioOn": "AUDIO ON",
+        "audioOff": "AUDIO OFF",
+        "downloadCv": "Download CV",
+        "downloadCvBadge": "PDF · EN / DE",
+        "cvModalTag": "CURRICULUM VITAE // EXPORT",
+        "cvModalTitle": "Choose CV Language",
+        "cvModalSubtitle": "Select your preferred resume edition to download immediately as PDF.",
+        "cvEnTitle": "English CV",
+        "cvEnDesc": "International edition · ATS-friendly 1-page PDF",
+        "cvDeTitle": "Deutsch (German CV)",
+        "cvDeDesc": "Deutscher Lebenslauf · DACH-optimiertes PDF",
+        "downloadEnCv": "English CV",
+        "downloadDeCv": "German CV",
+        "closeModal": "Close",
+        "educationLabel": "EDUCATION",
+        "certificateLabel": "CERTIFICATE",
+        "languagesLabel": "LANGUAGES",
+        "experienceHeading": "PROFESSIONAL EXPERIENCE",
+        "experienceHeaderTag": "CH.03 // EXPERIENCE",
+        "researchHeading": "ARTICLES & RESEARCH",
+        "researchHeaderTag": "CH.04 // RESEARCH",
+        "researchSummaryBadge": "2 SUBMITTED · 1 UNDER REVIEW",
+        "readPaper": "Read Paper",
+        "sendEmail": "Send Email",
+        "copy": "Copy",
+        "copyAddressSuffix": " Address",
+        "copyNumberSuffix": " Number",
+        "copied": "Copied",
+        "callNumber": "Call Number",
+        "openSourceTag": "Open Source",
+        "openGithubProfile": "Open GitHub Profile",
+        "connectOnLinkedin": "Connect on LinkedIn",
+        "yourEmailLabel": "Your Email",
+        "emailPlaceholder": "you@company.com",
+        "messageLabel": "Message",
+        "messagePlaceholder": "Write your message or inquiry...",
+        "sendMessage": "Send Message",
+        "sendingMessage": "Sending...",
+        "invalidEmailError": "Please enter a valid email address.",
+        "emptyMessageError": "Please enter a short message.",
+        "messagePreparedFor": "Message Sent to",
+        "draftOpenedNotice": "Your message has been delivered to",
+        "sendErrorFallback": "Direct email relay unavailable right now. Use the button below to send via your email app.",
+        "openInEmailApp": "Open in Email App",
+        "sendAnotherMessage": "Send Another Message"
+      }
+    },
+    "de": {
+      "identity": {
+        "name": "Sam Moradian",
+        "role": "Fullstack KI-Entwickler",
+        "manifesto": "KI-Integration, skalierbare Webplattformen & typsichere API-Architekturen.",
+        "location": "Ardabil, Iran · Remote",
+        "availability": "Verfügbar",
+        "avatarUrl": "/profile.png",
+        "avatarCaption": "SAM_01",
+        "email": "m.hesam.moradian@gmail.com",
+        "phone": "+1 (805) 900-7207",
+        "githubHandle": "@m-hesam-moradian",
+        "githubUrl": "https://github.com/m-hesam-moradian",
+        "linkedinHandle": "Sam Moradian",
+        "linkedinUrl": "https://www.linkedin.com"
+      },
+      "about": {
+        "headline": "Fullstack-Architektur & Angewandte KI",
+        "summary": "Erfahrener Fullstack-Entwickler mit Fokus auf KI-Integration und skalierbare Webanwendungen. Über 4 Jahre Erfahrung in zuverlässigen Webplattformen, ML/DL-Pipelines (PyTorch, TensorFlow), Explainable AI (SHAP, LIME), modularen IAM/SSO-Microservices, typsicheren API-Gateways und Next.js/React-Frontends. Zertifiziert durch die Harvard University (CS50x).",
+        "education": {
+          "degree": "B.Sc. Technische Informatik",
+          "institution": "Islamic Azad University (IAU)",
+          "institutionUrl": "https://iau.ir/en",
+          "period": "Sep. 2021 — Mai 2025",
+          "location": "Ardabil",
+          "equivalency": "18,5/20 (IR) · ≈ 3,8 GPA (US) · 1,5 Sehr Gut (DE · Anabin H+)"
+        },
+        "certificate": {
+          "title": "CS50x: Informatik",
+          "issuer": "Harvard University",
+          "date": "Jan. 2024",
+          "credentialId": "fe673d2f-6a44-46b..."
+        },
+        "languages": [
+          { "name": "Englisch", "level": "B2" },
+          { "name": "Deutsch", "level": "A2" },
+          { "name": "Türkisch", "level": "C1" },
+          { "name": "Persisch", "level": "C2" }
+        ],
+        "telemetry": [
+          { "label": "ERFAHRUNG", "value": "4+ JAHRE", "highlight": true },
+          { "label": "FOKUS", "value": "KI + FULLSTACK" },
+          { "label": "ABSCHLUSS", "value": "B.SC. (1,5 DE)" }
+        ],
+        "capabilities": [
+          {
+            "code": "01",
+            "label": "KI & XAI PIPELINES",
+            "value": "PyTorch · TensorFlow · SHAP · LIME · RAG"
+          },
+          {
+            "code": "02",
+            "label": "API & IAM SYSTEME",
+            "value": "tRPC · Apollo GraphQL · OAuth2/JWT · IAM/SSO"
+          },
+          {
+            "code": "03",
+            "label": "WEB & CLOUD STACK",
+            "value": "Next.js · React · TypeScript · Docker · PostgreSQL"
+          }
+        ]
+      },
+      "chambers": [
+        { "id": "summit", "hudTitle": "KAP.01 // GENESIS", "sectionTag": "BLOCKCHAIN-MONUMENT" },
+        { "id": "drift", "hudTitle": "KAP.02 // ÜBER MICH", "sectionTag": "NEURONALER KERN" },
+        { "id": "iris", "hudTitle": "KAP.03 // ERFAHRUNG", "sectionTag": "BERUFLICHER WERDEGANG" },
+        { "id": "research", "hudTitle": "KAP.04 // FORSCHUNG", "sectionTag": "ARTIKEL & PUBLIKATIONEN" },
+        { "id": "pedestal", "hudTitle": "KAP.05 // KONTAKT", "sectionTag": "DIREKTE VERBINDUNG" }
+      ],
+      "stageFigures": {
+        "email": {
+          "label": "E-Mail",
+          "shortLabel": "E-Mail",
+          "title": "Direkte E-Mail",
+          "description": "Senden Sie Projektanfragen, Jobangebote oder Forschungsanfragen direkt per E-Mail."
+        },
+        "phone": {
+          "label": "Telefon",
+          "shortLabel": "Telefon",
+          "title": "Telefonkontakt",
+          "description": "Direkt anrufen oder Rufnummer für technische Interviews und Terminabsprachen kopieren."
+        },
+        "github": {
+          "label": "GitHub",
+          "shortLabel": "GitHub",
+          "title": "GitHub-Repositories",
+          "description": "Entdecken Sie Open-Source-Repositories, Fullstack-Systeme und WebGL/KI-Projekte."
+        },
+        "linkedin": {
+          "label": "LinkedIn",
+          "shortLabel": "LinkedIn",
+          "title": "LinkedIn-Profil",
+          "description": "Vernetzen Sie sich für Fullstack- & KI-Entwicklungsrollen sowie technische Zusammenarbeit."
+        },
+        "form": {
+          "label": "Kontaktformular",
+          "shortLabel": "Formular",
+          "title": "Direkte Nachricht",
+          "preview": "Nachricht senden",
+          "description": "Schreiben Sie unten eine Nachricht, die direkt an Sam Moradians Postfach gesendet wird."
+        }
+      },
+      "experience": [
+        {
+          "period": "Mai 2021 — Heute",
+          "role": "Fullstack & AI Entwickler",
+          "company": "Sustainable Energy OWJ Company, Ardabil, Iran",
+          "detail": "End-to-End-Entwicklung und Migration von Legacy JS zu React/Tailwind CSS sowie skalierbaren Node.js/Express-Microservices. Produktive TensorFlow- & PyTorch-Pipelines mit Explainable AI (SHAP, LIME), typsichere tRPC/GraphQL-APIs, PostgreSQL/Redis und Clean Architecture mit Zod-Validierung.",
+          "stack": "React · Tailwind · Node.js · Express · PyTorch · TensorFlow · SHAP · LIME · tRPC · GraphQL · PostgreSQL · Redis · Zod"
+        },
+        {
+          "period": "Juli 2023 — Heute",
+          "role": "Fullstack Entwickler (Ehrenamtlich / Teilzeit)",
+          "company": "The Million Project, Deutschland (Remote)",
+          "detail": "Entwicklung eines hochfrequentierten Social-Media-MVP unter engen Fristen mit voller Verantwortung von Vitest-Tests bis Docker CI/CD. Sichere tRPC/Apollo GraphQL/REST-APIs, barrierefreie Next.js/React/TypeScript/Tailwind-Oberflächen mit Zod-Validierung sowie Mentoring von Junior-Entwicklern.",
+          "stack": "Next.js · React · TypeScript · Tailwind · tRPC · Apollo GraphQL · REST · Vitest · Docker · CI/CD · Zod"
+        }
+      ],
+      "research": [
+        {
+          "id": "ART_SUB_01",
+          "status": "submitted",
+          "statusLabel": "EINGEREICHT",
+          "title": "Eingereichter Forschungsartikel #1 — Titel ausstehend",
+          "venue": "Fachzeitschrift / Konferenz-Einreichung",
+          "year": "2025",
+          "summary": "Bereit für Titel, Co-Autoren, Publikationsort, Abstract und Link Ihres ersten eingereichten Artikels.",
+          "keywords": "Eingereicht · Forschungsartikel 01",
+          "url": ""
+        },
+        {
+          "id": "ART_SUB_02",
+          "status": "submitted",
+          "statusLabel": "EINGEREICHT",
+          "title": "Eingereichter Forschungsartikel #2 — Titel ausstehend",
+          "venue": "Fachzeitschrift / Konferenz-Einreichung",
+          "year": "2025",
+          "summary": "Bereit für Titel, Publikationsort, Abstract und PDF/DOI-Link Ihres zweiten eingereichten Artikels.",
+          "keywords": "Eingereicht · Forschungsartikel 02",
+          "url": ""
+        },
+        {
+          "id": "ART_REV_01",
+          "status": "under_review",
+          "statusLabel": "IN BEGUTACHTUNG",
+          "title": "Forschungsmanuskript #3 — Im Peer-Review",
+          "venue": "Laufendes Begutachtungsverfahren",
+          "year": "2026",
+          "summary": "Manuskript aktuell in Begutachtung. Bereit für genauen Titel, Zieljournal und Abstract.",
+          "keywords": "In Begutachtung · Angewandte KI",
+          "url": ""
+        }
+      ],
+      "ui": {
+        "resetView": "ANSICHT RESET",
+        "scrollToExplore": "SCROLLEN ZUM ENTDECKEN",
+        "audioOn": "AUDIO AN",
+        "audioOff": "AUDIO AUS",
+        "downloadCv": "CV Herunterladen",
+        "downloadCvBadge": "PDF · EN / DE",
+        "cvModalTag": "LEBENSLAUF // EXPORT",
+        "cvModalTitle": "CV-Sprache wählen",
+        "cvModalSubtitle": "Wählen Sie die gewünschte Lebenslauf-Version für den direkten PDF-Download.",
+        "cvEnTitle": "English CV",
+        "cvEnDesc": "Internationale Version · 1-seitiges PDF",
+        "cvDeTitle": "Deutsch (Deutscher CV)",
+        "cvDeDesc": "Deutscher Lebenslauf · DACH-Standard PDF",
+        "downloadEnCv": "Englischer CV",
+        "downloadDeCv": "Deutscher CV",
+        "closeModal": "Schließen",
+        "educationLabel": "AUSBILDUNG",
+        "certificateLabel": "ZERTIFIKATE",
+        "languagesLabel": "SPRACHEN",
+        "experienceHeading": "BERUFLICHE ERFAHRUNG",
+        "experienceHeaderTag": "KAP.03 // ERFAHRUNG",
+        "researchHeading": "ARTIKEL & FORSCHUNG",
+        "researchHeaderTag": "KAP.04 // FORSCHUNG",
+        "researchSummaryBadge": "2 EINGEREICHT · 1 IN BEGUTACHTUNG",
+        "readPaper": "Artikel öffnen",
+        "sendEmail": "E-Mail senden",
+        "copy": "Kopieren",
+        "copyAddressSuffix": "",
+        "copyNumberSuffix": "",
+        "copied": "Kopiert",
+        "callNumber": "Anrufen",
+        "openSourceTag": "Open Source",
+        "openGithubProfile": "GitHub-Profil öffnen",
+        "connectOnLinkedin": "Auf LinkedIn vernetzen",
+        "yourEmailLabel": "Ihre E-Mail",
+        "emailPlaceholder": "sie@unternehmen.de",
+        "messageLabel": "Nachricht",
+        "messagePlaceholder": "Schreiben Sie Ihre Nachricht oder Anfrage...",
+        "sendMessage": "Nachricht senden",
+        "sendingMessage": "Wird gesendet...",
+        "invalidEmailError": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        "emptyMessageError": "Bitte geben Sie eine kurze Nachricht ein.",
+        "messagePreparedFor": "Nachricht gesendet an",
+        "draftOpenedNotice": "Ihre Nachricht wurde erfolgreich gesendet an",
+        "sendErrorFallback": "Direktversand derzeit blockiert. Klicken Sie unten für Ihre E-Mail-App.",
+        "openInEmailApp": "In E-Mail-App öffnen",
+        "sendAnotherMessage": "Weitere Nachricht senden"
+      }
+    }
+  }
+}

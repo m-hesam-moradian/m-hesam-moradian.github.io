@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import {
   ArrowUpRight,
+  BookOpen,
   Check,
   Copy,
   Github,
   Linkedin,
+  Loader2,
   Mail,
   MessageSquare,
   Phone,
   Send,
 } from 'lucide-react';
-import { RESUME_DATA } from '../data/resume';
+import { ResumeData } from '../data/resume';
 import { PedestalMode } from '../three/detailedChambers';
 
-export type ScrollCardKind = 'about' | 'work' | 'contact';
+export type ScrollCardKind = 'about' | 'experience' | 'research' | 'contact';
 
 interface HologramInspectorModalProps {
+  resume: ResumeData;
   activeCard: ScrollCardKind | null;
   revealAmount: number;
   enterT: number;
@@ -24,23 +27,29 @@ interface HologramInspectorModalProps {
   onSelectPedestalMode: (mode: PedestalMode) => void;
 }
 
-const PEDESTAL_MODES: {
-  id: PedestalMode;
-  label: string;
-  shortLabel: string;
-  preview: string;
-}[] = [
-  { id: 'email', label: 'Email', shortLabel: 'Email', preview: RESUME_DATA.identity.email },
-  { id: 'phone', label: 'Phone', shortLabel: 'Phone', preview: RESUME_DATA.identity.phone },
-  { id: 'github', label: 'GitHub', shortLabel: 'GitHub', preview: RESUME_DATA.identity.githubHandle },
-  { id: 'linkedin', label: 'LinkedIn', shortLabel: 'LinkedIn', preview: RESUME_DATA.identity.linkedinHandle },
-  { id: 'form', label: 'Contact Form', shortLabel: 'Form', preview: 'Send a message' },
-];
-
 /**
  * Compact Cybernetic Wireframe Face SVG displayed inside the top-left portrait badge
- * until `avatarUrl` is set in `src/data/resume.ts`.
+ * if no `avatarUrl` image loads.
  */
+const HoloGridBackdrop: React.FC = () => (
+  <svg
+    viewBox="0 0 100 100"
+    className="pointer-events-none absolute inset-0 w-full h-full"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <circle cx="50" cy="46" r="38" stroke="#00FFFF" strokeOpacity="0.28" strokeDasharray="2 3" />
+    <circle cx="50" cy="46" r="24" stroke="#00FFFF" strokeOpacity="0.16" />
+    <line x1="6" y1="46" x2="94" y2="46" stroke="#00FFFF" strokeOpacity="0.22" />
+    <line x1="50" y1="6" x2="50" y2="94" stroke="#00FFFF" strokeOpacity="0.22" />
+    <line x1="0" y1="22" x2="100" y2="22" stroke="#00FFFF" strokeOpacity="0.1" />
+    <line x1="0" y1="70" x2="100" y2="70" stroke="#00FFFF" strokeOpacity="0.1" />
+    <line x1="25" y1="0" x2="25" y2="100" stroke="#00FFFF" strokeOpacity="0.1" />
+    <line x1="75" y1="0" x2="75" y2="100" stroke="#00FFFF" strokeOpacity="0.1" />
+  </svg>
+);
+
 const HoloFaceBadge: React.FC = () => (
   <svg
     viewBox="0 0 100 100"
@@ -80,6 +89,7 @@ const HoloFaceBadge: React.FC = () => (
 );
 
 export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
+  resume,
   activeCard,
   revealAmount,
   enterT,
@@ -92,15 +102,23 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
   const [senderEmail, setSenderEmail] = useState('');
   const [messageText, setMessageText] = useState('');
   const [formError, setFormError] = useState('');
+  const [formErrorWithMailto, setFormErrorWithMailto] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [formSent, setFormSent] = useState(false);
 
   useEffect(() => {
     setAvatarFailed(false);
-  }, [RESUME_DATA.identity.avatarUrl]);
+  }, [resume.identity.avatarUrl]);
+
+  useEffect(() => {
+    setFormError('');
+    setFormErrorWithMailto(false);
+  }, [resume]);
 
   if (!activeCard || revealAmount <= 0.01) return null;
 
-  const hasPhoto = Boolean(RESUME_DATA.identity.avatarUrl.trim()) && !avatarFailed;
+  const hasPhoto = Boolean(resume.identity.avatarUrl.trim()) && !avatarFailed;
+  const ui = resume.ui;
 
   const handleCopy = async (field: 'email' | 'phone', value: string) => {
     try {
@@ -112,29 +130,132 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
     }
   };
 
-  const handleContactSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const buildMailtoHref = () => {
     const trimmedEmail = senderEmail.trim();
     const trimmedMsg = messageText.trim();
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      setFormError('Please enter a valid email address.');
+    const subject = encodeURIComponent(`Portfolio Inquiry from ${trimmedEmail || 'Visitor'}`);
+    const body = encodeURIComponent(`From: ${trimmedEmail}\n\n${trimmedMsg}`);
+    return `mailto:${resume.identity.email}?subject=${subject}&body=${body}`;
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSending) return;
+
+    const trimmedEmail = senderEmail.trim();
+    const trimmedMsg = messageText.trim();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(trimmedEmail)) {
+      setFormError(ui.invalidEmailError);
+      setFormErrorWithMailto(false);
       return;
     }
     if (!trimmedMsg) {
-      setFormError('Please enter a short message.');
+      setFormError(ui.emptyMessageError);
+      setFormErrorWithMailto(false);
       return;
     }
-    setFormError('');
-    setFormSent(true);
 
-    const subject = encodeURIComponent(`Portfolio Inquiry from ${trimmedEmail}`);
-    const body = encodeURIComponent(`From: ${trimmedEmail}\n\n${trimmedMsg}`);
-    window.location.href = `mailto:${RESUME_DATA.identity.email}?subject=${subject}&body=${body}`;
+    setFormError('');
+    setFormErrorWithMailto(false);
+    setIsSending(true);
+
+    try {
+      const accessKey = resume.contactForm.web3formsAccessKey?.trim();
+      if (accessKey) {
+        const res = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            access_key: accessKey,
+            from_name: trimmedEmail,
+            email: trimmedEmail,
+            replyto: trimmedEmail,
+            subject: `Portfolio Inquiry from ${trimmedEmail}`,
+            message: trimmedMsg,
+          }),
+        });
+        const data = (await res.json()) as { success?: boolean };
+        if (!res.ok || !data.success) {
+          throw new Error('Relay returned unsuccessful response');
+        }
+      } else {
+        const endpoint =
+          resume.contactForm.endpoint?.trim() ||
+          `https://formsubmit.co/ajax/${resume.identity.email}`;
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            email: trimmedEmail,
+            _replyto: trimmedEmail,
+            _subject: `New Portfolio Inquiry from ${trimmedEmail}`,
+            message: trimmedMsg,
+            _captcha: 'false',
+          }),
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+      }
+
+      setFormSent(true);
+    } catch {
+      setFormError(ui.sendErrorFallback);
+      setFormErrorWithMailto(true);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (activeCard === 'contact') {
-    const activeFigure = RESUME_DATA.stageFigures[pedestalMode];
-    const telHref = `tel:${RESUME_DATA.identity.phone.replace(/[^\d+]/g, '')}`;
+    const activeFigure = resume.stageFigures[pedestalMode];
+    const telHref = `tel:${resume.identity.phone.replace(/[^\d+]/g, '')}`;
+
+    const pedestalModes: {
+      id: PedestalMode;
+      label: string;
+      shortLabel: string;
+      preview: string;
+    }[] = [
+      {
+        id: 'email',
+        label: resume.stageFigures.email.label,
+        shortLabel: resume.stageFigures.email.shortLabel,
+        preview: resume.identity.email,
+      },
+      {
+        id: 'phone',
+        label: resume.stageFigures.phone.label,
+        shortLabel: resume.stageFigures.phone.shortLabel,
+        preview: resume.identity.phone,
+      },
+      {
+        id: 'github',
+        label: resume.stageFigures.github.label,
+        shortLabel: resume.stageFigures.github.shortLabel,
+        preview: resume.identity.githubHandle,
+      },
+      {
+        id: 'linkedin',
+        label: resume.stageFigures.linkedin.label,
+        shortLabel: resume.stageFigures.linkedin.shortLabel,
+        preview: resume.identity.linkedinHandle,
+      },
+      {
+        id: 'form',
+        label: resume.stageFigures.form.label,
+        shortLabel: resume.stageFigures.form.shortLabel,
+        preview: resume.stageFigures.form.preview ?? resume.stageFigures.form.title,
+      },
+    ];
 
     return (
       <div
@@ -155,252 +276,285 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
             <span aria-hidden="true" className="pointer-events-none absolute -bottom-[1px] -right-[1px] h-3.5 w-3.5 border-b-2 border-r-2 border-[#00FFFF]" />
 
             <div className="p-4 sm:p-6 overflow-x-hidden">
-            {pedestalMode === 'email' && (
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2.5 sm:pb-3">
-                  <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
-                    <Mail className="w-4 h-4" />
-                    <span>{activeFigure.title}</span>
+              {pedestalMode === 'email' && (
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2.5 sm:pb-3">
+                    <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
+                      <Mail className="w-4 h-4" />
+                      <span>{activeFigure.title}</span>
+                    </div>
+                    <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">
+                      {resume.identity.availability}
+                    </span>
                   </div>
-                  <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">
-                    {RESUME_DATA.identity.availability}
-                  </span>
-                </div>
 
-                <div className="space-y-1">
-                  <p className="font-display-hud text-base sm:text-2xl font-semibold tracking-tight text-[#FFFFFF] break-all">
-                    {RESUME_DATA.identity.email}
-                  </p>
-                  <p className="text-[11px] sm:text-sm leading-snug sm:leading-relaxed text-[#CBD5E1]">
-                    {activeFigure.description}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 sm:gap-2.5 pt-0.5 sm:pt-1">
-                  <a
-                    href={`mailto:${RESUME_DATA.identity.email}`}
-                    className="inline-flex min-h-[40px] sm:min-h-[46px] items-center justify-center gap-1.5 sm:gap-2 bg-[#00FFFF] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors focus-visible:outline-2 focus-visible:outline-[#FFFFFF]"
-                  >
-                    <Mail className="w-4 h-4 shrink-0" />
-                    <span className="whitespace-nowrap">Send Email</span>
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('email', RESUME_DATA.identity.email)}
-                    className="inline-flex min-h-[40px] sm:min-h-[46px] items-center justify-center gap-1.5 sm:gap-2 border border-[#00FFFF]/65 bg-[#0A131C]/90 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-[#FFFFFF] hover:border-[#00FFFF] hover:text-[#00FFFF] transition-colors cursor-pointer"
-                  >
-                    {copiedField === 'email' ? (
-                      <>
-                        <Check className="w-4 h-4 text-[#00FFFF] shrink-0" />
-                        <span className="whitespace-nowrap">Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4 shrink-0" />
-                        <span className="whitespace-nowrap">Copy<span className="hidden sm:inline"> Address</span></span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {pedestalMode === 'phone' && (
-              <div className="space-y-2 sm:space-y-4">
-                <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2 sm:pb-3">
-                  <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
-                    <Phone className="w-4 h-4" />
-                    <span>{activeFigure.title}</span>
-                  </div>
-                  <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">
-                    {RESUME_DATA.identity.location}
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="font-mono-hud text-lg sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
-                    {RESUME_DATA.identity.phone}
-                  </p>
-                  <p className="text-[11px] sm:text-sm leading-snug sm:leading-relaxed text-[#CBD5E1]">
-                    {activeFigure.description}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 sm:gap-2.5 pt-0.5 sm:pt-1">
-                  <a
-                    href={telHref}
-                    className="inline-flex min-h-[40px] sm:min-h-[46px] items-center justify-center gap-1.5 sm:gap-2 bg-[#00FFFF] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors focus-visible:outline-2 focus-visible:outline-[#FFFFFF]"
-                  >
-                    <Phone className="w-4 h-4 shrink-0" />
-                    <span className="whitespace-nowrap">Call Number</span>
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('phone', RESUME_DATA.identity.phone)}
-                    className="inline-flex min-h-[40px] sm:min-h-[46px] items-center justify-center gap-1.5 sm:gap-2 border border-[#00FFFF]/65 bg-[#0A131C]/90 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-[#FFFFFF] hover:border-[#00FFFF] hover:text-[#00FFFF] transition-colors cursor-pointer"
-                  >
-                    {copiedField === 'phone' ? (
-                      <>
-                        <Check className="w-4 h-4 text-[#00FFFF] shrink-0" />
-                        <span className="whitespace-nowrap">Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4 shrink-0" />
-                        <span className="whitespace-nowrap">Copy<span className="hidden sm:inline"> Number</span></span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {pedestalMode === 'github' && (
-              <div className="space-y-2 sm:space-y-4">
-                <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2 sm:pb-3">
-                  <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
-                    <Github className="w-4 h-4" />
-                    <span>{activeFigure.title}</span>
-                  </div>
-                  <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">Open Source</span>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="font-display-hud text-lg sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
-                    {RESUME_DATA.identity.githubHandle}
-                  </p>
-                  <p className="text-[11px] sm:text-sm leading-snug sm:leading-relaxed text-[#CBD5E1]">
-                    {activeFigure.description}
-                  </p>
-                </div>
-
-                <a
-                  href={RESUME_DATA.identity.githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-[40px] sm:min-h-[48px] w-full items-center justify-center gap-2 bg-[#00FFFF] px-4 py-2 text-xs sm:text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors focus-visible:outline-2 focus-visible:outline-[#FFFFFF]"
-                >
-                  <Github className="w-4 h-4" />
-                  <span className="whitespace-nowrap">Open GitHub Profile</span>
-                  <ArrowUpRight className="w-4 h-4" />
-                </a>
-              </div>
-            )}
-
-            {pedestalMode === 'linkedin' && (
-              <div className="space-y-2 sm:space-y-4">
-                <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2 sm:pb-3">
-                  <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
-                    <Linkedin className="w-4 h-4" />
-                    <span>{activeFigure.title}</span>
-                  </div>
-                  <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">
-                    {RESUME_DATA.identity.linkedinHandle}
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="font-display-hud text-lg sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
-                    {RESUME_DATA.identity.name}
-                  </p>
-                  <p className="text-[11px] sm:text-sm text-[#D8FFFF]">
-                    {RESUME_DATA.identity.role} · {RESUME_DATA.identity.location}
-                  </p>
-                  <p className="text-[11px] sm:text-sm leading-snug sm:leading-relaxed text-[#CBD5E1]">
-                    {activeFigure.description}
-                  </p>
-                </div>
-
-                <a
-                  href={RESUME_DATA.identity.linkedinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-[40px] sm:min-h-[48px] w-full items-center justify-center gap-2 bg-[#00FFFF] px-4 py-2 text-xs sm:text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors focus-visible:outline-2 focus-visible:outline-[#FFFFFF]"
-                >
-                  <Linkedin className="w-4 h-4" />
-                  <span className="whitespace-nowrap">Connect on LinkedIn</span>
-                  <ArrowUpRight className="w-4 h-4" />
-                </a>
-              </div>
-            )}
-
-            {pedestalMode === 'form' && (
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2 sm:pb-3">
-                  <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
-                    <MessageSquare className="w-4 h-4" />
-                    <span>{activeFigure.title}</span>
-                  </div>
-                  <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">
-                    {RESUME_DATA.identity.name}
-                  </span>
-                </div>
-
-                {formSent ? (
-                  <div className="border border-[#00FFFF]/50 bg-[#0A1922]/90 p-4 space-y-2.5 text-center">
-                    <p className="text-sm font-semibold text-[#FFFFFF]">
-                      Message prepared for {RESUME_DATA.identity.name}
+                  <div className="space-y-1">
+                    <p className="font-display-hud text-base sm:text-2xl font-semibold tracking-tight text-[#FFFFFF] break-all">
+                      {resume.identity.email}
                     </p>
-                    <p className="text-xs text-[#CBD5E1]">
-                      Your email draft opened. Direct inbox:{' '}
-                      <span className="text-[#00FFFF]">{RESUME_DATA.identity.email}</span>
+                    <p className="text-[11px] sm:text-sm leading-snug sm:leading-relaxed text-[#CBD5E1]">
+                      {activeFigure.description}
                     </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 sm:gap-2.5 pt-0.5 sm:pt-1">
+                    <a
+                      href={`mailto:${resume.identity.email}`}
+                      className="inline-flex min-h-[40px] sm:min-h-[46px] items-center justify-center gap-1.5 sm:gap-2 bg-[#00FFFF] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors focus-visible:outline-2 focus-visible:outline-[#FFFFFF]"
+                    >
+                      <Mail className="w-4 h-4 shrink-0" />
+                      <span className="whitespace-nowrap">{ui.sendEmail}</span>
+                    </a>
                     <button
                       type="button"
-                      onClick={() => {
-                        setFormSent(false);
-                        setMessageText('');
-                      }}
-                      className="inline-flex min-h-[40px] items-center justify-center border border-[#00FFFF]/60 px-4 py-2 text-xs font-medium text-[#00FFFF] hover:bg-[#00FFFF]/15 transition-colors cursor-pointer"
+                      onClick={() => handleCopy('email', resume.identity.email)}
+                      className="inline-flex min-h-[40px] sm:min-h-[46px] items-center justify-center gap-1.5 sm:gap-2 border border-[#00FFFF]/65 bg-[#0A131C]/90 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-[#FFFFFF] hover:border-[#00FFFF] hover:text-[#00FFFF] transition-colors cursor-pointer"
                     >
-                      Send Another Message
+                      {copiedField === 'email' ? (
+                        <>
+                          <Check className="w-4 h-4 text-[#00FFFF] shrink-0" />
+                          <span className="whitespace-nowrap">{ui.copied}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 shrink-0" />
+                          <span className="whitespace-nowrap">
+                            {ui.copy}
+                            {ui.copyAddressSuffix && (
+                              <span className="hidden sm:inline">{ui.copyAddressSuffix}</span>
+                            )}
+                          </span>
+                        </>
+                      )}
                     </button>
                   </div>
-                ) : (
-                  <form onSubmit={handleContactSubmit} className="space-y-2.5 sm:space-y-3" noValidate>
-                    <p className="text-xs text-[#CBD5E1] leading-snug">{activeFigure.description}</p>
-                    <div>
-                      <label htmlFor="contact-email" className="block text-[11px] sm:text-xs font-medium text-[#B8C4D0] mb-1">
-                        Your Email
-                      </label>
-                      <input
-                        id="contact-email"
-                        type="email"
-                        value={senderEmail}
-                        onChange={(e) => setSenderEmail(e.target.value)}
-                        placeholder="you@company.com"
-                        className="w-full h-[42px] sm:h-[44px] border border-[#8A929A]/45 bg-[#090F17]/95 px-3 py-2 text-sm text-[#FFFFFF] placeholder:text-[#8A929A] focus:border-[#00FFFF] focus:outline-none"
-                      />
+                </div>
+              )}
+
+              {pedestalMode === 'phone' && (
+                <div className="space-y-2 sm:space-y-4">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2 sm:pb-3">
+                    <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
+                      <Phone className="w-4 h-4" />
+                      <span>{activeFigure.title}</span>
                     </div>
-                    <div>
-                      <label htmlFor="contact-message" className="block text-[11px] sm:text-xs font-medium text-[#B8C4D0] mb-1">
-                        Message
-                      </label>
-                      <textarea
-                        id="contact-message"
-                        rows={3}
-                        value={messageText}
-                        onChange={(e) => setMessageText(e.target.value)}
-                        placeholder="Write your message or role inquiry..."
-                        className="w-full border border-[#8A929A]/45 bg-[#090F17]/95 px-3 py-2 text-sm text-[#FFFFFF] placeholder:text-[#8A929A] focus:border-[#00FFFF] focus:outline-none resize-none"
-                      />
-                    </div>
-                    {formError && (
-                      <p className="text-xs font-medium text-[#00FFFF]" role="alert">
-                        {formError}
-                      </p>
-                    )}
-                    <button
-                      type="submit"
-                      className="inline-flex min-h-[44px] sm:min-h-[48px] w-full items-center justify-center gap-2 bg-[#00FFFF] px-4 py-2 text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors cursor-pointer"
+                    <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">
+                      {resume.identity.location}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="font-mono-hud text-lg sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+                      {resume.identity.phone}
+                    </p>
+                    <p className="text-[11px] sm:text-sm leading-snug sm:leading-relaxed text-[#CBD5E1]">
+                      {activeFigure.description}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 sm:gap-2.5 pt-0.5 sm:pt-1">
+                    <a
+                      href={telHref}
+                      className="inline-flex min-h-[40px] sm:min-h-[46px] items-center justify-center gap-1.5 sm:gap-2 bg-[#00FFFF] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors focus-visible:outline-2 focus-visible:outline-[#FFFFFF]"
                     >
-                      <Send className="w-4 h-4" />
-                      <span>Send Message</span>
+                      <Phone className="w-4 h-4 shrink-0" />
+                      <span className="whitespace-nowrap">{ui.callNumber}</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy('phone', resume.identity.phone)}
+                      className="inline-flex min-h-[40px] sm:min-h-[46px] items-center justify-center gap-1.5 sm:gap-2 border border-[#00FFFF]/65 bg-[#0A131C]/90 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-[#FFFFFF] hover:border-[#00FFFF] hover:text-[#00FFFF] transition-colors cursor-pointer"
+                    >
+                      {copiedField === 'phone' ? (
+                        <>
+                          <Check className="w-4 h-4 text-[#00FFFF] shrink-0" />
+                          <span className="whitespace-nowrap">{ui.copied}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 shrink-0" />
+                          <span className="whitespace-nowrap">
+                            {ui.copy}
+                            {ui.copyNumberSuffix && (
+                              <span className="hidden sm:inline">{ui.copyNumberSuffix}</span>
+                            )}
+                          </span>
+                        </>
+                      )}
                     </button>
-                  </form>
-                )}
-              </div>
-            )}
+                  </div>
+                </div>
+              )}
+
+              {pedestalMode === 'github' && (
+                <div className="space-y-2 sm:space-y-4">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2 sm:pb-3">
+                    <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
+                      <Github className="w-4 h-4" />
+                      <span>{activeFigure.title}</span>
+                    </div>
+                    <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">
+                      {ui.openSourceTag}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="font-display-hud text-lg sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+                      {resume.identity.githubHandle}
+                    </p>
+                    <p className="text-[11px] sm:text-sm leading-snug sm:leading-relaxed text-[#CBD5E1]">
+                      {activeFigure.description}
+                    </p>
+                  </div>
+
+                  <a
+                    href={resume.identity.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[40px] sm:min-h-[48px] w-full items-center justify-center gap-2 bg-[#00FFFF] px-4 py-2 text-xs sm:text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors focus-visible:outline-2 focus-visible:outline-[#FFFFFF]"
+                  >
+                    <Github className="w-4 h-4" />
+                    <span className="whitespace-nowrap">{ui.openGithubProfile}</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </a>
+                </div>
+              )}
+
+              {pedestalMode === 'linkedin' && (
+                <div className="space-y-2 sm:space-y-4">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2 sm:pb-3">
+                    <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
+                      <Linkedin className="w-4 h-4" />
+                      <span>{activeFigure.title}</span>
+                    </div>
+                    <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">
+                      {resume.identity.linkedinHandle}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="font-display-hud text-lg sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+                      {resume.identity.name}
+                    </p>
+                    <p className="text-[11px] sm:text-sm text-[#D8FFFF]">
+                      {resume.identity.role} · {resume.identity.location}
+                    </p>
+                    <p className="text-[11px] sm:text-sm leading-snug sm:leading-relaxed text-[#CBD5E1]">
+                      {activeFigure.description}
+                    </p>
+                  </div>
+
+                  <a
+                    href={resume.identity.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[40px] sm:min-h-[48px] w-full items-center justify-center gap-2 bg-[#00FFFF] px-4 py-2 text-xs sm:text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors focus-visible:outline-2 focus-visible:outline-[#FFFFFF]"
+                  >
+                    <Linkedin className="w-4 h-4" />
+                    <span className="whitespace-nowrap">{ui.connectOnLinkedin}</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </a>
+                </div>
+              )}
+
+              {pedestalMode === 'form' && (
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-2 sm:pb-3">
+                    <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wider uppercase text-[#00FFFF]">
+                      <MessageSquare className="w-4 h-4" />
+                      <span>{activeFigure.title}</span>
+                    </div>
+                    <span className="font-mono-hud text-[10px] sm:text-[11px] text-[#B8C4D0]">
+                      {resume.identity.name}
+                    </span>
+                  </div>
+
+                  {formSent ? (
+                    <div className="border border-[#00FFFF]/50 bg-[#0A1922]/90 p-4 space-y-2.5 text-center">
+                      <div className="mx-auto flex h-9 w-9 items-center justify-center border border-[#00FFFF]/60 bg-[#00FFFF]/15 text-[#00FFFF]">
+                        <Check className="w-5 h-5" />
+                      </div>
+                      <p className="text-sm font-semibold text-[#FFFFFF]">
+                        {ui.messagePreparedFor} {resume.identity.name}
+                      </p>
+                      <p className="text-xs text-[#CBD5E1]">
+                        {ui.draftOpenedNotice}{' '}
+                        <span className="text-[#00FFFF] break-all">{resume.identity.email}</span>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormSent(false);
+                          setMessageText('');
+                        }}
+                        className="inline-flex min-h-[40px] items-center justify-center border border-[#00FFFF]/60 px-4 py-2 text-xs font-medium text-[#00FFFF] hover:bg-[#00FFFF]/15 transition-colors cursor-pointer"
+                      >
+                        {ui.sendAnotherMessage}
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleContactSubmit} className="space-y-2.5 sm:space-y-3" noValidate>
+                      <p className="text-xs text-[#CBD5E1] leading-snug">{activeFigure.description}</p>
+                      <div>
+                        <label htmlFor="contact-email" className="block text-[11px] sm:text-xs font-medium text-[#B8C4D0] mb-1">
+                          {ui.yourEmailLabel}
+                        </label>
+                        <input
+                          id="contact-email"
+                          type="email"
+                          value={senderEmail}
+                          disabled={isSending}
+                          onChange={(e) => setSenderEmail(e.target.value)}
+                          placeholder={ui.emailPlaceholder}
+                          className="w-full h-[40px] sm:h-[44px] border border-[#8A929A]/45 bg-[#090F17]/95 px-3 py-2 text-sm text-[#FFFFFF] placeholder:text-[#8A929A] focus:border-[#00FFFF] focus:outline-none disabled:opacity-60"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="contact-message" className="block text-[11px] sm:text-xs font-medium text-[#B8C4D0] mb-1">
+                          {ui.messageLabel}
+                        </label>
+                        <textarea
+                          id="contact-message"
+                          rows={3}
+                          value={messageText}
+                          disabled={isSending}
+                          onChange={(e) => setMessageText(e.target.value)}
+                          placeholder={ui.messagePlaceholder}
+                          className="w-full border border-[#8A929A]/45 bg-[#090F17]/95 px-3 py-2 text-sm text-[#FFFFFF] placeholder:text-[#8A929A] focus:border-[#00FFFF] focus:outline-none resize-none disabled:opacity-60"
+                        />
+                      </div>
+                      {formError && (
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-medium text-[#00FFFF]" role="alert">
+                            {formError}
+                          </p>
+                          {formErrorWithMailto && (
+                            <a
+                              href={buildMailtoHref()}
+                              className="inline-flex items-center gap-1.5 border border-[#00FFFF]/60 px-3 py-1.5 text-xs font-medium text-[#00FFFF] hover:bg-[#00FFFF]/15 transition-colors"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              <span>{ui.openInEmailApp}</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={isSending}
+                        className="inline-flex min-h-[42px] sm:min-h-[48px] w-full items-center justify-center gap-2 bg-[#00FFFF] px-4 py-2 text-sm font-semibold text-[#060A0F] hover:bg-[#D8FFFF] transition-colors cursor-pointer disabled:opacity-70"
+                      >
+                        {isSending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                        <span>{isSending ? ui.sendingMessage : ui.sendMessage}</span>
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -408,7 +562,7 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
         {/* Big, Noticeable 5-Button Bottom Contact & Figure Switcher Dock */}
         <div className="pointer-events-auto mx-auto w-full max-w-[980px] pt-1">
           <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5">
-            {PEDESTAL_MODES.map((m) => {
+            {pedestalModes.map((m) => {
               const isActive = pedestalMode === m.id;
               const Icon =
                 m.id === 'email'
@@ -460,19 +614,20 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
   }
 
   const cardWidthClass =
-    activeCard === 'work'
+    activeCard === 'experience' || activeCard === 'research'
       ? 'w-full md:w-[46%] lg:w-[43%] max-w-[530px]'
       : 'w-full md:w-[45%] lg:w-[42%] max-w-[490px]';
 
-  const isWorkLeft = activeCard === 'work';
+  // CH.02 About Me -> RIGHT desktop; CH.03 Experience -> LEFT desktop; CH.04 Research -> RIGHT desktop
+  const isLeftAlignedDesktop = activeCard === 'experience';
 
-  const wrapperAlignClass = isWorkLeft
+  const wrapperAlignClass = isLeftAlignedDesktop
     ? 'justify-center md:justify-start md:pl-8 lg:pl-12'
     : 'justify-center md:justify-end md:pr-8 lg:pr-12';
 
   const animStyle: React.CSSProperties = {
     opacity: revealAmount,
-    transform: isWorkLeft
+    transform: isLeftAlignedDesktop
       ? `translate3d(${(-(1 - enterT) * 22 - exitT * 18).toFixed(1)}px, 0, 0) scale(${(
           0.96 +
           0.04 * enterT +
@@ -486,6 +641,8 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
     willChange: 'transform, opacity',
   };
 
+  const isScrollableInteractive = activeCard === 'experience' || activeCard === 'research';
+
   return (
     <div
       aria-live="polite"
@@ -494,138 +651,224 @@ export const HologramInspectorModal: React.FC<HologramInspectorModalProps> = ({
       <div
         style={animStyle}
         className={`relative ${cardWidthClass} border border-[#00FFFF]/45 bg-[#080C12]/90 backdrop-blur-md ${
-          activeCard === 'work' ? 'pointer-events-auto md:pointer-events-none' : 'pointer-events-none'
+          isScrollableInteractive ? 'pointer-events-auto md:pointer-events-auto' : 'pointer-events-none'
         } shadow-[0_14px_48px_rgba(0,0,0,0.78)]`}
       >
-        {/* Crisp Pure Cyan Corner Reticles (kept outside inner scroll wrapper to prevent any horizontal overflow) */}
+        {/* Crisp Pure Cyan Corner Reticles */}
         <span aria-hidden="true" className="pointer-events-none absolute -top-[1px] -left-[1px] h-3.5 w-3.5 border-t-2 border-l-2 border-[#00FFFF]" />
         <span aria-hidden="true" className="pointer-events-none absolute -top-[1px] -right-[1px] h-3.5 w-3.5 border-t-2 border-r-2 border-[#00FFFF]" />
         <span aria-hidden="true" className="pointer-events-none absolute -bottom-[1px] -left-[1px] h-3.5 w-3.5 border-b-2 border-l-2 border-[#00FFFF]" />
         <span aria-hidden="true" className="pointer-events-none absolute -bottom-[1px] -right-[1px] h-3.5 w-3.5 border-b-2 border-r-2 border-[#00FFFF]" />
 
         {/* ================================================================= */}
-        {/* CH.02 // ABOUT ME — Expansive Mobile (~55-60%) & Right Desktop     */}
+        {/* CH.02 // ABOUT ME                                                  */}
         {/* ================================================================= */}
         {activeCard === 'about' && (
-          <div className="p-5 md:p-6 min-h-[55vh] md:min-h-0 flex flex-col justify-between gap-4 overflow-x-hidden">
-            {/* Top-Left Compact Biometric Face ID + Identity Header */}
-            <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 border-b border-[#8A929A]/25 pb-4">
+          <div className="p-4 sm:p-5 md:p-6 min-h-[55vh] md:min-h-0 flex flex-col justify-between gap-3 sm:gap-4 overflow-x-hidden">
+            <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 border-b border-[#8A929A]/25 pb-3.5 sm:pb-4">
               <div className="relative h-[72px] w-[72px] sm:h-[86px] sm:w-[86px] shrink-0 overflow-hidden border border-[#00FFFF]/55 bg-[#06090D]">
                 {hasPhoto ? (
-                  <img
-                    src={RESUME_DATA.identity.avatarUrl}
-                    alt={RESUME_DATA.identity.name}
-                    onError={() => setAvatarFailed(true)}
-                    className="h-full w-full object-cover grayscale contrast-125 brightness-95"
-                  />
+                  <>
+                    <HoloGridBackdrop />
+                    <img
+                      src={resume.identity.avatarUrl}
+                      alt={resume.identity.name}
+                      onError={() => setAvatarFailed(true)}
+                      className="relative z-10 h-full w-full object-cover object-top grayscale contrast-125 brightness-95"
+                    />
+                  </>
                 ) : (
                   <HoloFaceBadge />
                 )}
 
-                {/* Pure Cyan Hologram Concept Tint + Scanlines + Vertical Sweep */}
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-[#00FFFF]/22 mix-blend-color" />
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-[#00FFFF]/14 mix-blend-screen" />
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 holo-scanlines opacity-85" />
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-[#00FFFF]/14 mix-blend-screen"
-                />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 holo-scanlines opacity-75"
-                />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-transparent via-[#00FFFF]/30 to-transparent holo-scan-sweep"
+                  className="pointer-events-none absolute inset-x-0 top-0 z-20 h-5 bg-gradient-to-b from-transparent via-[#00FFFF]/40 to-transparent holo-scan-sweep"
                 />
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute bottom-0.5 right-1 font-mono-hud text-[8px] tracking-wider text-[#00FFFF]"
+                  className="pointer-events-none absolute bottom-0.5 right-1 z-20 bg-[#06090D]/75 px-1 font-mono-hud text-[8px] tracking-wider text-[#00FFFF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]"
                 >
-                  {RESUME_DATA.identity.avatarCaption}
+                  {resume.identity.avatarCaption}
                 </span>
               </div>
 
-              <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h2 className="font-display-hud text-xl sm:text-2xl font-medium tracking-tight text-[#FFFFFF]">
-                    {RESUME_DATA.identity.name}
+                    {resume.identity.name}
                   </h2>
                   <span className="font-mono-hud text-[10px] tracking-widest text-[#00FFFF] border border-[#00FFFF]/50 bg-[#00FFFF]/12 px-2 py-0.5 shrink-0">
-                    {RESUME_DATA.identity.availability}
+                    {resume.identity.availability}
                   </span>
                 </div>
                 <p className="font-mono-hud text-xs text-[#D8FFFF]/95 leading-snug">
-                  {RESUME_DATA.identity.role}
+                  {resume.identity.role}
                 </p>
                 <p className="font-mono-hud text-[11px] tracking-wider text-[#9CA6B0]">
-                  {RESUME_DATA.identity.location}
+                  {resume.identity.location}
                 </p>
               </div>
             </div>
 
-            {/* Clean, High-Contrast Bio Description */}
-            <p className="text-[15px] leading-relaxed text-[#E8F0F4] my-auto">
-              {RESUME_DATA.about.summary}
+            <p className="text-[13.5px] sm:text-[15px] leading-relaxed text-[#E8F0F4] my-auto">
+              {resume.about.summary}
             </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 border-t border-[#8A929A]/25 pt-3">
+              <div className="min-w-0 space-y-0.5">
+                <p className="font-mono-hud text-[9.5px] tracking-widest text-[#00FFFF]">
+                  {ui.educationLabel}
+                </p>
+                <p className="text-xs font-medium text-[#FFFFFF] truncate">
+                  {resume.about.education.degree}
+                </p>
+                <p className="font-mono-hud text-[10px] text-[#9CA6B0] truncate">
+                  {resume.about.education.institution} · {resume.about.education.period}
+                </p>
+                <p className="font-mono-hud text-[9.5px] text-[#D8FFFF]/85">
+                  {resume.about.education.equivalency}
+                </p>
+              </div>
+
+              <div className="min-w-0 space-y-1">
+                <div>
+                  <p className="font-mono-hud text-[9.5px] tracking-widest text-[#00FFFF]">
+                    {ui.certificateLabel}
+                  </p>
+                  <p className="text-xs font-medium text-[#FFFFFF] truncate">
+                    {resume.about.certificate.title} — {resume.about.certificate.issuer}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-mono-hud text-[9.5px] tracking-widest text-[#00FFFF]">
+                    {ui.languagesLabel}
+                  </p>
+                  <p className="font-mono-hud text-[10px] text-[#CBD5E1] leading-snug">
+                    {resume.about.languages.map((lang) => `${lang.name} (${lang.level})`).join(' · ')}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {/* ================================================================= */}
-        {/* CH.03 // WORK — 70% Bottom Mobile (zero x-scroll) / Left Desktop   */}
+        {/* CH.03 // EXPERIENCE ONLY (nothing else)                            */}
         {/* ================================================================= */}
-        {activeCard === 'work' && (
-          <div className="max-h-[62vh] sm:max-h-[64vh] md:max-h-none overflow-y-auto overflow-x-hidden md:overflow-visible touch-pan-y p-4 md:p-5 space-y-3">
-            {/* Selected Systems */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between border-b border-[#8A929A]/25 pb-1">
-                <p className="font-mono-hud text-[10px] tracking-widest text-[#00FFFF]">
-                  SELECTED SYSTEMS
-                </p>
-                <span className="font-mono-hud text-[9px] tracking-wider text-[#8A929A]">
-                  CH.03 // WORK
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                {RESUME_DATA.projects.map((proj) => (
-                  <div
-                    key={proj.id}
-                    className="min-w-0 border border-[#8A929A]/25 bg-[#090D12]/80 px-3 py-2 space-y-0.5"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
-                      <span className="font-display-hud text-xs sm:text-[13px] font-medium text-[#FFFFFF]">
-                        {proj.title}
-                      </span>
-                      <span className="font-mono-hud text-[10px] text-[#00FFFF] shrink-0">
-                        {proj.latency} · {proj.throughput}
-                      </span>
-                    </div>
-                    <p className="text-[11.5px] leading-snug text-[#B8C2CC] break-words">{proj.summary}</p>
-                    <p className="font-mono-hud text-[9.5px] text-[#8A929A] break-words">{proj.stack}</p>
-                  </div>
-                ))}
-              </div>
+        {activeCard === 'experience' && (
+          <div className="max-h-[62vh] sm:max-h-[64vh] md:max-h-none overflow-y-auto overflow-x-hidden md:overflow-visible touch-pan-y p-4 md:p-5 space-y-2.5">
+            <div className="flex items-center justify-between border-b border-[#8A929A]/25 pb-1.5">
+              <p className="font-mono-hud text-[10px] tracking-widest text-[#00FFFF]">
+                {ui.experienceHeading}
+              </p>
+              <span className="font-mono-hud text-[9px] tracking-wider text-[#8A929A]">
+                {ui.experienceHeaderTag}
+              </span>
             </div>
 
-            {/* Career Timeline */}
-            <div className="space-y-1.5">
-              <p className="font-mono-hud text-[10px] tracking-widest text-[#00FFFF] border-b border-[#8A929A]/25 pb-1">
-                EXPERIENCE
-              </p>
-              <div className="space-y-1.5">
-                {RESUME_DATA.experience.map((exp) => (
-                  <div
-                    key={exp.company}
-                    className="min-w-0 border border-[#8A929A]/25 bg-[#090D12]/80 px-3 py-2 space-y-0.5"
-                  >
-                    <div className="flex items-center justify-between gap-2 font-mono-hud text-[9.5px]">
-                      <span className="text-[#00FFFF] shrink-0">{exp.period}</span>
-                      <span className="text-[#8A929A] truncate">{exp.company}</span>
-                    </div>
-                    <p className="font-display-hud text-xs sm:text-[13px] font-medium text-[#FFFFFF]">
-                      {exp.role}
-                    </p>
-                    <p className="text-[11.5px] leading-snug text-[#B8C2CC] break-words">{exp.detail}</p>
+            <div className="space-y-2.5">
+              {resume.experience.map((exp) => (
+                <div
+                  key={exp.company}
+                  className="min-w-0 border border-[#8A929A]/25 bg-[#090D12]/80 px-3.5 py-2.5 space-y-1"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 font-mono-hud text-[10px]">
+                    <span className="text-[#00FFFF] shrink-0">{exp.period}</span>
+                    <span className="text-[#9CA6B0] truncate">{exp.company}</span>
                   </div>
-                ))}
+                  <p className="font-display-hud text-sm font-medium text-[#FFFFFF]">
+                    {exp.role}
+                  </p>
+                  <p className="text-[12px] leading-snug text-[#CBD5E1] break-words">
+                    {exp.detail}
+                  </p>
+                  <p className="font-mono-hud text-[9.5px] text-[#8A929A] pt-0.5 break-words">
+                    {exp.stack}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* CH.04 // ARTICLES & RESEARCH (2 Submitted + 1 Under Review)       */}
+        {/* ================================================================= */}
+        {activeCard === 'research' && (
+          <div className="max-h-[62vh] sm:max-h-[64vh] md:max-h-none overflow-y-auto overflow-x-hidden md:overflow-visible touch-pan-y p-4 md:p-5 space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#8A929A]/25 pb-1.5">
+              <div className="inline-flex items-center gap-1.5 font-mono-hud text-[10px] tracking-widest text-[#00FFFF]">
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>{ui.researchHeading}</span>
               </div>
+              <span className="font-mono-hud text-[9px] tracking-wider text-[#D8FFFF] border border-[#00FFFF]/35 bg-[#00FFFF]/10 px-1.5 py-0.5">
+                {ui.researchSummaryBadge}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {resume.research.map((article) => {
+                const isReview = article.status === 'under_review';
+                return (
+                  <div
+                    key={article.id}
+                    className={`min-w-0 border px-3 py-2 space-y-1 ${
+                      isReview
+                        ? 'border-[#D8FFFF]/40 bg-[#0A141E]/85'
+                        : 'border-[#8A929A]/30 bg-[#090D12]/80'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 font-mono-hud text-[9px] tracking-widest px-1.5 py-0.5 border ${
+                          isReview
+                            ? 'border-[#D8FFFF]/60 bg-[#D8FFFF]/12 text-[#D8FFFF]'
+                            : 'border-[#00FFFF]/55 bg-[#00FFFF]/12 text-[#00FFFF]'
+                        }`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            isReview ? 'bg-[#D8FFFF] animate-pulse' : 'bg-[#00FFFF]'
+                          }`}
+                        />
+                        {article.statusLabel}
+                      </span>
+                      <span className="font-mono-hud text-[9.5px] text-[#9CA6B0] truncate">
+                        {article.venue} · {article.year}
+                      </span>
+                    </div>
+
+                    <p className="font-display-hud text-xs sm:text-[13.5px] font-medium text-[#FFFFFF] leading-snug break-words">
+                      {article.title}
+                    </p>
+                    <p className="text-[11.5px] leading-snug text-[#CBD5E1] break-words">
+                      {article.summary}
+                    </p>
+
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                      <p className="font-mono-hud text-[9.5px] text-[#8A929A] truncate">
+                        {article.keywords}
+                      </p>
+                      {article.url && (
+                        <a
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-mono-hud text-[10px] text-[#00FFFF] hover:text-[#D8FFFF] shrink-0"
+                        >
+                          <span>{ui.readPaper}</span>
+                          <ArrowUpRight className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

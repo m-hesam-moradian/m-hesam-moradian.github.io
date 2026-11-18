@@ -52,36 +52,23 @@ export function buildVolcanicHorizonTerrain(basaltTerrainMaps?: PBRSurfaceMaps):
   terrainGeo.computeVertexNormals();
 
   const terrainMat = new THREE.MeshStandardMaterial({
-    color: 0x242a32,
+    color: 0x313a45,
     map: basaltTerrainMaps?.map ?? null,
     bumpMap: basaltTerrainMaps?.bumpMap ?? null,
-    bumpScale: 0.16,
+    bumpScale: 0.25,
     roughnessMap: basaltTerrainMaps?.roughnessMap ?? null,
-    roughness: 0.92,
-    metalness: 0.08,
-    envMapIntensity: 0.22,
+    roughness: 0.8,
+    metalness: 0.14,
+    envMapIntensity: 0.32,
     flatShading: true,
   });
   root.add(new THREE.Mesh(terrainGeo, terrainMat));
-
-  const wireGeo = new THREE.WireframeGeometry(terrainGeo);
-  const wireMat = new THREE.LineBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.04,
-    depthWrite: false,
-  });
-  const wire = new THREE.LineSegments(wireGeo, wireMat);
-  wire.position.y = 0.03;
-  root.add(wire);
 
   return {
     root,
     dispose: () => {
       terrainGeo.dispose();
       terrainMat.dispose();
-      wireGeo.dispose();
-      wireMat.dispose();
     },
   };
 }
@@ -114,14 +101,14 @@ export function buildSummitChamber(
   const hexGeo = new THREE.CylinderGeometry(0.45, 0.49, 3.6, 6, 4);
   const capGeo = new THREE.CylinderGeometry(0.39, 0.452, 0.12, 6, 1);
   const hexMat = new THREE.MeshStandardMaterial({
-    color: 0x9aa6b2,
+    color: 0xa2b0bd,
     map: basaltMaps.map,
     bumpMap: basaltMaps.bumpMap,
-    bumpScale: 0.075,
+    bumpScale: 0.115,
     roughnessMap: basaltMaps.roughnessMap,
-    roughness: 0.9,
-    metalness: 0.14,
-    envMapIntensity: 0.28,
+    roughness: 0.74,
+    metalness: 0.24,
+    envMapIntensity: 0.34,
     flatShading: true,
   });
   const basaltCols = new THREE.InstancedMesh(hexGeo, hexMat, basaltCount);
@@ -134,7 +121,7 @@ export function buildSummitChamber(
     const angle = (i / segCount) * Math.PI * 2 + ring * 0.25;
     const rad =
       ring === 0 ? 0.95 + rng() * 0.65 : ring === 1 ? 1.85 + rng() * 0.7 : 2.85 + rng() * 0.85;
-    const hScale = ring === 0 ? 1.15 : ring === 1 ? 0.82 + rng() * 0.3 : 0.45 + rng() * 0.32;
+    const hScale = ring === 0 ? 0.8 : ring === 1 ? 0.62 + rng() * 0.18 : 0.44 + rng() * 0.22;
     const px = Math.cos(angle) * rad;
     const py = -2.5 + hScale * 1.1;
     const pz = Math.sin(angle) * rad;
@@ -160,7 +147,7 @@ export function buildSummitChamber(
 
   // 2. Full 3x3x3 + Capstone Chained Binary Blockchain Cluster (NO strings/tendrils — inside is a block too!)
   const monumentGroup = new THREE.Group();
-  monumentGroup.position.set(0, 1.55, 0);
+  monumentGroup.position.set(0, 1.75, 0);
   root.add(monumentGroup);
 
   const wireBoxGeo = new THREE.BoxGeometry(0.94, 0.94, 0.94);
@@ -178,19 +165,19 @@ export function buildSummitChamber(
     map: binaryTexA.map,
     emissive: new THREE.Color(0x00ffff),
     emissiveMap: binaryTexA.emissiveMap,
-    emissiveIntensity: 0.42,
-    roughness: 0.58,
-    metalness: 0.2,
-    envMapIntensity: 0.22,
+    emissiveIntensity: 0.29,
+    roughness: 0.66,
+    metalness: 0.16,
+    envMapIntensity: 0.2,
   });
   const blockMatB = new THREE.MeshStandardMaterial({
     map: binaryTexB.map,
     emissive: new THREE.Color(0x00ffff),
     emissiveMap: binaryTexB.emissiveMap,
-    emissiveIntensity: 0.42,
-    roughness: 0.58,
-    metalness: 0.2,
-    envMapIntensity: 0.22,
+    emissiveIntensity: 0.29,
+    roughness: 0.66,
+    metalness: 0.16,
+    envMapIntensity: 0.2,
   });
 
   // Dedicated interior/exterior materials for the randomly Chosen Target Block (NEVER scales huge!)
@@ -198,10 +185,10 @@ export function buildSummitChamber(
     map: binaryTexA.map,
     emissive: new THREE.Color(0x00ffff),
     emissiveMap: binaryTexA.emissiveMap,
-    emissiveIntensity: 0.38,
-    roughness: 0.58,
-    metalness: 0.2,
-    envMapIntensity: 0.22,
+    emissiveIntensity: 0.27,
+    roughness: 0.66,
+    metalness: 0.16,
+    envMapIntensity: 0.2,
     side: THREE.FrontSide,
   });
 
@@ -223,10 +210,10 @@ export function buildSummitChamber(
     map: binaryTexA.map,
     emissive: new THREE.Color(0x00ffff),
     emissiveMap: binaryTexA.emissiveMap,
-    emissiveIntensity: 0.38,
-    roughness: 0.58,
-    metalness: 0.2,
-    envMapIntensity: 0.22,
+    emissiveIntensity: 0.27,
+    roughness: 0.66,
+    metalness: 0.16,
+    envMapIntensity: 0.2,
     side: THREE.FrontSide,
     transparent: true,
     opacity: 1.0,
@@ -409,18 +396,19 @@ export function buildSummitChamber(
   const chainLinkGeo = new THREE.TubeGeometry(linkCurve, 28, 0.02, 8, true);
 
   const chainCoreMat = new THREE.MeshStandardMaterial({
-    color: 0x091318,
-    roughness: 0.42,
-    metalness: 0.78,
+    color: 0x7c98a8,
+    roughness: 0.78,
+    metalness: 0.16,
+    envMapIntensity: 0.2,
     transparent: true,
-    opacity: 0.86,
+    opacity: 0.96,
   });
   const chainWireMat = new THREE.MeshBasicMaterial({
-    color: 0x00ffff,
+    color: 0x9cecf4,
     wireframe: true,
     transparent: true,
-    opacity: 0.62,
-    blending: THREE.AdditiveBlending,
+    opacity: 0.22,
+    blending: THREE.NormalBlending,
     depthWrite: false,
   });
 
@@ -501,16 +489,16 @@ export function buildSummitChamber(
         const op = Math.max(0, 1 - doorFade);
         frontDoorMat.opacity = op;
         frontDoorMat.depthWrite = doorFade < 0.02;
-        frontDoorMat.emissiveIntensity = 0.38 * (1 - doorFade * 0.65);
+        frontDoorMat.emissiveIntensity = 0.27 * (1 - doorFade * 0.65);
         frontDoorMesh.visible = op > 0.01;
       }
-      chosenWireMat.opacity = 0.4 * (1 - doorFade * 0.75);
-      heroFrameMat.opacity = 0.62 * (1 - doorFade * 0.78);
+      chosenWireMat.opacity = 0.36 * (1 - doorFade * 0.75);
+      heroFrameMat.opacity = 0.55 * (1 - doorFade * 0.78);
 
       // Update interlocking 3D chains between adjacent blocks, fading gracefully during block explosion
       const chainFade = Math.max(0, 1 - exp * 1.45);
-      chainWireMat.opacity = 0.62 * chainFade;
-      chainCoreMat.opacity = 0.86 * chainFade;
+      chainWireMat.opacity = 0.22 * chainFade;
+      chainCoreMat.opacity = 0.96 * chainFade;
       chainCoreInstanced.visible = chainFade > 0.02;
       chainWireInstanced.visible = chainFade > 0.02;
 
@@ -1113,10 +1101,11 @@ export function buildDriftChamber(glowTex: THREE.CanvasTexture) {
 }
 
 /**
- * CH.03 // QUANTUM GYROSCOPE REACTOR:
- * Sleek Obsidian Graphite & Pure Cyan multi-axis segmented gyroscope portal with an inner
- * crystalline core and dynamic orbiting Key-Skill prism satellites (driven by RESUME_DATA.keySkills).
- * Zero solar system, zero orange hues, zero blocking canyon sticks.
+ * CH.03 // EXPERIENCE: Photorealistic Cyan-Obsidian Black Hole Singularity.
+ * - Pitch-black #000000 Event Horizon void (zero light escaping inside)
+ * - Turbulent domain-warped 3D FBM plasma shaders (dark obsidian-cyan -> electric cyan -> incandescent white)
+ * - Volumetric NormalBlending accretion disk (dark dusty foreground clouds + glowing inner core) + curved lensing halo + razor Einstein photon ring
+ * - Untethered Key Skill nodes in unsynced, asymmetric 3D orbits that spiral and get pulled into the black hole on scroll
  */
 export function buildIrisChamber(
   yPos: number,
@@ -1132,265 +1121,498 @@ export function buildIrisChamber(
   const disposables: { dispose: () => void }[] = [];
   const rng = createRng(3303);
 
-  // Subtle deep-space obsidian cyan micro-particles (restrained depth field)
-  const starCount = 240;
+  // Subtle deep-space starfield well outside the gravitational shadow
+  const starCount = 260;
   const starGeo = new THREE.BufferGeometry();
   const starPos = new Float32Array(starCount * 3);
   for (let i = 0; i < starCount; i++) {
-    const r = 4.6 + rng() * 13.5;
+    const r = 9.5 + rng() * 18.0;
     const theta = rng() * Math.PI * 2;
     const phi = Math.acos(2 * rng() - 1);
     starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-    starPos[i * 3 + 1] = r * Math.cos(phi) * 0.72;
+    starPos[i * 3 + 1] = r * Math.cos(phi) * 0.78;
     starPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
   }
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
   const starMat = new THREE.PointsMaterial({
-    color: 0x9fefff,
-    size: 0.04,
+    color: 0xc8f6ff,
+    size: 0.042,
     transparent: true,
-    opacity: 0.38,
+    opacity: 0.34,
     depthWrite: false,
   });
   root.add(new THREE.Points(starGeo, starMat));
   disposables.push(starGeo, starMat);
 
-  // Main Quantum Gyroscope Assembly
-  const reactorGroup = new THREE.Group();
-  reactorGroup.rotation.set(0.22, -0.26, 0.08);
-  root.add(reactorGroup);
-
-  const obsidianMat = new THREE.MeshStandardMaterial({
-    color: 0x1a1f27,
-    roughness: 0.24,
-    metalness: 0.88,
-  });
-  const cyanEdgeMat = new THREE.LineBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.78,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const iceEdgeMat = new THREE.LineBasicMaterial({
-    color: 0xd8ffff,
-    transparent: true,
-    opacity: 0.48,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  disposables.push(obsidianMat, cyanEdgeMat, iceEdgeMat);
-
-  // 1. 3-Axis Interlocking Segmented Obsidian Gyroscope Rings
-  interface GimbalRing {
-    group: THREE.Group;
-    baseTiltX: number;
-    baseTiltY: number;
-    spinZ: number;
-    spinY: number;
-  }
-  const gimbalSpecs = [
-    { r: 2.65, tube: 0.11, segs: 6, gap: 0.18, tiltX: 0.35, tiltY: -0.2, spinZ: 0.14, spinY: 0.08 },
-    { r: 2.1, tube: 0.09, segs: 5, gap: 0.22, tiltX: -0.58, tiltY: 0.42, spinZ: -0.22, spinY: -0.12 },
-    { r: 1.55, tube: 0.075, segs: 4, gap: 0.28, tiltX: 0.72, tiltY: 0.65, spinZ: 0.32, spinY: 0.16 },
-    { r: 1.05, tube: 0.055, segs: 3, gap: 0.36, tiltX: -0.25, tiltY: -0.78, spinZ: -0.45, spinY: -0.2 },
-  ];
-
-  const gimbalRings: GimbalRing[] = [];
-  gimbalSpecs.forEach((spec, idx) => {
-    const ringPivot = new THREE.Group();
-    ringPivot.rotation.set(spec.tiltX, spec.tiltY, 0);
-
-    const ringSpin = new THREE.Group();
-    const arcLen = (Math.PI * 2) / spec.segs - spec.gap;
-    for (let s = 0; s < spec.segs; s++) {
-      const start = s * ((Math.PI * 2) / spec.segs);
-      const tGeo = new THREE.TorusGeometry(spec.r, spec.tube, 8, 22, arcLen);
-      const eGeo = new THREE.EdgesGeometry(tGeo, 16);
-      disposables.push(tGeo, eGeo);
-
-      const mesh = new THREE.Mesh(tGeo, obsidianMat);
-      mesh.rotation.z = start;
-      mesh.add(new THREE.LineSegments(eGeo, idx % 2 === 0 ? cyanEdgeMat : iceEdgeMat));
-      ringSpin.add(mesh);
+  // Shared GLSL 3D turbulent noise block (seam-free circular sampling via cos/sin + log(r))
+  const GLSL_NOISE_3D = `
+    float hash31(vec3 p) {
+      p = fract(p * 0.1031);
+      p += dot(p, p.yzx + 33.33);
+      return fract((p.x + p.y) * p.z);
     }
 
-    ringPivot.add(ringSpin);
-    reactorGroup.add(ringPivot);
-    gimbalRings.push({
-      group: ringSpin,
-      baseTiltX: spec.tiltX,
-      baseTiltY: spec.tiltY,
-      spinZ: spec.spinZ,
-      spinY: spec.spinY,
-    });
-  });
+    float noise3(vec3 x) {
+      vec3 i = floor(x);
+      vec3 f = fract(x);
+      f = f * f * (3.0 - 2.0 * f);
 
-  // 2. Central Crystalline Singularity Core (Obsidian Glass Icosahedron + Glowing Cyan Nucleus)
+      return mix(
+        mix(
+          mix(hash31(i + vec3(0.0, 0.0, 0.0)), hash31(i + vec3(1.0, 0.0, 0.0)), f.x),
+          mix(hash31(i + vec3(0.0, 1.0, 0.0)), hash31(i + vec3(1.0, 1.0, 0.0)), f.x),
+          f.y
+        ),
+        mix(
+          mix(hash31(i + vec3(0.0, 0.0, 1.0)), hash31(i + vec3(1.0, 0.0, 1.0)), f.x),
+          mix(hash31(i + vec3(0.0, 1.0, 1.0)), hash31(i + vec3(1.0, 1.0, 1.0)), f.x),
+          f.y
+        ),
+        f.z
+      );
+    }
+
+    float fbm3(vec3 p) {
+      float v = 0.0;
+      float a = 0.52;
+      for (int i = 0; i < 4; i++) {
+        v += a * noise3(p);
+        p = p * 2.04 + vec3(17.1, 31.7, 13.3);
+        a *= 0.5;
+      }
+      return v;
+    }
+  `;
+
+  // Main Black Hole tilted cosmic frame
+  const reactorGroup = new THREE.Group();
+  reactorGroup.rotation.order = 'ZYX';
+  reactorGroup.rotation.set(0.18, -0.14, 0.15);
+  root.add(reactorGroup);
+
   const coreGroup = new THREE.Group();
   reactorGroup.add(coreGroup);
 
-  const outerCrystalGeo = new THREE.IcosahedronGeometry(0.62, 0);
-  const outerCrystalEdges = new THREE.EdgesGeometry(outerCrystalGeo);
-  const outerCrystalMat = new THREE.MeshPhysicalMaterial({
-    color: 0x0b161e,
-    emissive: new THREE.Color(0x00ffff),
-    emissiveIntensity: 0.14,
-    roughness: 0.12,
-    metalness: 0.35,
+  // 1. Pure #000000 Event Horizon Void — zero light escapes inside
+  const horizonRadius = 1.06;
+  const horizonGeo = new THREE.SphereGeometry(horizonRadius, 64, 64);
+  const horizonMat = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    depthWrite: true,
+    depthTest: true,
+    fog: false,
+  });
+  const eventHorizon = new THREE.Mesh(horizonGeo, horizonMat);
+  eventHorizon.renderOrder = 1;
+  coreGroup.add(eventHorizon);
+  disposables.push(horizonGeo, horizonMat);
+
+  // 2. Camera-aligned Gravitational Lensing Halo + Razor Einstein Photon Ring
+  //    Flares smoothly outward near the equatorial plane like relativistic spacetime bending.
+  const haloGeo = new THREE.RingGeometry(1.065, 3.85, 220, 64);
+  const haloMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uFly: { value: 0 },
+    },
+    vertexShader: `
+      varying vec3 vLocalPos;
+      void main() {
+        vLocalPos = position;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uFly;
+      varying vec3 vLocalPos;
+      ${GLSL_NOISE_3D}
+
+      void main() {
+        float r = length(vLocalPos.xy);
+        float ang = atan(vLocalPos.y, vLocalPos.x);
+        vec2 dir = vec2(cos(ang), sin(ang));
+
+        // Relativistic bell/saddle flare along sides into the accretion equator
+        float eqPinch = pow(1.0 - abs(dir.y), 2.15);
+        float flareScale = 1.0 + 0.52 * eqPinch;
+        float rw = 1.065 + (r - 1.065) / flareScale;
+
+        // 1) Crisp asymmetric Einstein photon ring hugging outside the #000000 void
+        float photonBand = exp(-pow((r - 1.118) / 0.009, 2.0));
+        float photonCorona = exp(-pow((r - 1.19) / 0.11, 2.0));
+
+        // 2) Sheared turbulent gaseous plasma clouds bent smoothly around the sphere
+        float shear = 4.6 / pow(max(rw, 1.0), 0.85);
+        float flow1 = ang + shear - uTime * (0.28 + uFly * 0.55);
+        float flow2 = ang + shear * 0.65 - uTime * (0.16 + uFly * 0.35);
+
+        float warp = fbm3(vec3(cos(ang) * 2.1, sin(ang) * 2.1, rw * 2.4 - uTime * 0.08));
+        float turbA = fbm3(vec3(cos(flow1) * 1.9, sin(flow1) * 1.9, (rw + warp * 0.24) * 5.2));
+        float turbB = fbm3(vec3(cos(flow2) * 3.4, sin(flow2) * 3.4, (rw - warp * 0.18) * 9.5));
+        float gas = clamp(turbA * 0.64 + turbB * 0.36, 0.0, 1.0);
+        gas = smoothstep(0.20, 0.86, gas);
+
+        // Smooth radial envelope with soft outer fade
+        float archIn = smoothstep(1.13, 1.24, r);
+        float archOut = pow(1.0 - smoothstep(1.38, 2.85, rw), 2.15);
+        float archEnvelope = archIn * archOut;
+
+        // Relativistic Doppler beaming (left/approaching rim brighter icy-white, right deeper cyan)
+        float doppler = 0.56 + 0.64 * smoothstep(0.85, -0.85, dir.x);
+        float photonDoppler = 0.38 + 0.85 * smoothstep(0.95, -0.75, dir.x);
+
+        // Dark Abyssal Cyan -> Electric Cyan -> Ice White
+        vec3 deepCyan = vec3(0.02, 0.16, 0.28);
+        vec3 midCyan = vec3(0.08, 0.64, 0.88);
+        vec3 iceCyan = vec3(0.55, 0.94, 1.0);
+        vec3 pureWhite = vec3(1.0, 1.0, 1.0);
+
+        float intensity = clamp(
+          gas * archEnvelope * 1.05 * doppler +
+          photonCorona * 0.72 * doppler +
+          photonBand * 1.25 * photonDoppler,
+          0.0,
+          1.25
+        );
+
+        vec3 col = mix(deepCyan, midCyan, smoothstep(0.04, 0.36, intensity));
+        col = mix(col, iceCyan, smoothstep(0.34, 0.72, intensity));
+        col = mix(col, pureWhite, smoothstep(0.70, 1.08, intensity));
+
+        float alpha = clamp(
+          photonBand * 0.96 * photonDoppler +
+          (gas * 0.82 + 0.18) * archEnvelope * doppler * 0.92 +
+          photonCorona * 0.58 * doppler,
+          0.0,
+          0.98
+        );
+        alpha *= (1.0 - uFly * 0.22);
+        if (alpha < 0.004) discard;
+
+        gl_FragColor = vec4(col, alpha);
+      }
+    `,
     transparent: true,
-    opacity: 0.58,
+    side: THREE.DoubleSide,
+    depthTest: true,
     depthWrite: false,
-  });
-  const outerCrystal = new THREE.Mesh(outerCrystalGeo, outerCrystalMat);
-  outerCrystal.add(new THREE.LineSegments(outerCrystalEdges, cyanEdgeMat));
-  coreGroup.add(outerCrystal);
-
-  const innerCrystalGeo = new THREE.OctahedronGeometry(0.32, 0);
-  const innerCrystalMat = new THREE.MeshBasicMaterial({
-    color: 0xd8ffff,
-    transparent: true,
-    opacity: 0.88,
-  });
-  const innerCrystal = new THREE.Mesh(innerCrystalGeo, innerCrystalMat);
-  coreGroup.add(innerCrystal);
-
-  const coreAuraMat = new THREE.SpriteMaterial({
-    map: glowTex,
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.45,
     blending: THREE.AdditiveBlending,
-    depthWrite: false,
   });
-  const coreAura = new THREE.Sprite(coreAuraMat);
-  coreAura.scale.set(2.1, 2.1, 1);
-  coreGroup.add(coreAura);
 
-  disposables.push(
-    outerCrystalGeo,
-    outerCrystalEdges,
-    outerCrystalMat,
-    innerCrystalGeo,
-    innerCrystalMat,
-    coreAuraMat
-  );
+  const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+  haloMesh.renderOrder = 2;
 
-  // 3. Dynamic Key-Skill Orbital Prism Nodes tethered around the Reactor Core
+  // Keep halo facing camera while matching accretion equator tilt (zero GC inside render loop)
+  const _hWorld = new THREE.Vector3();
+  const _hFwd = new THREE.Vector3();
+  const _hDiskUp = new THREE.Vector3();
+  const _hRight = new THREE.Vector3();
+  const _hTrueUp = new THREE.Vector3();
+  const _hMat = new THREE.Matrix4();
+  const _hWorldQuat = new THREE.Quaternion();
+  const _hParentQuat = new THREE.Quaternion();
+  haloMesh.onBeforeRender = (_renderer, _scene, cam) => {
+    coreGroup.getWorldPosition(_hWorld);
+    coreGroup.getWorldQuaternion(_hParentQuat);
+    _hFwd.subVectors(cam.position, _hWorld).normalize();
+    _hDiskUp.set(0, 1, 0).applyQuaternion(_hParentQuat).normalize();
+    _hRight.crossVectors(_hDiskUp, _hFwd);
+    if (_hRight.lengthSq() < 0.0001) {
+      _hRight.set(1, 0, 0);
+    } else {
+      _hRight.normalize();
+    }
+    _hTrueUp.crossVectors(_hFwd, _hRight).normalize();
+    _hMat.makeBasis(_hRight, _hTrueUp, _hFwd);
+    _hWorldQuat.setFromRotationMatrix(_hMat);
+    haloMesh.quaternion.copy(_hParentQuat).invert().multiply(_hWorldQuat);
+    haloMesh.updateMatrixWorld();
+  };
+
+  coreGroup.add(haloMesh);
+  disposables.push(haloGeo, haloMat);
+
+  // 3. Tilted 3D Volumetric Turbulent Accretion Disk (NormalBlending: dark outer dust clouds + bright cyan-white inner core)
+  const diskGeo = new THREE.RingGeometry(1.07, 7.6, 220, 72);
+  diskGeo.rotateX(-Math.PI / 2);
+
+  const diskMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uFly: { value: 0 },
+    },
+    vertexShader: `
+      uniform float uTime;
+      uniform float uFly;
+      varying vec3 vLocalPos;
+      void main() {
+        vec3 pos = position;
+        float r = length(pos.xz);
+        float ang = atan(pos.z, pos.x);
+        // Subtle organic vertical gas thickness wave
+        pos.y += sin(ang * 2.0 + r * 1.15 - uTime * 0.45) * 0.032 * smoothstep(1.3, 5.2, r);
+        pos *= 1.0 + uFly * 0.48;
+        vLocalPos = pos;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uFly;
+      varying vec3 vLocalPos;
+      ${GLSL_NOISE_3D}
+
+      void main() {
+        float r = length(vLocalPos.xz);
+        float ang = atan(vLocalPos.z, vLocalPos.x);
+
+        // Differential Keplerian rotation + domain-warped turbulent gas clouds (no uniform stripes)
+        float kepler = 4.9 / pow(max(r, 1.0), 0.85);
+        float flowA = ang + kepler - uTime * (0.34 / pow(max(r, 1.0), 0.78)) * (1.0 + uFly * 1.4);
+        float flowB = ang + kepler * 0.58 - uTime * (0.20 / pow(max(r, 1.0), 0.7)) * (1.0 + uFly * 1.1);
+
+        float warp = fbm3(vec3(cos(ang) * 1.8, sin(ang) * 1.8, log(max(r, 1.02)) * 3.2 - uTime * 0.06));
+        float cloudMain = fbm3(vec3(cos(flowA) * 2.0, sin(flowA) * 2.0, (log(max(r, 1.02)) + warp * 0.22) * 5.8));
+        float cloudFine = fbm3(vec3(cos(flowB) * 3.8, sin(flowB) * 3.8, (log(max(r, 1.02)) - warp * 0.16) * 11.2));
+        float wisp = clamp(cloudMain * 0.65 + cloudFine * 0.35, 0.0, 1.0);
+
+        float innerEdge = smoothstep(1.07, 1.20, r);
+        float outerFade = pow(1.0 - smoothstep(2.2, 7.5, r), 1.65);
+
+        // Hot incandescent inner photon collar dropping smoothly into turbulent cyan & dark outer dust
+        float coreHeat = exp(-pow((r - 1.24) / 0.52, 2.0));
+        float midPlasma = smoothstep(0.32, 0.78, wisp) * (1.0 - smoothstep(1.8, 6.2, r));
+        float dustDensity = smoothstep(0.18, 0.72, cloudMain) * smoothstep(1.25, 2.6, r);
+
+        // Doppler brightness shift across approaching vs receding side
+        float doppler = 0.58 + 0.56 * smoothstep(4.0, -4.0, vLocalPos.x);
+
+        vec3 obsidianDust = vec3(0.014, 0.032, 0.062);
+        vec3 deepCyan = vec3(0.03, 0.22, 0.38);
+        vec3 brightCyan = vec3(0.08, 0.72, 0.94);
+        vec3 iceCyan = vec3(0.58, 0.95, 1.0);
+        vec3 pureWhite = vec3(1.0, 1.0, 1.0);
+
+        float lum = clamp(
+          coreHeat * (0.78 + 0.45 * wisp) * doppler +
+          midPlasma * 0.68 * doppler +
+          wisp * 0.22 * (1.0 - smoothstep(2.5, 6.8, r)),
+          0.0,
+          1.2
+        );
+
+        vec3 col = mix(obsidianDust, deepCyan, smoothstep(0.02, 0.24, lum));
+        col = mix(col, brightCyan, smoothstep(0.22, 0.55, lum));
+        col = mix(col, iceCyan, smoothstep(0.54, 0.82, lum));
+        col = mix(col, pureWhite, smoothstep(0.80, 1.08, lum));
+
+        // High opacity in both dark dusty clouds and bright inner plasma so front disk visibly shadows rear halo
+        float alpha = clamp(
+          (coreHeat * 0.96 + midPlasma * 0.72 + dustDensity * 0.88) * innerEdge * outerFade,
+          0.0,
+          0.96
+        );
+        if (alpha < 0.005) discard;
+
+        gl_FragColor = vec4(col, alpha);
+      }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthTest: true,
+    depthWrite: false,
+    blending: THREE.NormalBlending,
+  });
+
+  const diskMesh = new THREE.Mesh(diskGeo, diskMat);
+  diskMesh.renderOrder = 3;
+  reactorGroup.add(diskMesh);
+  disposables.push(diskGeo, diskMat);
+
+  // 4. Subtle Additive Inner Equatorial Corona (soft pure white -> cyan incandescent glow close to horizon)
+  const coronaGeo = new THREE.RingGeometry(1.08, 3.15, 180, 32);
+  coronaGeo.rotateX(-Math.PI / 2);
+  const coronaMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uFly: { value: 0 },
+    },
+    vertexShader: `
+      uniform float uFly;
+      varying vec3 vLocalPos;
+      void main() {
+        vec3 pos = position * (1.0 + uFly * 0.48);
+        vLocalPos = pos;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uFly;
+      varying vec3 vLocalPos;
+      ${GLSL_NOISE_3D}
+
+      void main() {
+        float r = length(vLocalPos.xz);
+        float ang = atan(vLocalPos.z, vLocalPos.x);
+        float flow = ang + 3.2 / max(r, 1.0) - uTime * 0.36;
+        float turb = fbm3(vec3(cos(flow) * 2.4, sin(flow) * 2.4, r * 3.8));
+
+        float rim = exp(-pow((r - 1.24) / 0.42, 2.0));
+        float innerCut = smoothstep(1.08, 1.18, r);
+        float outerCut = 1.0 - smoothstep(1.6, 3.15, r);
+        float doppler = 0.55 + 0.60 * smoothstep(2.6, -2.6, vLocalPos.x);
+
+        vec3 col = mix(vec3(0.08, 0.72, 0.96), vec3(0.95, 0.99, 1.0), smoothstep(0.25, 0.85, rim * (0.7 + turb * 0.5)));
+        float alpha = clamp(rim * (0.48 + turb * 0.52) * innerCut * outerCut * doppler * 0.65, 0.0, 0.78);
+        if (alpha < 0.004) discard;
+        gl_FragColor = vec4(col, alpha);
+      }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthTest: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const coronaMesh = new THREE.Mesh(coronaGeo, coronaMat);
+  coronaMesh.renderOrder = 4;
+  reactorGroup.add(coronaMesh);
+  disposables.push(coronaGeo, coronaMat);
+
+  // 5. Untethered Key Skills — Unsynced, Unpatterned 3D Orbits Attracted Into the Black Hole on Scroll
   const effectiveSkills: ResumeKeySkill[] =
     keySkills.length > 0 ? keySkills : [{ name: 'SYSTEMS', color: '#00FFFF' }];
 
-  const nodeGeo = new THREE.OctahedronGeometry(0.13, 0);
+  const nodeGeo = new THREE.OctahedronGeometry(0.145, 0);
   const nodeWireGeo = new THREE.EdgesGeometry(nodeGeo);
-  const trackLineMat = new THREE.LineBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.2,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const tetherMat = new THREE.LineBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.24,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  disposables.push(nodeGeo, nodeWireGeo, trackLineMat, tetherMat);
+  disposables.push(nodeGeo, nodeWireGeo);
 
-  interface OrbitalSkillNode {
+  interface AttractedSkillNode {
     orbitGroup: THREE.Group;
     nodePivot: THREE.Group;
     nodeMesh: THREE.Mesh;
+    haloSprite: THREE.Sprite;
     labelMat: THREE.SpriteMaterial;
-    tetherAttr: THREE.BufferAttribute;
-    radius: number;
+    baseTiltX: number;
+    baseTiltY: number;
+    baseTiltZ: number;
+    baseRadius: number;
     speed: number;
     phase: number;
+    eccentricity: number;
+    bobFreq: number;
+    bobAmp: number;
+    bobPhase: number;
+    spinX: number;
+    spinY: number;
+    infallSwirl: number;
+    infallThreshold: number;
   }
 
-  const skillNodes: OrbitalSkillNode[] = [];
+  // Jittered non-uniform radial/angular spread so skills never look like a rigid pattern or sync up
   const count = effectiveSkills.length;
+  const sectorOrder = effectiveSkills.map((_, idx) => idx);
+  for (let i = sectorOrder.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = sectorOrder[i];
+    sectorOrder[i] = sectorOrder[j];
+    sectorOrder[j] = tmp;
+  }
+
+  const skillNodes: AttractedSkillNode[] = [];
 
   effectiveSkills.forEach((skill, idx) => {
-    const ratio = count === 1 ? 0.5 : idx / (count - 1);
-    const radius = count === 1 ? 3.2 : 2.95 + ratio * 1.15;
-    const speed = (idx % 2 === 0 ? 1 : -1) * (0.28 - ratio * 0.1);
-    const phase = (idx * 2.39996) % (Math.PI * 2);
+    // Non-patterned radii & scattered angular sectors (avoiding overlap without looking ordered)
+    const sector = sectorOrder[idx];
+    const baseRadius = count === 1 ? 3.2 : 2.55 + rng() * 1.45;
+    const phase =
+      ((sector + 0.18 + rng() * 0.64) / Math.max(1, count)) * Math.PI * 2;
+    const speed = 0.09 + rng() * 0.21; // genuinely distinct unsynced orbital speeds
+    const eccentricity = 0.76 + rng() * 0.36;
+
+    // Distinct asymmetric 3D inclinations (each node on its own tilted plane, not flat system rings)
+    const baseTiltX = (rng() - 0.5) * 0.88;
+    const baseTiltY = rng() * Math.PI * 2;
+    const baseTiltZ = (rng() - 0.5) * 0.82;
 
     const orbitGroup = new THREE.Group();
-    orbitGroup.rotation.set(
-      (idx % 3 - 1) * 0.34 + 0.18,
-      (idx * 0.45) % Math.PI,
-      (idx % 2 === 0 ? 1 : -1) * 0.24
-    );
+    orbitGroup.rotation.set(baseTiltX, baseTiltY, baseTiltZ);
     reactorGroup.add(orbitGroup);
-
-    // Sleek hairline orbital ring
-    const pts: THREE.Vector3[] = [];
-    const segs = 64;
-    for (let s = 0; s <= segs; s++) {
-      const a = (s / segs) * Math.PI * 2;
-      pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
-    }
-    const trackGeo = new THREE.BufferGeometry().setFromPoints(pts);
-    orbitGroup.add(new THREE.Line(trackGeo, trackLineMat));
-    disposables.push(trackGeo);
 
     const nodePivot = new THREE.Group();
     orbitGroup.add(nodePivot);
 
     const accent = new THREE.Color(skill.color);
     const nodeMat = new THREE.MeshStandardMaterial({
-      color: 0x161c24,
+      color: 0x0b1018,
       emissive: accent,
-      emissiveIntensity: 0.42,
-      roughness: 0.28,
-      metalness: 0.72,
+      emissiveIntensity: 0.68,
+      roughness: 0.22,
+      metalness: 0.78,
     });
     const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
     const nodeEdgeMat = new THREE.LineBasicMaterial({
       color: accent,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.96,
     });
     nodeMesh.add(new THREE.LineSegments(nodeWireGeo, nodeEdgeMat));
     nodePivot.add(nodeMesh);
     disposables.push(nodeMat, nodeEdgeMat);
 
-    // Floating crisp Key Skill tag right above each prism node
+    // Subtle colored crystal halo
+    const haloMat = new THREE.SpriteMaterial({
+      map: glowTex,
+      color: accent,
+      transparent: true,
+      opacity: 0.48,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const haloSprite = new THREE.Sprite(haloMat);
+    haloSprite.scale.set(0.56, 0.56, 1);
+    nodePivot.add(haloSprite);
+    disposables.push(haloMat);
+
+    // High-contrast dark-backed Key Skill label sprite (NO string tether to black hole)
     const { tex: labelTex, aspect } = createSkillPlanetLabelTexture(skill.name, skill.color);
     const labelMat = new THREE.SpriteMaterial({
       map: labelTex,
       transparent: true,
-      opacity: 0.92,
+      opacity: 0.98,
       depthWrite: false,
+      depthTest: true,
     });
     const labelSprite = new THREE.Sprite(labelMat);
-    const labelH = 0.25;
+    labelSprite.renderOrder = 12;
+    const labelH = 0.33;
     labelSprite.scale.set(labelH * aspect, labelH, 1);
-    labelSprite.position.set(0, 0.28, 0);
+    labelSprite.position.set(0, 0.34, 0);
     nodePivot.add(labelSprite);
     disposables.push(labelTex, labelMat);
-
-    // Dynamic laser tether linking prism satellite cleanly back to Reactor core
-    const tetherArr = new Float32Array(6);
-    const tetherGeo = new THREE.BufferGeometry();
-    const tetherAttr = new THREE.BufferAttribute(tetherArr, 3);
-    tetherAttr.setUsage(THREE.DynamicDrawUsage);
-    tetherGeo.setAttribute('position', tetherAttr);
-    orbitGroup.add(new THREE.Line(tetherGeo, tetherMat));
-    disposables.push(tetherGeo);
 
     skillNodes.push({
       orbitGroup,
       nodePivot,
       nodeMesh,
+      haloSprite,
       labelMat,
-      tetherAttr,
-      radius,
+      baseTiltX,
+      baseTiltY,
+      baseTiltZ,
+      baseRadius,
       speed,
       phase,
+      eccentricity,
+      bobFreq: 0.45 + rng() * 0.95,
+      bobAmp: 0.14 + rng() * 0.28,
+      bobPhase: rng() * Math.PI * 2,
+      spinX: 0.35 + rng() * 0.9,
+      spinY: 0.55 + rng() * 1.1,
+      infallSwirl: 2.6 + rng() * 3.1, // each skill spirals inward at its own rate on scroll
+      infallThreshold: rng() * 0.14, // slightly staggered scroll response so they don't fall in sync
     });
   });
 
@@ -1402,48 +1624,61 @@ export function buildIrisChamber(
     root,
     getCoreWorldPosition: (out: THREE.Vector3) => out.copy(coreWorldPos),
     update: (elapsed: number, pointerX: number, pointerY: number, flyProgress: number) => {
-      const tiltDamp = 1 - THREE.MathUtils.smoothstep(flyProgress, 0.15, 0.75);
-      reactorGroup.rotation.y = -0.26 * tiltDamp + pointerX * 0.16 * tiltDamp;
-      reactorGroup.rotation.x = 0.22 * tiltDamp + pointerY * 0.12 * tiltDamp;
+      const tiltDamp = 1 - THREE.MathUtils.smoothstep(flyProgress, 0.18, 0.78);
+      reactorGroup.rotation.x = 0.18 * tiltDamp + pointerY * 0.09 * tiltDamp;
+      reactorGroup.rotation.y = -0.14 * tiltDamp + pointerX * 0.12 * tiltDamp;
+      reactorGroup.rotation.z = 0.15 * tiltDamp;
       reactorGroup.updateMatrixWorld(true);
       coreGroup.getWorldPosition(coreWorldPos);
 
-      // Counter-rotating obsidian gyroscope gimbals that open smoothly outward during portal dive
-      const openScale = 1.0 + flyProgress * 0.58;
-      gimbalRings.forEach((gr, idx) => {
-        gr.group.rotation.z = elapsed * gr.spinZ;
-        gr.group.rotation.y = elapsed * gr.spinY;
-        gr.group.scale.setScalar(openScale + flyProgress * idx * 0.14);
-      });
+      haloMat.uniforms.uTime.value = elapsed;
+      haloMat.uniforms.uFly.value = flyProgress;
 
-      outerCrystal.rotation.y = elapsed * 0.35;
-      outerCrystal.rotation.x = elapsed * 0.22;
-      innerCrystal.rotation.y = -elapsed * 0.65;
-      innerCrystal.rotation.z = elapsed * 0.4;
+      diskMat.uniforms.uTime.value = elapsed;
+      diskMat.uniforms.uFly.value = flyProgress;
 
-      const auraScale = 2.0 + Math.sin(elapsed * 2.2) * 0.18 + flyProgress * 2.8;
-      coreAura.scale.set(auraScale, auraScale, 1);
-
-      const labelFade = 1 - THREE.MathUtils.smoothstep(flyProgress, 0.14, 0.48);
+      coronaMat.uniforms.uTime.value = elapsed;
+      coronaMat.uniforms.uFly.value = flyProgress;
 
       for (let i = 0; i < skillNodes.length; i++) {
         const sn = skillNodes[i];
-        const angle = sn.phase + elapsed * sn.speed;
-        const nx = Math.cos(angle) * sn.radius;
-        const nz = Math.sin(angle) * sn.radius;
-        sn.nodePivot.position.set(nx, 0, nz);
-        sn.nodeMesh.rotation.y = elapsed * 0.9 + i;
-        sn.nodeMesh.rotation.x = elapsed * 0.55;
-        sn.labelMat.opacity = 0.92 * labelFade;
 
-        const arr = sn.tetherAttr.array as Float32Array;
-        arr[0] = 0;
-        arr[1] = 0;
-        arr[2] = 0;
-        arr[3] = nx;
-        arr[4] = 0;
-        arr[5] = nz;
-        sn.tetherAttr.needsUpdate = true;
+        // Scroll-driven gravitational infall: skills break orbit & spiral into the Event Horizon
+        const localInfall = THREE.MathUtils.smoothstep(
+          flyProgress,
+          0.02 + sn.infallThreshold,
+          0.88 + sn.infallThreshold * 0.4
+        );
+        const pull = Math.pow(localInfall, 1.28);
+
+        // Flatten inclination slightly toward singularity as gravity captures each skill
+        const planeFlatten = 1.0 - pull * 0.65;
+        sn.orbitGroup.rotation.set(
+          sn.baseTiltX * planeFlatten,
+          sn.baseTiltY,
+          sn.baseTiltZ * planeFlatten
+        );
+
+        const curR = THREE.MathUtils.lerp(sn.baseRadius, horizonRadius * 0.65, pull);
+        const ecc = THREE.MathUtils.lerp(sn.eccentricity, 1.0, pull);
+        const angle = sn.phase + elapsed * sn.speed + pull * sn.infallSwirl;
+
+        const nx = Math.cos(angle) * curR;
+        const nz = Math.sin(angle) * curR * ecc;
+        const ny = Math.sin(elapsed * sn.bobFreq + sn.bobPhase) * sn.bobAmp * (1.0 - pull * 0.9);
+
+        sn.nodePivot.position.set(nx, ny, nz);
+
+        // Shrink cleanly right as the skill crosses into the Event Horizon shadow
+        const swallowScale = 1.0 - THREE.MathUtils.smoothstep(pull, 0.72, 0.98);
+        sn.nodePivot.scale.setScalar(Math.max(0.001, swallowScale));
+
+        sn.nodeMesh.rotation.y = elapsed * sn.spinY + sn.phase;
+        sn.nodeMesh.rotation.x = elapsed * sn.spinX;
+
+        const labelFade = 1.0 - THREE.MathUtils.smoothstep(pull, 0.45, 0.85);
+        sn.labelMat.opacity = 0.98 * labelFade;
+        sn.haloSprite.material.opacity = 0.48 * swallowScale;
       }
     },
     dispose: () => {
@@ -1453,7 +1688,284 @@ export function buildIrisChamber(
 }
 
 /**
- * CH.04 // THE PEDESTAL: Precision Machined Circuit Platform + 2,400-Particle & Wireframe Contact Emblems
+ * CH.04 // RESEARCH ARCHIVE:
+ * Obsidian Knowledge Codex & Holographic Manuscript Lattice with 3 suspended
+ * research plates (2 Submitted + 1 Under Review) linked by citation vectors.
+ */
+export function buildResearchChamber(
+  yPos: number,
+  zPos: number,
+  glowTex: THREE.CanvasTexture
+) {
+  const root = new THREE.Group();
+  root.position.set(0, yPos, zPos);
+
+  const disposables: { dispose: () => void }[] = [];
+  const rng = createRng(4404);
+
+  // Subtle ambient archival dust field
+  const starCount = 190;
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount; i++) {
+    const r = 4.0 + rng() * 11.5;
+    const theta = rng() * Math.PI * 2;
+    const phi = Math.acos(2 * rng() - 1);
+    starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    starPos[i * 3 + 1] = r * Math.cos(phi) * 0.65;
+    starPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  const starMat = new THREE.PointsMaterial({
+    color: 0xa6f7ff,
+    size: 0.04,
+    transparent: true,
+    opacity: 0.36,
+    depthWrite: false,
+  });
+  root.add(new THREE.Points(starGeo, starMat));
+  disposables.push(starGeo, starMat);
+
+  const codexGroup = new THREE.Group();
+  root.add(codexGroup);
+
+  // Base octagonal obsidian plinth + exit portal ring
+  const baseGeo = new THREE.CylinderGeometry(2.55, 2.95, 0.22, 8);
+  const baseMat = new THREE.MeshStandardMaterial({
+    color: 0x151a21,
+    roughness: 0.58,
+    metalness: 0.44,
+    envMapIntensity: 0.24,
+  });
+  const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+  baseMesh.position.y = -2.05;
+  codexGroup.add(baseMesh);
+  disposables.push(baseGeo, baseMat);
+
+  const cyanRingMat = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.56,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  disposables.push(cyanRingMat);
+
+  [1.35, 2.32].forEach((r) => {
+    const rg = new THREE.RingGeometry(r - 0.03, r, 48);
+    rg.rotateX(-Math.PI / 2);
+    const rm = new THREE.Mesh(rg, cyanRingMat);
+    rm.position.y = -1.92;
+    codexGroup.add(rm);
+    disposables.push(rg);
+  });
+
+  // Central Obsidian Knowledge Core + Dual Telemetry Scanner Halos
+  const coreGroup = new THREE.Group();
+  coreGroup.position.set(0, 0.15, 0);
+  codexGroup.add(coreGroup);
+
+  const coreGeo = new THREE.OctahedronGeometry(0.46, 0);
+  const coreEdgeGeo = new THREE.EdgesGeometry(coreGeo);
+  const coreMat = new THREE.MeshPhysicalMaterial({
+    color: 0x0d1822,
+    emissive: new THREE.Color(0x00ffff),
+    emissiveIntensity: 0.18,
+    roughness: 0.14,
+    metalness: 0.38,
+    transparent: true,
+    opacity: 0.68,
+  });
+  const coreEdgeMat = new THREE.LineBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+  coreMesh.add(new THREE.LineSegments(coreEdgeGeo, coreEdgeMat));
+  coreGroup.add(coreMesh);
+  disposables.push(coreGeo, coreEdgeGeo, coreMat, coreEdgeMat);
+
+  const auraMat = new THREE.SpriteMaterial({
+    map: glowTex,
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.36,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const auraSprite = new THREE.Sprite(auraMat);
+  auraSprite.scale.set(1.9, 1.9, 1);
+  coreGroup.add(auraSprite);
+  disposables.push(auraMat);
+
+  const haloOuterGeo = new THREE.TorusGeometry(1.48, 0.022, 12, 64);
+  const haloInnerGeo = new THREE.TorusGeometry(1.06, 0.018, 12, 64);
+  const haloMat = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.45,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const haloOuter = new THREE.Mesh(haloOuterGeo, haloMat);
+  haloOuter.rotation.set(0.55, 0.2, 0);
+  const haloInner = new THREE.Mesh(haloInnerGeo, haloMat);
+  haloInner.rotation.set(-0.48, 0.6, 0);
+  coreGroup.add(haloOuter, haloInner);
+  disposables.push(haloOuterGeo, haloInnerGeo, haloMat);
+
+  // 3 Floating Research Manuscript Plates (Plates 0 & 1: Submitted, Plate 2: Under Review)
+  const plateGeo = new THREE.BoxGeometry(1.12, 1.48, 0.045);
+  const plateEdgeGeo = new THREE.EdgesGeometry(plateGeo);
+  const lineBarGeo = new THREE.BoxGeometry(0.74, 0.042, 0.014);
+  const beaconGeo = new THREE.OctahedronGeometry(0.085, 0);
+
+  const plateGlassMat = new THREE.MeshPhysicalMaterial({
+    color: 0x09131b,
+    emissive: new THREE.Color(0x00ffff),
+    emissiveIntensity: 0.06,
+    roughness: 0.18,
+    metalness: 0.25,
+    transparent: true,
+    opacity: 0.62,
+  });
+  const submittedEdgeMat = new THREE.LineBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const reviewEdgeMat = new THREE.LineBasicMaterial({
+    color: 0xd8ffff,
+    transparent: true,
+    opacity: 0.88,
+  });
+  const submittedBarMat = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.68,
+  });
+  const reviewBarMat = new THREE.MeshBasicMaterial({
+    color: 0xd8ffff,
+    transparent: true,
+    opacity: 0.72,
+  });
+  const tetherMat = new THREE.LineBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.26,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+
+  disposables.push(
+    plateGeo,
+    plateEdgeGeo,
+    lineBarGeo,
+    beaconGeo,
+    plateGlassMat,
+    submittedEdgeMat,
+    reviewEdgeMat,
+    submittedBarMat,
+    reviewBarMat,
+    tetherMat
+  );
+
+  interface ManuscriptPlate {
+    group: THREE.Group;
+    beacon: THREE.Mesh;
+    basePos: THREE.Vector3;
+    baseRotY: number;
+    phase: number;
+    isReview: boolean;
+  }
+
+  const plateConfigs = [
+    { x: -1.92, y: 0.34, z: 0.65, rotY: 0.42, isReview: false, phase: 0.0 },
+    { x: 0.0, y: 0.68, z: -0.95, rotY: 0.0, isReview: false, phase: 2.1 },
+    { x: 1.92, y: 0.28, z: 0.65, rotY: -0.42, isReview: true, phase: 4.2 },
+  ];
+
+  const plates: ManuscriptPlate[] = plateConfigs.map((cfg) => {
+    const pGroup = new THREE.Group();
+    pGroup.position.set(cfg.x, cfg.y, cfg.z);
+    pGroup.rotation.y = cfg.rotY;
+
+    const plateMesh = new THREE.Mesh(plateGeo, plateGlassMat);
+    plateMesh.add(
+      new THREE.LineSegments(plateEdgeGeo, cfg.isReview ? reviewEdgeMat : submittedEdgeMat)
+    );
+    pGroup.add(plateMesh);
+
+    const barMat = cfg.isReview ? reviewBarMat : submittedBarMat;
+    for (let r = 0; r < 6; r++) {
+      const bar = new THREE.Mesh(lineBarGeo, barMat);
+      const barScale = r === 0 ? 0.62 : r === 5 ? 0.54 : 0.94;
+      bar.scale.x = barScale;
+      bar.position.set(-(1 - barScale) * 0.36, 0.42 - r * 0.18, 0.03);
+      pGroup.add(bar);
+    }
+
+    const beacon = new THREE.Mesh(beaconGeo, barMat);
+    beacon.position.set(0.38, 0.55, 0.05);
+    pGroup.add(beacon);
+
+    codexGroup.add(pGroup);
+
+    // Citation tether back to core
+    const linkGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0.15, 0),
+      new THREE.Vector3(cfg.x, cfg.y, cfg.z),
+    ]);
+    codexGroup.add(new THREE.Line(linkGeo, tetherMat));
+    disposables.push(linkGeo);
+
+    return {
+      group: pGroup,
+      beacon,
+      basePos: new THREE.Vector3(cfg.x, cfg.y, cfg.z),
+      baseRotY: cfg.rotY,
+      phase: cfg.phase,
+      isReview: cfg.isReview,
+    };
+  });
+
+  return {
+    root,
+    update: (elapsed: number, pointerX: number, pointerY: number, diveProgress: number) => {
+      const damp = 1 - THREE.MathUtils.smoothstep(diveProgress, 0.1, 0.8);
+      codexGroup.rotation.y = pointerX * 0.18 * damp + Math.sin(elapsed * 0.25) * 0.08 * damp;
+      codexGroup.rotation.x = pointerY * 0.1 * damp;
+
+      coreMesh.rotation.y = elapsed * 0.48;
+      coreMesh.rotation.x = elapsed * 0.24;
+      haloOuter.rotation.z = elapsed * 0.34;
+      haloOuter.rotation.y = 0.2 + elapsed * 0.18;
+      haloInner.rotation.z = -elapsed * 0.45;
+      haloInner.scale.setScalar(1 + diveProgress * 0.75);
+      haloOuter.scale.setScalar(1 + diveProgress * 0.95);
+
+      auraSprite.scale.setScalar(1.85 + Math.sin(elapsed * 2.1) * 0.16 + diveProgress * 1.4);
+
+      plates.forEach((p, idx) => {
+        const hover = Math.sin(elapsed * 1.3 + p.phase) * 0.08;
+        const spread = 1 + diveProgress * 0.55;
+        p.group.position.set(p.basePos.x * spread, p.basePos.y + hover, p.basePos.z * spread);
+        p.group.rotation.y = p.baseRotY + Math.sin(elapsed * 0.4 + idx) * 0.06;
+        p.beacon.rotation.y = elapsed * (p.isReview ? 2.4 : 1.1);
+        const pulseScale = p.isReview ? 1 + Math.sin(elapsed * 4.5) * 0.28 : 1;
+        p.beacon.scale.setScalar(pulseScale);
+      });
+    },
+    dispose: () => {
+      disposables.forEach((d) => d.dispose());
+    },
+  };
+}
+
+/**
+ * CH.05 // THE PEDESTAL: Precision Machined Circuit Platform + 2,400-Particle & Wireframe Contact Emblems
  */
 export function buildPedestalChamber(
   yPos: number,

@@ -12,6 +12,7 @@ import {
   buildDriftChamber,
   buildIrisChamber,
   buildPedestalChamber,
+  buildResearchChamber,
   buildSummitChamber,
   buildVolcanicHorizonTerrain,
   createRng,
@@ -44,7 +45,7 @@ const _vC = new THREE.Vector3();
 const _vD = new THREE.Vector3();
 const _vMid = new THREE.Vector3();
 const _coreWorld = new THREE.Vector3(0, -24, -12);
-const _summitCenter = new THREE.Vector3(0, 1.55, 0);
+const _summitCenter = new THREE.Vector3(0, 1.75, 0);
 const _camGoalPos = new THREE.Vector3();
 const _camGoalTarget = new THREE.Vector3();
 const _dummy = new THREE.Object3D();
@@ -71,6 +72,8 @@ function getResponsiveFov(aspect: number): number {
   return 48;
 }
 
+type ChamberStage = 'summit' | 'iris' | 'research' | 'pedestal';
+
 function sampleDetailedFlight(
   progress: number,
   rideCurve: THREE.CatmullRomCurve3,
@@ -81,11 +84,11 @@ function sampleDetailedFlight(
   outTarget: THREE.Vector3
 ): {
   chamberIdx: number;
+  chamberStage: ChamberStage;
   warpIntensity: number;
   teleportFlash: number;
-  teleported: boolean;
-  coreEntered: boolean;
   portalFlyProgress: number;
+  researchDiveProgress: number;
   summitExplodeProgress: number;
   neuralRevealProgress: number;
   neuralPauseFactor: number;
@@ -109,62 +112,81 @@ function sampleDetailedFlight(
 
   let warpIntensity = 0;
   let portalFlyProgress = 0;
-  const inReturnSky = p >= 0.945;
-  const summitExplodeProgress = inReturnSky ? 0 : THREE.MathUtils.smoothstep(p, 0.0, 0.175);
-  const frontWallFade = inReturnSky ? 0 : THREE.MathUtils.smoothstep(p, 0.035, 0.19);
-  const neuralRevealProgress = inReturnSky ? 0 : THREE.MathUtils.smoothstep(p, 0.035, 0.185);
+  let researchDiveProgress = 0;
+  const inReturnSky = p >= 0.968;
+  const summitExplodeProgress = inReturnSky ? 0 : THREE.MathUtils.smoothstep(p, 0.0, 0.1);
+  const frontWallFade = inReturnSky ? 0 : THREE.MathUtils.smoothstep(p, 0.022, 0.105);
+  const neuralRevealProgress = inReturnSky ? 0 : THREE.MathUtils.smoothstep(p, 0.022, 0.102);
 
-  // Smoothly pause neural simulation while About Me card is displayed [0.275 .. 0.41]
-  const pauseIn = THREE.MathUtils.smoothstep(p, 0.275, 0.31);
-  const pauseOut = THREE.MathUtils.smoothstep(p, 0.375, 0.41);
+  // Smoothly pause neural simulation while About Me card is displayed [0.160 .. 0.245]
+  const pauseIn = THREE.MathUtils.smoothstep(p, 0.16, 0.185);
+  const pauseOut = THREE.MathUtils.smoothstep(p, 0.222, 0.248);
   const neuralPauseFactor = pauseIn * (1 - pauseOut);
 
-  // Pure Cyan Teleport Flash 1 centered at p = 0.53 inside Last Neuron nucleus
+  // Flash 1: Last Neuron nucleus -> CH.03 Iris (center 0.355)
   let neuronTeleportFlash = 0;
-  if (p >= 0.51 && p <= 0.55) {
+  if (p >= 0.333 && p <= 0.377) {
     neuronTeleportFlash =
-      p < 0.53
-        ? THREE.MathUtils.smoothstep(p, 0.51, 0.53)
-        : 1 - THREE.MathUtils.smoothstep(p, 0.53, 0.55);
+      p < 0.355
+        ? THREE.MathUtils.smoothstep(p, 0.333, 0.355)
+        : 1 - THREE.MathUtils.smoothstep(p, 0.355, 0.377);
   }
 
-  // Pure Cyan Teleport Flash 3 centered at p = 0.945 inside CH.04 overhead Halo Portal
+  // Flash 2: Iris Singularity -> CH.04 Research Codex (center 0.615)
+  let irisTeleportFlash = 0;
+  if (p >= 0.593 && p <= 0.637) {
+    irisTeleportFlash =
+      p < 0.615
+        ? THREE.MathUtils.smoothstep(p, 0.593, 0.615)
+        : 1 - THREE.MathUtils.smoothstep(p, 0.615, 0.637);
+  }
+
+  // Flash 3: Research Codex -> CH.05 Contact Pedestal (center 0.845)
+  let researchTeleportFlash = 0;
+  if (p >= 0.825 && p <= 0.865) {
+    researchTeleportFlash =
+      p < 0.845
+        ? THREE.MathUtils.smoothstep(p, 0.825, 0.845)
+        : 1 - THREE.MathUtils.smoothstep(p, 0.845, 0.865);
+  }
+
+  // Flash 4: CH.05 Overhead Halo -> Stage 1 Sky Return (center 0.968)
   let skyTeleportFlash = 0;
-  if (p >= 0.928 && p <= 0.968) {
+  if (p >= 0.952 && p <= 0.984) {
     skyTeleportFlash =
-      p < 0.945
-        ? THREE.MathUtils.smoothstep(p, 0.928, 0.945)
-        : 1 - THREE.MathUtils.smoothstep(p, 0.945, 0.968);
+      p < 0.968
+        ? THREE.MathUtils.smoothstep(p, 0.952, 0.968)
+        : 1 - THREE.MathUtils.smoothstep(p, 0.968, 0.984);
   }
 
-  // Segment 1: CH.01 Genesis Blocks (0.00) -> Explode & enter inside Chosen Block (0.19)
-  if (p <= 0.19) {
-    const u = p / 0.19;
+  // Segment 1: CH.01 Genesis Blocks (0.00) -> Explode & enter inside Chosen Block (0.105)
+  if (p <= 0.105) {
+    const u = p / 0.105;
     const eased = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
 
     if (isMobileLayout) {
-      _vA.set(0.0, 2.9, 15.6);
-      _vB.set(0.0, 1.54, 0.68);
-      _vC.set(0.0, 1.15, 0.0);
-      _vD.set(0.0, 1.55, 0.0);
+      _vA.set(-12.8, -0.45, 10.4);
+      _vB.set(0.0, 1.74, 0.68);
+      _vC.set(0.0, 1.75, 0.0);
+      _vD.set(0.0, 1.75, 0.0);
     } else {
-      _vA.set(...DETAILED_CHAMBERS[0].camPos); // (0, 2.35, 11.4)
-      _vB.set(...DETAILED_CHAMBERS[1].camPos); // (0, 1.56, 0.52)
-      _vC.set(...DETAILED_CHAMBERS[0].camTarget); // (0, 1.35, 0)
-      _vD.set(...DETAILED_CHAMBERS[1].camTarget); // (0, 1.55, 0)
+      _vA.set(...DETAILED_CHAMBERS[0].camPos);
+      _vB.set(...DETAILED_CHAMBERS[1].camPos);
+      _vC.set(...DETAILED_CHAMBERS[0].camTarget);
+      _vD.set(...DETAILED_CHAMBERS[1].camTarget);
     }
     outPos.lerpVectors(_vA, _vB, eased);
     outTarget.lerpVectors(_vC, _vD, eased);
 
-    warpIntensity = Math.sin(THREE.MathUtils.clamp((u - 0.14) / 0.48, 0, 1) * Math.PI) * 0.38;
+    warpIntensity = Math.sin(THREE.MathUtils.clamp((u - 0.14) / 0.48, 0, 1) * Math.PI) * 0.36;
     const microBlend = THREE.MathUtils.smoothstep(u, 0.55, 0.95);
     return {
       chamberIdx: 0,
+      chamberStage: 'summit',
       warpIntensity,
       teleportFlash: 0,
-      teleported: false,
-      coreEntered: false,
-      portalFlyProgress,
+      portalFlyProgress: 0,
+      researchDiveProgress: 0,
       summitExplodeProgress,
       neuralRevealProgress,
       neuralPauseFactor: 0,
@@ -176,27 +198,27 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 2A: Unobstructed Live Neural Network Viewing Hold (0.19 -> 0.27)
-  if (p <= 0.27) {
-    const u = (p - 0.19) / 0.08;
+  // Segment 2A: Unobstructed Live Neural Network Viewing Hold (0.105 -> 0.155)
+  if (p <= 0.155) {
+    const u = (p - 0.105) / 0.05;
     const eased = u * u * (3 - 2 * u);
     if (isMobileLayout) {
-      _vA.set(0.0, 1.54, 0.68);
-      _vB.set(0.0, 1.52, 0.64);
+      _vA.set(0.0, 1.74, 0.68);
+      _vB.set(0.0, 1.72, 0.64);
     } else {
-      _vA.set(...DETAILED_CHAMBERS[1].camPos); // (0, 1.56, 0.52)
-      _vB.set(0, 1.56, 0.45);
+      _vA.set(...DETAILED_CHAMBERS[1].camPos);
+      _vB.set(0, 1.76, 0.45);
     }
     outPos.lerpVectors(_vA, _vB, eased);
-    outTarget.set(0, 1.55, 0);
+    outTarget.set(0, 1.75, 0);
 
     return {
       chamberIdx: 1,
+      chamberStage: 'summit',
       warpIntensity: 0,
       teleportFlash: 0,
-      teleported: false,
-      coreEntered: false,
       portalFlyProgress: 0,
+      researchDiveProgress: 0,
       summitExplodeProgress: 1,
       neuralRevealProgress: 1,
       neuralPauseFactor,
@@ -208,31 +230,31 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 2B: Sweep into Left-Half (desktop) or Larger Upper-Stage (mobile) Pose + About Me Card (0.27 -> 0.41)
-  if (p <= 0.41) {
-    const u = (p - 0.27) / 0.14;
-    const orbitIn = THREE.MathUtils.smoothstep(u, 0.0, 0.16);
+  // Segment 2B: Sweep into About Me framing + card hold (0.155 -> 0.24)
+  if (p <= 0.24) {
+    const u = (p - 0.155) / 0.085;
+    const orbitIn = THREE.MathUtils.smoothstep(u, 0.0, 0.24);
     if (isMobileLayout) {
-      _vA.set(0.0, 1.52, 0.64);
-      _vB.set(0.0, 1.44, 0.66);
-      _vD.set(0.0, 1.32, 0.0);
+      _vA.set(0.0, 1.72, 0.64);
+      _vB.set(0.0, 1.64, 0.66);
+      _vD.set(0.0, 1.52, 0.0);
     } else {
-      _vA.set(0, 1.56, 0.45);
-      _vB.set(-0.19, 1.6, 0.3);
-      _vD.set(0.14, 1.54, 0.04);
+      _vA.set(0, 1.76, 0.45);
+      _vB.set(-0.19, 1.8, 0.3);
+      _vD.set(0.14, 1.74, 0.04);
     }
     outPos.lerpVectors(_vA, _vB, orbitIn);
 
-    _vC.set(0, 1.55, 0);
+    _vC.set(0, 1.75, 0);
     outTarget.lerpVectors(_vC, _vD, orbitIn);
 
     return {
       chamberIdx: 1,
+      chamberStage: 'summit',
       warpIntensity: 0,
       teleportFlash: 0,
-      teleported: false,
-      coreEntered: false,
       portalFlyProgress: 0,
+      researchDiveProgress: 0,
       summitExplodeProgress: 1,
       neuralRevealProgress: 1,
       neuralPauseFactor,
@@ -244,16 +266,16 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 2C: Unified Sweeping Spline Glide -> First Neuron -> 3 Neurons -> Inside Last Neuron (0.41 -> 0.53)
-  if (p < 0.53) {
-    const u = THREE.MathUtils.clamp((p - 0.41) / (0.53 - 0.41), 0, 1);
-    const rideT = u < 0.2 ? 0.5 * (u / 0.2) * u : u;
+  // Segment 2C: Unhurried Neural Spline Ride inside Chosen Block -> Neuron Portal (0.24 -> 0.355)
+  if (p < 0.355) {
+    const u = THREE.MathUtils.clamp((p - 0.24) / (0.355 - 0.24), 0, 1);
+    const rideT = u * u * (3 - 2 * u);
     const clampedT = THREE.MathUtils.clamp(rideT, 0, 1);
     rideCurve.getPointAt(clampedT, outPos);
 
     if (isMobileLayout && u < 0.28) {
       const mobileEntryBlend = THREE.MathUtils.smoothstep(u, 0.0, 0.28);
-      _vA.set(0.0, 1.44, 0.66);
+      _vA.set(0.0, 1.64, 0.66);
       outPos.lerpVectors(_vA, outPos, mobileEntryBlend);
     }
 
@@ -268,20 +290,20 @@ function sampleDetailedFlight(
 
     const lookPan = THREE.MathUtils.smoothstep(u, 0.0, 0.26);
     if (isMobileLayout) {
-      _vC.set(0.0, 1.32, 0.0);
+      _vC.set(0.0, 1.52, 0.0);
     } else {
-      _vC.set(0.14, 1.54, 0.04);
+      _vC.set(0.14, 1.74, 0.04);
     }
     outTarget.lerpVectors(_vC, _vD, lookPan);
 
     const nearEase = THREE.MathUtils.smoothstep(u, 0.05, 0.35);
     return {
       chamberIdx: 1,
+      chamberStage: 'summit',
       warpIntensity: 0,
       teleportFlash: neuronTeleportFlash,
-      teleported: false,
-      coreEntered: false,
       portalFlyProgress: 0,
+      researchDiveProgress: 0,
       summitExplodeProgress: 1,
       neuralRevealProgress: 1,
       neuralPauseFactor: 0,
@@ -293,10 +315,10 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 2D: Teleported cleanly from Last Neuron to CH.03 Quantum Gyroscope Reactor (0.53 -> 0.64)
+  // Segment 3A: Emerge & glide smoothly onto CH.03 Iris Reactor (0.355 -> 0.455)
   if (p <= DETAILED_CHAMBERS[2].scrollAt) {
-    const u = (p - 0.53) / (DETAILED_CHAMBERS[2].scrollAt - 0.53);
-    const eased = 1 - Math.pow(1 - u, 2.5);
+    const u = (p - 0.355) / (DETAILED_CHAMBERS[2].scrollAt - 0.355);
+    const eased = 1 - Math.pow(1 - u, 2.6);
     if (isMobileLayout) {
       _vA.set(0.0, -15.0, 10.0);
       _vB.set(0.0, -17.6, 9.8);
@@ -304,7 +326,7 @@ function sampleDetailedFlight(
       _vD.set(0.0, -34.0, -12.0);
     } else {
       _vA.set(-4.2, -17.9, 1.4);
-      _vB.set(...DETAILED_CHAMBERS[2].camPos); // [-4.2, -21.2, -0.4] -> frames Reactor cleanly in RIGHT HALF
+      _vB.set(...DETAILED_CHAMBERS[2].camPos);
       _vC.set(-4.0, -24.0, -12.0);
       _vD.set(...DETAILED_CHAMBERS[2].camTarget);
     }
@@ -313,11 +335,11 @@ function sampleDetailedFlight(
 
     return {
       chamberIdx: 2,
+      chamberStage: 'iris',
       warpIntensity: 0,
       teleportFlash: neuronTeleportFlash,
-      teleported: true,
-      coreEntered: false,
       portalFlyProgress: 0,
+      researchDiveProgress: 0,
       summitExplodeProgress: 1,
       neuralRevealProgress: 0,
       neuralPauseFactor: 0,
@@ -329,9 +351,9 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 3A: Hold framing CH.03 Quantum Reactor (RIGHT desktop / High-Upper mobile) while WORK card sits opposite (0.64 -> 0.725)
-  if (p < 0.725) {
-    const t = (p - 0.64) / (0.725 - 0.64);
+  // Segment 3B: Hold framing CH.03 Reactor while Experience card displays (0.455 -> 0.525)
+  if (p < 0.525) {
+    const t = (p - 0.455) / (0.525 - 0.455);
     const eased = t * t * (3 - 2 * t);
     portalFlyProgress = eased * 0.08;
 
@@ -341,9 +363,9 @@ function sampleDetailedFlight(
       _vC.set(0.0, -34.0, -12.0);
       _vD.set(0.0, -33.6, -12.0);
     } else {
-      _vA.set(...DETAILED_CHAMBERS[2].camPos); // [-4.2, -21.2, -0.4]
+      _vA.set(...DETAILED_CHAMBERS[2].camPos);
       _vB.set(-4.05, -21.6, -0.9);
-      _vC.set(...DETAILED_CHAMBERS[2].camTarget); // [-4.0, -24.0, -12.0]
+      _vC.set(...DETAILED_CHAMBERS[2].camTarget);
       _vD.set(-3.85, -24.0, -12.0);
     }
     outPos.lerpVectors(_vA, _vB, eased);
@@ -351,11 +373,11 @@ function sampleDetailedFlight(
 
     return {
       chamberIdx: 2,
+      chamberStage: 'iris',
       warpIntensity: 0,
       teleportFlash: 0,
-      teleported: true,
-      coreEntered: false,
       portalFlyProgress,
+      researchDiveProgress: 0,
       summitExplodeProgress: 1,
       neuralRevealProgress: 0,
       neuralPauseFactor: 0,
@@ -367,9 +389,9 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 3B: Smooth aperture dive into the Quantum Gyroscope singularity core (0.725 -> 0.805)
-  if (p < 0.805) {
-    const t = (p - 0.725) / (0.805 - 0.725);
+  // Segment 3C: Slow, smooth aperture dive into Quantum Gyroscope core -> Flash 2 (0.525 -> 0.615)
+  if (p < 0.615) {
+    const t = (p - 0.525) / (0.615 - 0.525);
     const eased = t * t * (3 - 2 * t);
     const inv = 1 - eased;
     portalFlyProgress = 0.08 + eased * 0.92;
@@ -391,18 +413,16 @@ function sampleDetailedFlight(
       .addScaledVector(_vMid, 2 * inv * eased)
       .addScaledVector(_vB, eased * eased);
 
-    const lookBlend = THREE.MathUtils.smoothstep(t, 0.0, 0.42);
+    const lookBlend = THREE.MathUtils.smoothstep(t, 0.0, 0.48);
     outTarget.lerpVectors(_vC, coreWorld, lookBlend);
-
-    const portalFlash = THREE.MathUtils.smoothstep(p, 0.77, 0.805);
 
     return {
       chamberIdx: t < 0.65 ? 2 : 3,
+      chamberStage: 'iris',
       warpIntensity: 0,
-      teleportFlash: portalFlash,
-      teleported: true,
-      coreEntered: false,
+      teleportFlash: irisTeleportFlash,
       portalFlyProgress,
+      researchDiveProgress: 0,
       summitExplodeProgress: 1,
       neuralRevealProgress: 0,
       neuralPauseFactor: 0,
@@ -414,34 +434,31 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 4A: Emerge onto & dwell cleanly at CH.04 Contact Pedestal (LEFT desktop / High-Upper mobile) (0.805 -> 0.91)
-  if (p <= 0.91) {
-    const enterT = THREE.MathUtils.clamp((p - 0.805) / (0.86 - 0.805), 0, 1);
-    const eased = 1 - Math.pow(1 - enterT, 3);
-
+  // Segment 4A: Emerge & glide smoothly onto CH.04 Research Archive (y=-48, z=-12) (0.615 -> 0.705)
+  if (p <= DETAILED_CHAMBERS[3].scrollAt) {
+    const u = (p - 0.615) / (DETAILED_CHAMBERS[3].scrollAt - 0.615);
+    const eased = 1 - Math.pow(1 - u, 2.6);
     if (isMobileLayout) {
-      _vA.set(0.0, -47.2, -0.5);
-      _vB.set(0.0, -48.3, 1.4);
-      _vC.set(0.0, -54.0, -12.0);
-      _vD.set(0.0, -55.4, -12.0);
+      _vA.set(0.0, -44.2, -1.8);
+      _vB.set(0.0, -45.6, -2.8);
+      _vC.set(0.0, -48.8, -12.0);
+      _vD.set(0.0, -50.1, -12.0);
     } else {
-      _vA.set(1.3, -48.9, -5.6);
-      _vB.set(...DETAILED_CHAMBERS[3].camPos); // [2.75, -49.95, -3.5] -> more direct & larger LEFT HALF framing
-      _vC.set(1.2, -51.3, -12.0);
-      _vD.set(...DETAILED_CHAMBERS[3].camTarget); // [2.6, -51.35, -12.0]
+      _vA.set(1.3, -46.2, -3.2);
+      _vB.set(...DETAILED_CHAMBERS[3].camPos); // [2.4, -47.2, -4.4] -> Codex on LEFT, Research card RIGHT
+      _vC.set(1.2, -48.0, -12.0);
+      _vD.set(...DETAILED_CHAMBERS[3].camTarget); // [2.2, -48.1, -12.0]
     }
     outPos.lerpVectors(_vA, _vB, eased);
     outTarget.lerpVectors(_vC, _vD, eased);
 
-    const emergeFlash = 1 - THREE.MathUtils.smoothstep(p, 0.805, 0.835);
-
     return {
       chamberIdx: 3,
+      chamberStage: 'research',
       warpIntensity: 0,
-      teleportFlash: emergeFlash,
-      teleported: true,
-      coreEntered: true,
+      teleportFlash: irisTeleportFlash,
       portalFlyProgress: 1,
+      researchDiveProgress: 0,
       summitExplodeProgress: 1,
       neuralRevealProgress: 0,
       neuralPauseFactor: 0,
@@ -453,38 +470,114 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 4B: Rise upward through CH.04 overhead Cyan Halo Portal (0.91 -> 0.945)
-  if (p < 0.945) {
-    const t = (p - 0.91) / (0.945 - 0.91);
+  // Segment 4B: Hold CH.04 Research Codex framed while Articles & Research card shows (0.705 -> 0.77)
+  if (p < 0.77) {
+    const t = (p - 0.705) / (0.77 - 0.705);
     const eased = t * t * (3 - 2 * t);
-    const inv = 1 - eased;
+    researchDiveProgress = eased * 0.08;
 
     if (isMobileLayout) {
-      _vA.set(0.0, -48.3, 1.4);
-      _vMid.set(0.0, -48.6, -7.2);
-      _vC.set(0.0, -55.4, -12.0);
+      _vA.set(0.0, -45.6, -2.8);
+      _vB.set(0.0, -45.8, -3.1);
+      _vC.set(0.0, -50.1, -12.0);
+      _vD.set(0.0, -49.8, -12.0);
     } else {
       _vA.set(...DETAILED_CHAMBERS[3].camPos);
-      _vMid.set(1.2, -49.6, -9.2);
+      _vB.set(2.2, -47.25, -4.8);
       _vC.set(...DETAILED_CHAMBERS[3].camTarget);
+      _vD.set(2.0, -48.05, -12.0);
     }
-    _vB.set(0.0, -47.2, -12.0); // straight through overhead Halo Ring at y = -49.05, z = -12
+    outPos.lerpVectors(_vA, _vB, eased);
+    outTarget.lerpVectors(_vC, _vD, eased);
+
+    return {
+      chamberIdx: 3,
+      chamberStage: 'research',
+      warpIntensity: 0,
+      teleportFlash: 0,
+      portalFlyProgress: 1,
+      researchDiveProgress,
+      summitExplodeProgress: 1,
+      neuralRevealProgress: 0,
+      neuralPauseFactor: 0,
+      enterNeuronProgress: 1,
+      horizontalWarp: false,
+      nearPlane: 0.1,
+      farPlane: 180,
+      frontWallFade: 1,
+    };
+  }
+
+  // Segment 4C: Smooth plunge through Research Codex core into CH.05 Contact Pedestal -> Flash 3 (0.77 -> 0.845)
+  if (p < 0.845) {
+    const t = (p - 0.77) / (0.845 - 0.77);
+    const eased = t * t * (3 - 2 * t);
+    const inv = 1 - eased;
+    researchDiveProgress = 0.08 + eased * 0.92;
+
+    if (isMobileLayout) {
+      _vA.set(0.0, -45.8, -3.1);
+      _vMid.set(0.0, -47.2, -7.8);
+      _vC.set(0.0, -49.8, -12.0);
+    } else {
+      _vA.set(2.2, -47.25, -4.8);
+      _vMid.set(0.8, -47.6, -8.8);
+      _vC.set(2.0, -48.05, -12.0);
+    }
+    _vB.set(0.0, -47.85, -12.0);
     outPos
       .set(0, 0, 0)
       .addScaledVector(_vA, inv * inv)
       .addScaledVector(_vMid, 2 * inv * eased)
       .addScaledVector(_vB, eased * eased);
 
-    _vD.set(0.0, -42.0, -12.0);
-    outTarget.lerpVectors(_vC, _vD, THREE.MathUtils.smoothstep(t, 0.08, 0.72));
+    _vD.set(0.0, -49.6, -12.0);
+    outTarget.lerpVectors(_vC, _vD, THREE.MathUtils.smoothstep(t, 0.0, 0.58));
 
     return {
-      chamberIdx: 3,
-      warpIntensity: Math.sin(t * Math.PI) * 0.48,
-      teleportFlash: skyTeleportFlash,
-      teleported: true,
-      coreEntered: true,
+      chamberIdx: t < 0.65 ? 3 : 4,
+      chamberStage: 'research',
+      warpIntensity: Math.sin(t * Math.PI) * 0.28,
+      teleportFlash: researchTeleportFlash,
       portalFlyProgress: 1,
+      researchDiveProgress,
+      summitExplodeProgress: 1,
+      neuralRevealProgress: 0,
+      neuralPauseFactor: 0,
+      enterNeuronProgress: 1,
+      horizontalWarp: false,
+      nearPlane: 0.06,
+      farPlane: 180,
+      frontWallFade: 1,
+    };
+  }
+
+  // Segment 5A: Emerge smoothly onto & dwell at CH.05 Contact Pedestal (y=-76, z=-12) (0.845 -> 0.94)
+  if (p <= 0.94) {
+    const enterT = THREE.MathUtils.clamp((p - 0.845) / (0.905 - 0.845), 0, 1);
+    const eased = 1 - Math.pow(1 - enterT, 2.8);
+
+    if (isMobileLayout) {
+      _vA.set(0.0, -71.2, -0.5);
+      _vB.set(0.0, -72.3, 1.4);
+      _vC.set(0.0, -78.0, -12.0);
+      _vD.set(0.0, -79.4, -12.0);
+    } else {
+      _vA.set(1.3, -72.9, -5.6);
+      _vB.set(...DETAILED_CHAMBERS[4].camPos); // [2.75, -73.95, -3.5]
+      _vC.set(1.2, -75.3, -12.0);
+      _vD.set(...DETAILED_CHAMBERS[4].camTarget); // [2.6, -75.35, -12.0]
+    }
+    outPos.lerpVectors(_vA, _vB, eased);
+    outTarget.lerpVectors(_vC, _vD, eased);
+
+    return {
+      chamberIdx: 4,
+      chamberStage: 'pedestal',
+      warpIntensity: 0,
+      teleportFlash: researchTeleportFlash,
+      portalFlyProgress: 1,
+      researchDiveProgress: 1,
       summitExplodeProgress: 1,
       neuralRevealProgress: 0,
       neuralPauseFactor: 0,
@@ -496,17 +589,60 @@ function sampleDetailedFlight(
     };
   }
 
-  // Segment 4C (Loop Return): Teleport into high starry sky & descend cleanly onto Stage 1 CH.01 (0.945 -> 1.00)
-  const t = THREE.MathUtils.clamp((p - 0.945) / (0.994 - 0.945), 0, 1);
+  // Segment 5B: Rise upward through CH.05 overhead Cyan Halo Portal (y=-73.05, z=-12) (0.94 -> 0.968)
+  if (p < 0.968) {
+    const t = (p - 0.94) / (0.968 - 0.94);
+    const eased = t * t * (3 - 2 * t);
+    const inv = 1 - eased;
+
+    if (isMobileLayout) {
+      _vA.set(0.0, -72.3, 1.4);
+      _vMid.set(0.0, -72.6, -7.2);
+      _vC.set(0.0, -79.4, -12.0);
+    } else {
+      _vA.set(...DETAILED_CHAMBERS[4].camPos);
+      _vMid.set(1.2, -73.6, -9.2);
+      _vC.set(...DETAILED_CHAMBERS[4].camTarget);
+    }
+    _vB.set(0.0, -71.2, -12.0); // straight through overhead Halo Ring at y = -73.05, z = -12
+    outPos
+      .set(0, 0, 0)
+      .addScaledVector(_vA, inv * inv)
+      .addScaledVector(_vMid, 2 * inv * eased)
+      .addScaledVector(_vB, eased * eased);
+
+    _vD.set(0.0, -66.0, -12.0);
+    outTarget.lerpVectors(_vC, _vD, THREE.MathUtils.smoothstep(t, 0.08, 0.72));
+
+    return {
+      chamberIdx: 4,
+      chamberStage: 'pedestal',
+      warpIntensity: Math.sin(t * Math.PI) * 0.44,
+      teleportFlash: skyTeleportFlash,
+      portalFlyProgress: 1,
+      researchDiveProgress: 1,
+      summitExplodeProgress: 1,
+      neuralRevealProgress: 0,
+      neuralPauseFactor: 0,
+      enterNeuronProgress: 1,
+      horizontalWarp: false,
+      nearPlane: 0.1,
+      farPlane: 180,
+      frontWallFade: 1,
+    };
+  }
+
+  // Segment 5C (Loop Return): Teleport into high starry sky & descend cleanly onto Stage 1 CH.01 (0.968 -> 1.00)
+  const t = THREE.MathUtils.clamp((p - 0.968) / (0.995 - 0.968), 0, 1);
   const eased = 1 - Math.pow(1 - t, 3);
 
   _vA.set(0.0, 22.5, 25.0);
   if (isMobileLayout) {
-    _vB.set(0.0, 2.9, 15.6);
-    _vD.set(0.0, 1.15, 0.0);
+    _vB.set(-12.8, -0.45, 10.4);
+    _vD.set(0.0, 1.75, 0.0);
   } else {
-    _vB.set(...DETAILED_CHAMBERS[0].camPos); // Exact Stage 1 [0.0, 2.35, 11.4]
-    _vD.set(...DETAILED_CHAMBERS[0].camTarget); // Exact Stage 1 [0.0, 1.35, 0.0]
+    _vB.set(...DETAILED_CHAMBERS[0].camPos);
+    _vD.set(...DETAILED_CHAMBERS[0].camTarget);
   }
   outPos.lerpVectors(_vA, _vB, eased);
 
@@ -515,11 +651,11 @@ function sampleDetailedFlight(
 
   return {
     chamberIdx: 0,
+    chamberStage: 'summit',
     warpIntensity: Math.sin(THREE.MathUtils.clamp((1 - t) * 0.85, 0, 1) * Math.PI) * 0.22,
     teleportFlash: skyTeleportFlash,
-    teleported: false,
-    coreEntered: false,
     portalFlyProgress: 0,
+    researchDiveProgress: 0,
     summitExplodeProgress: 0,
     neuralRevealProgress: 0,
     neuralPauseFactor: 0,
@@ -602,17 +738,17 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     renderer.domElement.style.height = '100%';
     renderer.domElement.style.cursor = 'grab';
 
-    // Deep Graphite Environment (#121417) + subtle fog preserving sharp contrast
+    // Deep Graphite Environment (#121417) + lighter atmospheric fog so volcanic ridge silhouettes show clearly
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x121417);
-    scene.fog = new THREE.FogExp2(0x121417, 0.017);
+    scene.fog = new THREE.FogExp2(0x121417, 0.0115);
 
-    // Studio Reflection Map for crisp metallic basalt & clear quartz bevels (dialed low to prevent white glare)
+    // Studio Reflection Map for crisp metallic basalt & clear quartz bevels
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     const roomEnv = new RoomEnvironment();
     const envTarget = pmremGenerator.fromScene(roomEnv, 0.04);
     scene.environment = envTarget.texture;
-    scene.environmentIntensity = 0.36;
+    scene.environmentIntensity = 0.42;
     roomEnv.dispose();
     pmremGenerator.dispose();
 
@@ -623,7 +759,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       180
     );
     if (isMobileRef.current) {
-      camera.position.set(0.0, 2.9, 15.6);
+      camera.position.set(-12.8, -0.45, 10.4);
     } else {
       camera.position.set(...DETAILED_CHAMBERS[0].camPos);
     }
@@ -635,7 +771,7 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     controls.enablePan = false;
     controls.rotateSpeed = 0.65;
     if (isMobileRef.current) {
-      controls.target.set(0.0, 1.15, 0.0);
+      controls.target.set(0.0, 1.75, 0.0);
     } else {
       controls.target.set(...DETAILED_CHAMBERS[0].camTarget);
     }
@@ -648,21 +784,32 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       orbitScrollAnchorRef.current = scrollRef.current;
     });
 
-    // Pure Cyan + Crisp White Lighting Rig (zero blue or green-teal hues, calibrated against harsh glare)
-    const hemiLight = new THREE.HemisphereLight(0x00ffff, 0x121417, 0.55);
+    // Pure Cyan + Crisp White Lighting Rig
+    const hemiLight = new THREE.HemisphereLight(0x00ffff, 0x1a2028, 0.65);
     scene.add(hemiLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
-    keyLight.position.set(10, 18, 14);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.92);
+    keyLight.position.set(16, 22, 18);
     scene.add(keyLight);
 
     const cyanRim = new THREE.DirectionalLight(0x00ffff, 1.35);
     cyanRim.position.set(-12, -4, -18);
     scene.add(cyanRim);
 
-    const horizonRim = new THREE.DirectionalLight(0xd8ffff, 0.75);
+    const horizonRim = new THREE.DirectionalLight(0xd8ffff, 0.78);
     horizonRim.position.set(0, 7, -62);
     scene.add(horizonRim);
+
+    // High, far, side-angled Sun Light positioned on the camera side to sculpt rock & chain textures
+    const cameraSunLight = new THREE.DirectionalLight(0xf6f9ff, 1.24);
+    cameraSunLight.position.set(22, 28, 26);
+    scene.add(cameraSunLight);
+    scene.add(cameraSunLight.target);
+
+    // Cyan box-cluster bounce light spilling onto basalt columns and surrounding volcanic ground
+    const boxGlowLight = new THREE.PointLight(0x00ffff, 6.8, 19, 1.4);
+    boxGlowLight.position.set(0, 1.4, 0);
+    scene.add(boxGlowLight);
 
     // Procedural PBR & Holographic Textures
     const maxAniso = renderer.capabilities.getMaxAnisotropy();
@@ -689,13 +836,13 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
     // Transform local neuron ride waypoints into a unified sweeping CatmullRomCurve3 starting right at the hold pose
     const worldWaypoints = driftChamber.rideWaypoints.map(
-      (lp) => new THREE.Vector3(lp.x * 0.026, 1.55 + lp.y * 0.026, lp.z * 0.026)
+      (lp) => new THREE.Vector3(lp.x * 0.026, 1.75 + lp.y * 0.026, lp.z * 0.026)
     );
     const firstNeuronWorld = worldWaypoints[0];
     const lastNeuronWorld = worldWaypoints[worldWaypoints.length - 1];
     const rideCurve = new THREE.CatmullRomCurve3(
       [
-        new THREE.Vector3(-0.19, 1.6, 0.3),
+        new THREE.Vector3(-0.19, 1.8, 0.3),
         new THREE.Vector3(
           firstNeuronWorld.x - 0.045,
           firstNeuronWorld.y + 0.015,
@@ -718,7 +865,10 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     );
     scene.add(irisChamber.root);
 
-    const pedestalChamber = buildPedestalChamber(-52, -12, circuitTex, glowTex);
+    const researchChamber = buildResearchChamber(-48, -12, glowTex);
+    scene.add(researchChamber.root);
+
+    const pedestalChamber = buildPedestalChamber(-76, -12, circuitTex, glowTex);
     scene.add(pedestalChamber.root);
 
     // -------------------------------------------------------------------------
@@ -750,23 +900,54 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     });
     scene.add(warpStreaks);
 
-    const moteCount = 620;
+    // Lower-chamber drifting dust motes strictly below ground level (y: -14 down to -104)
+    const moteCount = 480;
     const moteGeo = new THREE.BufferGeometry();
     const motePos = new Float32Array(moteCount * 3);
     for (let i = 0; i < moteCount; i++) {
-      motePos[i * 3] = (rng() - 0.5) * 84; // Covers x: -42 to +42 symmetrically
-      motePos[i * 3 + 1] = 36 - rng() * 120; // Covers y: 36 down to -84 (sky return through CH.04)
-      motePos[i * 3 + 2] = 42 - rng() * 96; // Covers z: 42 down to -54 (full 360 deg around all chambers)
+      motePos[i * 3] = (rng() - 0.5) * 76;
+      motePos[i * 3 + 1] = -14 - rng() * 90;
+      motePos[i * 3 + 2] = 36 - rng() * 88;
     }
     moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
     const moteMat = new THREE.PointsMaterial({
       color: 0xffffff,
-      size: 0.065,
+      map: neutralGlowTex,
+      size: 0.14,
       transparent: true,
-      opacity: 0.42,
+      opacity: 0.52,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
     const motes = new THREE.Points(moteGeo, moteMat);
     scene.add(motes);
+
+    // Dedicated Celestial Night Sky Starfield placed strictly above volcanic mountain rim (never on ground)
+    const skyStarCount = 320;
+    const skyStarGeo = new THREE.BufferGeometry();
+    const skyStarPos = new Float32Array(skyStarCount * 3);
+    for (let i = 0; i < skyStarCount; i++) {
+      const r = 84 + rng() * 52;
+      const theta = rng() * Math.PI * 2;
+      const cosPhi = 0.24 + rng() * 0.76; // Elevation >= ~14° -> y >= +20 above mountain peaks
+      const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi));
+      skyStarPos[i * 3] = r * sinPhi * Math.cos(theta);
+      skyStarPos[i * 3 + 1] = r * cosPhi;
+      skyStarPos[i * 3 + 2] = r * sinPhi * Math.sin(theta);
+    }
+    skyStarGeo.setAttribute('position', new THREE.BufferAttribute(skyStarPos, 3));
+    const skyStarMat = new THREE.PointsMaterial({
+      color: 0xe8faff,
+      map: neutralGlowTex,
+      size: 0.92,
+      transparent: true,
+      opacity: 0.88,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      fog: false,
+    });
+    const skyStars = new THREE.Points(skyStarGeo, skyStarMat);
+    scene.add(skyStars);
 
     // Hardware-GPU MSAA EffectComposer so spheres, synapses, rings & basalt edges render silky smooth
     let composer: EffectComposer | null = null;
@@ -787,9 +968,9 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       composer.addPass(new RenderPass(scene, camera));
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(width, height),
-        0.17,
-        0.22,
-        0.9
+        0.13,
+        0.2,
+        0.93
       );
       composer.addPass(bloomPass);
       composer.addPass(new OutputPass());
@@ -862,8 +1043,14 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
     let lastWarp = -1;
     let lastTeleportFlash = -1;
     let lastOrbit = false;
-    let prevTeleported = scrollRef.current >= 0.53 && scrollRef.current < 0.945;
-    let prevCoreEntered = scrollRef.current >= 0.805 && scrollRef.current < 0.945;
+    let prevStage: ChamberStage =
+      scrollRef.current >= 0.845 && scrollRef.current < 0.968
+        ? 'pedestal'
+        : scrollRef.current >= 0.615 && scrollRef.current < 0.845
+          ? 'research'
+          : scrollRef.current >= 0.355 && scrollRef.current < 0.615
+            ? 'iris'
+            : 'summit';
     let smoothScroll = scrollRef.current;
     const clock = new THREE.Clock();
 
@@ -898,11 +1085,11 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       const elapsed = clock.elapsedTime;
 
       // Damped scroll interpolation + instant wrap handoff only when looping bottom -> top
-      const wrappedToStart = smoothScroll > 0.88 && scrollRef.current < 0.1;
+      const wrappedToStart = smoothScroll > 0.9 && scrollRef.current < 0.08;
       if (wrappedToStart) {
         smoothScroll = scrollRef.current;
       } else {
-        smoothScroll = THREE.MathUtils.damp(smoothScroll, scrollRef.current, 4.2, delta);
+        smoothScroll = THREE.MathUtils.damp(smoothScroll, scrollRef.current, 3.1, delta);
       }
 
       const pAlpha = 1 - Math.exp(-6.5 * delta);
@@ -913,11 +1100,11 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
       const {
         chamberIdx,
+        chamberStage,
         warpIntensity,
         teleportFlash,
-        teleported,
-        coreEntered,
         portalFlyProgress,
+        researchDiveProgress,
         summitExplodeProgress,
         neuralRevealProgress,
         neuralPauseFactor,
@@ -954,9 +1141,8 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
         );
       }
 
-      const crossedTeleport = teleported !== prevTeleported || coreEntered !== prevCoreEntered;
-      prevTeleported = teleported;
-      prevCoreEntered = coreEntered;
+      const crossedTeleport = chamberStage !== prevStage;
+      prevStage = chamberStage;
 
       if (crossedTeleport) {
         camera.near = nearPlane;
@@ -977,13 +1163,15 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
         if (!userOrbitingRef.current) {
           const camDist = _camGoalPos.distanceTo(_camGoalTarget);
           const parallaxScale =
-            enterNeuronProgress > 0.05 || portalFlyProgress > 0.12
+            enterNeuronProgress > 0.05 ||
+            portalFlyProgress > 0.12 ||
+            researchDiveProgress > 0.12
               ? 0
               : Math.min(1.0, camDist * 0.09);
           _camGoalPos.x += pointerSmooth.x * 0.72 * parallaxScale;
           _camGoalPos.y += pointerSmooth.y * 0.42 * parallaxScale;
 
-          const damp = enterNeuronProgress > 0.05 ? 5.2 : 4.2;
+          const damp = enterNeuronProgress > 0.05 ? 3.8 : 3.4;
           camera.position.x = THREE.MathUtils.damp(camera.position.x, _camGoalPos.x, damp, delta);
           camera.position.y = THREE.MathUtils.damp(camera.position.y, _camGoalPos.y, damp, delta);
           camera.position.z = THREE.MathUtils.damp(camera.position.z, _camGoalPos.z, damp, delta);
@@ -996,11 +1184,26 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
 
       controls.update();
 
-      // Clean visibility separation across portals (only hide terrain once inside Chosen Block interior so 360° orbiting & explosion never lose background)
+      // Position Sunlight near the camera side, higher like a sun, and a bit far & sideways to sculpt textures
+      _vA.subVectors(camera.position, controls.target);
+      if (_vA.lengthSq() < 0.001) _vA.set(0, 2, 12);
+      _vA.normalize();
+      _vB.crossVectors(camera.up, _vA);
+      if (_vB.lengthSq() > 0.0001) _vB.normalize();
+      cameraSunLight.target.position.copy(controls.target);
+      cameraSunLight.position
+        .copy(controls.target)
+        .addScaledVector(_vA, 24)
+        .addScaledVector(_vB, -22)
+        .addScaledVector(camera.up, 28);
+      cameraSunLight.target.updateMatrixWorld();
+
+      // Clean visibility separation across portals (only hide terrain once inside Chosen Block interior)
+      const isSummit = chamberStage === 'summit';
       const insideChosenBlock =
-        neuralRevealProgress > 0.92 && camera.position.distanceTo(_summitCenter) < 0.95;
-      volcanicTerrain.root.visible = !teleported && !insideChosenBlock;
-      summitChamber.root.visible = !teleported;
+        isSummit && neuralRevealProgress > 0.92 && camera.position.distanceTo(_summitCenter) < 0.95;
+      volcanicTerrain.root.visible = isSummit && !insideChosenBlock;
+      summitChamber.root.visible = isSummit;
       if (summitChamber.root.visible) {
         summitChamber.update(
           elapsed,
@@ -1018,11 +1221,18 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
           enterNeuronProgress
         );
       }
-      irisChamber.root.visible = teleported && !coreEntered;
+
+      irisChamber.root.visible = chamberStage === 'iris';
       if (irisChamber.root.visible) {
         irisChamber.update(elapsed, pointerSmooth.x, pointerSmooth.y, portalFlyProgress);
       }
-      pedestalChamber.root.visible = teleported && coreEntered;
+
+      researchChamber.root.visible = chamberStage === 'research';
+      if (researchChamber.root.visible) {
+        researchChamber.update(elapsed, pointerSmooth.x, pointerSmooth.y, researchDiveProgress);
+      }
+
+      pedestalChamber.root.visible = chamberStage === 'pedestal';
       if (pedestalChamber.root.visible) {
         pedestalChamber.update(
           elapsed,
@@ -1033,7 +1243,15 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
         );
       }
 
-      motes.visible = !insideChosenBlock || coreEntered || smoothScroll >= 0.945;
+      boxGlowLight.intensity =
+        isSummit && !insideChosenBlock ? 6.8 * (1 - summitExplodeProgress * 0.65) : 0;
+
+      skyStars.visible = isSummit && !insideChosenBlock;
+      if (skyStars.visible) {
+        skyStarMat.opacity = 0.82 + Math.sin(elapsed * 1.45) * 0.12;
+        skyStars.rotation.y = elapsed * 0.004;
+      }
+      motes.visible = !isSummit || smoothScroll >= 0.968;
 
       // Animate Hyperspace Warp Streaks (Z-tunnel for CH.01->02, Y-shaft for CH.03->04)
       warpStreaks.visible = warpIntensity > 0.02;
@@ -1115,11 +1333,14 @@ export const ObsidianCyanScene: React.FC<ObsidianCyanSceneProps> = ({
       summitChamber.dispose();
       driftChamber.dispose();
       irisChamber.dispose();
+      researchChamber.dispose();
       pedestalChamber.dispose();
       streakGeo.dispose();
       streakMat.dispose();
       moteGeo.dispose();
       moteMat.dispose();
+      skyStarGeo.dispose();
+      skyStarMat.dispose();
       renderer.dispose();
 
       if (renderer.domElement.parentNode === container) {

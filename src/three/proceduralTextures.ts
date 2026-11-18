@@ -511,20 +511,21 @@ export function createNeutralGlowTexture(): THREE.CanvasTexture {
 }
 
 /**
- * Compact crisp 3D skill label badge for orbiting planets in the CH.03 Helical Solar Vortex.
+ * High-contrast 3D skill label badge with solid dark obsidian backing so skill names stay
+ * crisp and readable even when orbiting in front of bright black hole accretion filaments.
  */
 export function createSkillPlanetLabelTexture(
   label: string,
   accentHex: string
 ): { tex: THREE.CanvasTexture; aspect: number } {
-  const height = 112;
+  const height = 128;
   const measureCanvas = document.createElement('canvas');
   const mCtx = measureCanvas.getContext('2d')!;
-  const font = '600 42px "JetBrains Mono", ui-monospace, monospace';
+  const font = '700 46px "JetBrains Mono", ui-monospace, monospace';
   mCtx.font = font;
   const textWidth = Math.ceil(mCtx.measureText(label).width);
 
-  const width = Math.max(300, textWidth + 120);
+  const width = Math.max(330, textWidth + 138);
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -532,23 +533,50 @@ export function createSkillPlanetLabelTexture(
 
   ctx.clearRect(0, 0, width, height);
 
-  ctx.fillStyle = 'rgba(11, 15, 21, 0.88)';
-  ctx.fillRect(12, 16, width - 24, height - 32);
+  const padX = 12;
+  const padY = 14;
+  const boxW = width - padX * 2;
+  const boxH = height - padY * 2;
+  const radius = 22;
 
+  // Deep obsidian solid backing (97% opaque) so glowing disk strings behind never wash out text
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(padX, padY, boxW, boxH, radius);
+  const bgGrad = ctx.createLinearGradient(0, padY, 0, padY + boxH);
+  bgGrad.addColorStop(0, 'rgba(10, 14, 21, 0.98)');
+  bgGrad.addColorStop(1, 'rgba(4, 7, 11, 0.98)');
+  ctx.fillStyle = bgGrad;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 14;
+  ctx.fill();
+  ctx.restore();
+
+  // Crisp colored perimeter stroke + subtle top highlight
+  ctx.beginPath();
+  ctx.roundRect(padX, padY, boxW, boxH, radius);
   ctx.strokeStyle = accentHex;
-  ctx.globalAlpha = 0.78;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(12, 16, width - 24, height - 32);
+  ctx.globalAlpha = 0.92;
+  ctx.lineWidth = 3.5;
+  ctx.stroke();
 
   ctx.globalAlpha = 1.0;
+
+  // Glowing colored status node on left
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(padX + 36, height / 2, 9, 0, Math.PI * 2);
   ctx.fillStyle = accentHex;
-  ctx.fillRect(32, height / 2 - 7, 14, 14);
+  ctx.shadowColor = accentHex;
+  ctx.shadowBlur = 12;
+  ctx.fill();
+  ctx.restore();
 
   ctx.font = font;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#F1F5F9';
-  ctx.fillText(label, 64, height / 2 + 2);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(label, padX + 64, height / 2 + 2);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
