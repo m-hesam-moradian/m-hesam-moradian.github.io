@@ -1689,14 +1689,16 @@ export function buildIrisChamber(
 
 /**
  * CH.04 // KNOWLEDGE (QUANTUM KNOWLEDGE FIELD):
- * Deep scientific quantum environment with reflective dark obsidian surface, undulating
- * probability-wave wireframe floor, circular holographic energy platform, and two
- * simultaneous interactive quantum states:
- * - Article 01: Clean Structured Photon / Atom (glass Fresnel sphere, geodesic filaments,
- *   4 elliptical orbits, translucent sub-spheres & fine particle comet trails)
- * - Article 02: Chaotic Unstable Probability Field (2,600 shader-advected morphing particles,
- *   live deforming curved energy filaments, fragmented geometric node connections & mist lobes)
- * Supports smooth observation transitions swapping foreground/background depth, focus/blur & brightness.
+ * Deep scientific quantum environment with animated GPU wave-interference terrain,
+ * reflective dark obsidian floor, holographic quantum containment & interference platform
+ * (zero solid plinth), entanglement filaments, and two dual-morphing quantum entities:
+ * - Selected (Observed / Positioned): Collapses smoothly onto the center platform as a
+ *   sharply focused, detailed Photon / Atom (Fresnel glass core with hexagonal quantum
+ *   micro-pattern, geodesic/octahedral lattice, precision reticle ring, 4 elliptical orbits,
+ *   haloed sub-spheres & tapered particle comet wakes).
+ * - Unselected (Unobserved / Superposition): Decoheres smoothly into the upper-left background
+ *   with soft bokeh depth blur, multi-position ghost superposition echoes, live-deforming
+ *   energy filaments, shifting geometric constellation & drifting mist lobes.
  */
 export function buildResearchChamber(
   yPos: number,
@@ -1709,34 +1711,35 @@ export function buildResearchChamber(
   const disposables: { dispose: () => void }[] = [];
   const rng = createRng(4404);
 
-  // Spatial slots: Selected foreground sits centered above the circular platform;
-  // Unselected sits upper-left deep in the quantum field (simultaneously visible).
+  // Spatial slots: Observed/Focused Photon sits above center quantum platform;
+  // Unobserved/Superposition floats in upper-left background depth.
   const PRIMARY_POS = new THREE.Vector3(-0.38, 0.28, 0.92);
   const SECONDARY_POS = new THREE.Vector3(-4.25, 0.72, -3.15);
+  const floorLevelY = -2.22;
 
   // =========================================================================
-  // 1. IMMERSIVE QUANTUM ENVIRONMENT (Particles, Wave Trails, Platform & Terrain)
+  // 1. IMMERSIVE QUANTUM ENVIRONMENT (Particles, Wave Floor, Platform & Bridges)
   // =========================================================================
 
-  // A. Multi-depth ambient quantum dust particles
-  const ambientCount = 420;
+  // A. Multi-depth ambient quantum dust particles + soft distant bokeh orbs
+  const ambientCount = 480;
   const ambientPos = new Float32Array(ambientCount * 3);
   for (let i = 0; i < ambientCount; i++) {
-    const r = 3.8 + rng() * 15.5;
+    const r = 3.5 + rng() * 16.5;
     const theta = rng() * Math.PI * 2;
     const phi = Math.acos(2 * rng() - 1);
-    ambientPos[i * 3] = r * Math.sin(phi) * Math.cos(theta) * 1.25;
-    ambientPos[i * 3 + 1] = r * Math.cos(phi) * 0.58 + 0.5;
-    ambientPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta) - 2.0;
+    ambientPos[i * 3] = r * Math.sin(phi) * Math.cos(theta) * 1.28;
+    ambientPos[i * 3 + 1] = r * Math.cos(phi) * 0.62 + 0.45;
+    ambientPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta) - 2.2;
   }
   const ambientGeo = new THREE.BufferGeometry();
   ambientGeo.setAttribute('position', new THREE.BufferAttribute(ambientPos, 3));
   const ambientMat = new THREE.PointsMaterial({
-    color: 0xa6f7ff,
+    color: 0xa8f8ff,
     map: glowTex,
     size: 0.068,
     transparent: true,
-    opacity: 0.42,
+    opacity: 0.46,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -1744,18 +1747,49 @@ export function buildResearchChamber(
   root.add(ambientDust);
   disposables.push(ambientGeo, ambientMat);
 
-  // B. Swirling distant energy wave trails & large subtle bokeh background rings
+  // Soft atmospheric depth bokeh spheres floating in deep space
   const bgGroup = new THREE.Group();
   root.add(bgGroup);
+  const depthBokehSprites: {
+    sprite: THREE.Sprite;
+    mat: THREE.SpriteMaterial;
+    base: THREE.Vector3;
+    speed: number;
+    phase: number;
+  }[] = [];
+  for (let b = 0; b < 9; b++) {
+    const mat = new THREE.SpriteMaterial({
+      map: glowTex,
+      color: b % 2 === 0 ? 0x00ffff : 0x5eeeff,
+      transparent: true,
+      opacity: 0.08 + rng() * 0.07,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const sprite = new THREE.Sprite(mat);
+    const base = new THREE.Vector3(
+      (rng() - 0.5) * 16.0,
+      -0.6 + rng() * 4.4,
+      -4.5 - rng() * 7.5
+    );
+    const sc = 0.85 + rng() * 1.45;
+    sprite.position.copy(base);
+    sprite.scale.set(sc, sc, 1);
+    bgGroup.add(sprite);
+    disposables.push(mat);
+    depthBokehSprites.push({ sprite, mat, base, speed: 0.25 + rng() * 0.35, phase: rng() * Math.PI * 2 });
+  }
+
+  // B. Swirling distant probability wave trails & faint orbital halos
   const bgTrailMats: THREE.LineBasicMaterial[] = [];
   for (let w = 0; w < 5; w++) {
     const pts: THREE.Vector3[] = [];
-    const segs = 72;
-    const yBase = -0.6 + w * 0.65;
+    const segs = 76;
+    const yBase = -0.65 + w * 0.68;
     const zDepth = -5.8 - w * 1.15;
     for (let s = 0; s <= segs; s++) {
       const u = s / segs;
-      const x = (u - 0.5) * 18.0;
+      const x = (u - 0.5) * 19.0;
       const y = yBase + Math.sin(u * Math.PI * (2 + w * 0.45) + w) * (0.95 + w * 0.16);
       const z = zDepth + Math.cos(u * Math.PI * 2 + w * 1.2) * 1.1;
       pts.push(new THREE.Vector3(x, y, z));
@@ -1774,7 +1808,7 @@ export function buildResearchChamber(
   }
 
   for (let rIdx = 0; rIdx < 2; rIdx++) {
-    const bgRingGeo = new THREE.RingGeometry(2.3 + rIdx * 0.9, 2.34 + rIdx * 0.9, 96);
+    const bgRingGeo = new THREE.RingGeometry(2.4 + rIdx * 0.95, 2.44 + rIdx * 0.95, 96);
     const bgRingMat = new THREE.MeshBasicMaterial({
       color: 0x00ffff,
       transparent: true,
@@ -1784,83 +1818,93 @@ export function buildResearchChamber(
       depthWrite: false,
     });
     const bgRing = new THREE.Mesh(bgRingGeo, bgRingMat);
-    bgRing.position.set(rIdx === 0 ? 3.9 : -2.6, 1.35 + rIdx * 0.45, -7.2 - rIdx * 2.2);
+    bgRing.position.set(rIdx === 0 ? 4.1 : -2.8, 1.35 + rIdx * 0.45, -7.4 - rIdx * 2.1);
     bgRing.rotation.set(0.45 + rIdx * 0.35, -0.3 + rIdx * 0.4, rIdx * 0.5);
     bgGroup.add(bgRing);
     disposables.push(bgRingGeo, bgRingMat);
   }
 
-  // C. Reflective Dark Surface + Wireframe Quantum Probability Wave Terrain Floor
-  const floorLevelY = -2.22;
-  const reflectFloorGeo = new THREE.PlaneGeometry(34, 24);
+  // C. Reflective Obsidian Plane + Live GPU Probability-Wave Wireframe Floor
+  const reflectFloorGeo = new THREE.PlaneGeometry(36, 26);
   reflectFloorGeo.rotateX(-Math.PI / 2);
   const reflectFloorMat = new THREE.MeshStandardMaterial({
-    color: 0x05090e,
-    roughness: 0.24,
-    metalness: 0.86,
-    envMapIntensity: 0.45,
+    color: 0x04080d,
+    roughness: 0.22,
+    metalness: 0.88,
+    envMapIntensity: 0.48,
   });
   const reflectFloor = new THREE.Mesh(reflectFloorGeo, reflectFloorMat);
   reflectFloor.position.set(0, floorLevelY - 0.06, -1.5);
   root.add(reflectFloor);
   disposables.push(reflectFloorGeo, reflectFloorMat);
 
-  // Undulating wireframe probability-wave mesh receding cleanly from foreground edges
-  const waveCols = 54;
-  const waveRows = 32;
-  const waveW = 24;
-  const waveD = 16;
+  const waveCols = 58;
+  const waveRows = 36;
+  const waveW = 26;
+  const waveD = 18;
   const wavePlaneGeo = new THREE.PlaneGeometry(waveW, waveD, waveCols, waveRows);
   wavePlaneGeo.rotateX(-Math.PI / 2);
-  const wPos = wavePlaneGeo.attributes.position;
-  for (let i = 0; i < wPos.count; i++) {
-    const x = wPos.getX(i);
-    const z = wPos.getZ(i);
-    const distFromPlatform = Math.hypot(x - PRIMARY_POS.x, z - PRIMARY_POS.z);
-    const flatten = THREE.MathUtils.smoothstep(distFromPlatform, 1.85, 5.2);
-    const ridge =
-      (Math.sin(x * 0.55 + z * 0.38) * 0.42 +
-        Math.cos(x * 0.92 - z * 0.64) * 0.24 +
-        Math.sin(x * 0.24 - z * 0.22) * 0.36) *
-      flatten;
-    wPos.setY(i, Math.max(-0.04, ridge + flatten * 0.22));
-  }
   const waveWireGeo = new THREE.WireframeGeometry(wavePlaneGeo);
-  const waveWirePos = waveWireGeo.attributes.position;
-  const waveWireColors = new Float32Array(waveWirePos.count * 3);
-  const cEdgeCyan = new THREE.Color(0x00ffff);
-  const cDeepInk = new THREE.Color(0x031119);
-  const cWaveTmp = new THREE.Color();
-  for (let i = 0; i < waveWirePos.count; i++) {
-    const vx = waveWirePos.getX(i);
-    const vy = waveWirePos.getY(i);
-    const vz = waveWirePos.getZ(i);
-    const radial = Math.hypot(vx * 0.72, vz + 0.5);
-    const fade = 1.0 - THREE.MathUtils.smoothstep(radial, 3.2, 11.5);
-    const crest = THREE.MathUtils.clamp(vy * 0.85 + 0.25, 0.1, 1.0);
-    cWaveTmp.copy(cDeepInk).lerp(cEdgeCyan, fade * crest * 0.78);
-    waveWireColors[i * 3] = cWaveTmp.r;
-    waveWireColors[i * 3 + 1] = cWaveTmp.g;
-    waveWireColors[i * 3 + 2] = cWaveTmp.b;
-  }
-  waveWireGeo.setAttribute('color', new THREE.BufferAttribute(waveWireColors, 3));
-  const waveWireMat = new THREE.LineBasicMaterial({
-    vertexColors: true,
+  wavePlaneGeo.dispose();
+
+  const waveShaderMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uPlatformXZ: { value: new THREE.Vector2(PRIMARY_POS.x, PRIMARY_POS.z + 1.2) },
+      uOpacity: { value: 0.56 },
+    },
+    vertexShader: `
+      uniform float uTime;
+      uniform vec2 uPlatformXZ;
+      varying float vCrest;
+      varying float vFade;
+
+      void main() {
+        vec3 pos = position;
+        float distPlatform = length(pos.xz - uPlatformXZ);
+        float flatten = smoothstep(1.9, 5.4, distPlatform);
+
+        // Standing probability wave ridges + radiating interference ripple
+        float standing =
+          sin(pos.x * 0.56 + pos.z * 0.36 + uTime * 0.45) * 0.36 +
+          cos(pos.x * 0.88 - pos.z * 0.62 - uTime * 0.35) * 0.22 +
+          sin(distPlatform * 1.45 - uTime * 1.15) * 0.14;
+
+        pos.y = max(-0.02, (standing + 0.24) * flatten);
+        vCrest = clamp(pos.y * 1.15 + 0.18, 0.08, 1.0);
+        float radial = length(vec2(pos.x * 0.68, pos.z + 0.5));
+        vFade = (1.0 - smoothstep(3.4, 12.2, radial)) * smoothstep(1.35, 2.5, distPlatform);
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float uOpacity;
+      varying float vCrest;
+      varying float vFade;
+
+      void main() {
+        vec3 deepCol = vec3(0.015, 0.09, 0.14);
+        vec3 cyanCol = vec3(0.0, 0.96, 1.0);
+        vec3 col = mix(deepCol, cyanCol, vCrest * 0.85);
+        float alpha = vFade * (0.22 + vCrest * 0.62) * uOpacity;
+        if (alpha < 0.01) discard;
+        gl_FragColor = vec4(col, alpha);
+      }
+    `,
     transparent: true,
-    opacity: 0.46,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  const waveMesh = new THREE.LineSegments(waveWireGeo, waveWireMat);
+  const waveMesh = new THREE.LineSegments(waveWireGeo, waveShaderMat);
   waveMesh.position.set(0, floorLevelY, -1.2);
   root.add(waveMesh);
-  wavePlaneGeo.dispose();
-  disposables.push(waveWireGeo, waveWireMat);
+  disposables.push(waveWireGeo, waveShaderMat);
 
-  // Subtle low-poly dark rock outcrops along outer left/right edges
+  // Subtle low-poly dark rock outcrops framing outer field edges
   const rockGeo = new THREE.ConeGeometry(1.1, 0.85, 5);
   const rockMat = new THREE.MeshStandardMaterial({
-    color: 0x090e15,
+    color: 0x080d14,
     roughness: 0.84,
     metalness: 0.28,
     flatShading: true,
@@ -1871,7 +1915,7 @@ export function buildResearchChamber(
   const dummy = new THREE.Object3D();
   for (let i = 0; i < rockCount; i++) {
     const side = i % 2 === 0 ? -1 : 1;
-    const x = side * (3.6 + rng() * 5.8);
+    const x = side * (3.9 + rng() * 5.8);
     const z = -6.5 + rng() * 9.5;
     dummy.position.set(x, floorLevelY + 0.08, z);
     dummy.rotation.set((rng() - 0.5) * 0.25, rng() * Math.PI, (rng() - 0.5) * 0.25);
@@ -1882,90 +1926,392 @@ export function buildResearchChamber(
   rockInst.instanceMatrix.needsUpdate = true;
   root.add(rockInst);
 
-  // D. Circular Holographic Energy Platform directly beneath PRIMARY_POS
+  // D. Pure Holographic Quantum Emitter & Interference Platform beneath PRIMARY_POS (No solid plinth)
   const platformGroup = new THREE.Group();
   platformGroup.position.set(PRIMARY_POS.x, floorLevelY + 0.01, PRIMARY_POS.z);
   root.add(platformGroup);
 
-  const plinthGeo = new THREE.CylinderGeometry(1.38, 1.56, 0.11, 64);
-  const plinthMat = new THREE.MeshStandardMaterial({
-    color: 0x09131c,
-    roughness: 0.42,
-    metalness: 0.84,
-  });
-  const plinthMesh = new THREE.Mesh(plinthGeo, plinthMat);
-  platformGroup.add(plinthMesh);
-  disposables.push(plinthGeo, plinthMat);
+  // 1) Animated GPU Quantum Interference Wave Disc
+  const quantumDiscGeo = new THREE.PlaneGeometry(7.2, 7.2);
+  quantumDiscGeo.rotateX(-Math.PI / 2);
+  const quantumDiscMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uOpacity: { value: 1.0 },
+    },
+    vertexShader: `
+      varying vec2 vLocalUv;
+      void main() {
+        vLocalUv = uv * 2.0 - 1.0;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uOpacity;
+      varying vec2 vLocalUv;
 
-  const poolGeo = new THREE.PlaneGeometry(5.6, 5.6);
-  poolGeo.rotateX(-Math.PI / 2);
-  const poolMat = new THREE.MeshBasicMaterial({
-    map: glowTex,
-    color: 0x00ffff,
+      void main() {
+        float r = length(vLocalUv);
+        if (r > 1.0) discard;
+
+        float angle = atan(vLocalUv.y, vLocalUv.x);
+        float coreGlow = exp(-r * 3.8) * 0.85;
+
+        // Concentric outward standing probability interference waves
+        float waveA = pow(0.5 + 0.5 * sin(r * 24.0 - uTime * 2.1), 5.0);
+        float harmonic = 0.5 + 0.5 * cos(angle * 6.0 + uTime * 0.55 - r * 8.0);
+        float ringEnvelope = smoothstep(0.08, 0.25, r) * (1.0 - smoothstep(0.65, 1.0, r));
+
+        // Precision azimuthal quantum calibration ticks near outer perimeter
+        float tickZone = smoothstep(0.54, 0.56, r) * (1.0 - smoothstep(0.61, 0.63, r));
+        float ticks = step(0.88, abs(cos(angle * 24.0 - uTime * 0.15))) * tickZone * 0.55;
+
+        // Sharp inner containment ring harmonic
+        float innerRing = exp(-pow((r - 0.36) * 26.0, 2.0)) * 0.72;
+        float midRing = exp(-pow((r - 0.58) * 22.0, 2.0)) * 0.45;
+
+        float intensity =
+          coreGlow +
+          waveA * harmonic * ringEnvelope * 0.48 +
+          innerRing +
+          midRing +
+          ticks;
+
+        vec3 col = mix(vec3(0.0, 0.88, 1.0), vec3(0.85, 1.0, 1.0), clamp(coreGlow * 0.9 + innerRing * 0.5, 0.0, 1.0));
+        float alpha = clamp(intensity, 0.0, 1.0) * (1.0 - smoothstep(0.82, 1.0, r)) * uOpacity;
+        gl_FragColor = vec4(col, alpha);
+      }
+    `,
     transparent: true,
-    opacity: 0.46,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  const poolMesh = new THREE.Mesh(poolGeo, poolMat);
-  poolMesh.position.y = 0.07;
-  platformGroup.add(poolMesh);
-  disposables.push(poolGeo, poolMat);
+  const quantumDiscMesh = new THREE.Mesh(quantumDiscGeo, quantumDiscMat);
+  quantumDiscMesh.position.y = 0.025;
+  platformGroup.add(quantumDiscMesh);
+  disposables.push(quantumDiscGeo, quantumDiscMat);
 
+  // 2) Elevated Stepped Concentric Holographic Rings + Segmented Energy Containment Arcs
   const platformRings: THREE.Mesh[] = [];
   const platformRingMats: THREE.MeshBasicMaterial[] = [];
-  [0.64, 1.04, 1.46, 1.88].forEach((radius, idx) => {
-    const rg = new THREE.RingGeometry(radius - 0.024, radius, 96);
+  [
+    { r: 0.62, y: 0.035, op: 0.78, col: 0xd8ffff },
+    { r: 1.05, y: 0.065, op: 0.62, col: 0x00ffff },
+    { r: 1.48, y: 0.095, op: 0.48, col: 0x00ffff },
+    { r: 1.92, y: 0.045, op: 0.34, col: 0x70f8ff },
+  ].forEach((cfg) => {
+    const rg = new THREE.RingGeometry(cfg.r - 0.022, cfg.r, 96);
     rg.rotateX(-Math.PI / 2);
     const rm = new THREE.MeshBasicMaterial({
-      color: idx < 2 ? 0xd8ffff : 0x00ffff,
+      color: cfg.col,
       transparent: true,
-      opacity: 0.72 - idx * 0.13,
+      opacity: cfg.op,
       side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
     const rmMesh = new THREE.Mesh(rg, rm);
-    rmMesh.position.y = 0.068 + idx * 0.003;
+    rmMesh.position.y = cfg.y;
     platformGroup.add(rmMesh);
     platformRings.push(rmMesh);
     platformRingMats.push(rm);
     disposables.push(rg, rm);
   });
 
-  // Fine vertical energy tether beam beneath primary focal spot
+  const containmentArcs: { mesh: THREE.Mesh; mat: THREE.MeshBasicMaterial; speed: number }[] = [];
+  [
+    { r: 0.86, y: 0.12, arc: Math.PI * 0.58, speed: 0.32 },
+    { r: 1.28, y: 0.18, arc: Math.PI * 0.44, speed: -0.24 },
+    { r: 1.7, y: 0.09, arc: Math.PI * 0.36, speed: 0.18 },
+  ].forEach((cfg, idx) => {
+    const ag = new THREE.TorusGeometry(cfg.r, 0.011, 8, 64, cfg.arc);
+    ag.rotateX(Math.PI / 2);
+    const am = new THREE.MeshBasicMaterial({
+      color: idx === 0 ? 0xd8ffff : 0x00ffff,
+      transparent: true,
+      opacity: 0.62 - idx * 0.1,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    for (let copy = 0; copy < 2; copy++) {
+      const m = new THREE.Mesh(ag, am);
+      m.position.y = cfg.y;
+      m.rotation.y = copy * Math.PI + idx * 0.7;
+      platformGroup.add(m);
+      containmentArcs.push({ mesh: m, mat: am, speed: cfg.speed });
+    }
+    disposables.push(ag, am);
+  });
+
+  // 3) Ascending Quantum Energy Flux Particles spiraling gently from the emitter platform into the focused state
+  const fluxCount = 160;
+  const fluxSeed = new Float32Array(fluxCount * 3);
+  const fluxPos = new Float32Array(fluxCount * 3);
+  for (let i = 0; i < fluxCount; i++) {
+    fluxSeed[i * 3] = rng(); // phase
+    fluxSeed[i * 3 + 1] = 0.22 + rng() * 1.25; // radius
+    fluxSeed[i * 3 + 2] = 0.35 + rng() * 0.65; // speed factor
+    fluxPos[i * 3] = 0;
+    fluxPos[i * 3 + 1] = 0;
+    fluxPos[i * 3 + 2] = 0;
+  }
+  const fluxGeo = new THREE.BufferGeometry();
+  fluxGeo.setAttribute('position', new THREE.BufferAttribute(fluxPos, 3));
+  fluxGeo.setAttribute('aSeed', new THREE.BufferAttribute(fluxSeed, 3));
+  const fluxMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uPixelRatio: { value: Math.min(window.devicePixelRatio || 1, 2) },
+      uOpacity: { value: 1.0 },
+    },
+    vertexShader: `
+      attribute vec3 aSeed;
+      uniform float uTime;
+      uniform float uPixelRatio;
+      varying float vLife;
+
+      void main() {
+        float life = fract(aSeed.x + uTime * 0.14 * aSeed.z);
+        vLife = life;
+        float angle = aSeed.x * 6.28318 + uTime * 0.55 * aSeed.z + life * 2.2;
+        float radius = aSeed.y * (1.0 - life * 0.62);
+        vec3 pos = vec3(
+          cos(angle) * radius,
+          0.08 + life * 2.55,
+          sin(angle) * radius
+        );
+        vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
+        gl_Position = projectionMatrix * mvPos;
+        gl_PointSize = (2.4 + (1.0 - life) * 2.2) * uPixelRatio * (180.0 / max(1.0, -mvPos.z));
+      }
+    `,
+    fragmentShader: `
+      uniform float uOpacity;
+      varying float vLife;
+
+      void main() {
+        vec2 uv = gl_PointCoord - 0.5;
+        float d = length(uv) * 2.0;
+        if (d > 1.0) discard;
+        float glow = pow(1.0 - d, 2.4);
+        float fade = smoothstep(0.0, 0.18, vLife) * (1.0 - smoothstep(0.62, 1.0, vLife));
+        gl_FragColor = vec4(vec3(0.45, 0.98, 1.0), glow * fade * 0.72 * uOpacity);
+      }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const fluxPoints = new THREE.Points(fluxGeo, fluxMat);
+  platformGroup.add(fluxPoints);
+  disposables.push(fluxGeo, fluxMat);
+
+  // Fine vertical phase-lock tether beam from emitter focal center into the focused state
   const beamGeo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(0, 0.08, 0),
-    new THREE.Vector3(0, 1.55, 0),
+    new THREE.Vector3(0, 0.04, 0),
+    new THREE.Vector3(0, 1.72, 0),
   ]);
   const beamMat = new THREE.LineBasicMaterial({
-    color: 0x7affff,
+    color: 0x8efaff,
     transparent: true,
-    opacity: 0.34,
+    opacity: 0.36,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   platformGroup.add(new THREE.Line(beamGeo, beamMat));
   disposables.push(beamGeo, beamMat);
 
+  // E. Quantum Entanglement Bridges & Traveling Phase Sparks between Primary & Secondary Slots
+  const bridgeCurves: THREE.CatmullRomCurve3[] = [];
+  const bridgeMats: THREE.LineBasicMaterial[] = [];
+  for (let b = 0; b < 3; b++) {
+    const midA = PRIMARY_POS.clone().lerp(SECONDARY_POS, 0.33);
+    const midB = PRIMARY_POS.clone().lerp(SECONDARY_POS, 0.68);
+    midA.y += (b - 1) * 0.45 + 0.18;
+    midB.y += (1 - b) * 0.42 + 0.26;
+    midA.z += (b - 1) * 0.52;
+    midB.z -= (b - 1) * 0.48;
+    const curve = new THREE.CatmullRomCurve3([PRIMARY_POS.clone(), midA, midB, SECONDARY_POS.clone()]);
+    bridgeCurves.push(curve);
+    const pts = curve.getPoints(56);
+    const bGeo = new THREE.BufferGeometry().setFromPoints(pts);
+    const bMat = new THREE.LineBasicMaterial({
+      color: b === 1 ? 0x9efaff : 0x00ffff,
+      transparent: true,
+      opacity: 0.14,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    root.add(new THREE.Line(bGeo, bMat));
+    bridgeMats.push(bMat);
+    disposables.push(bGeo, bMat);
+  }
+
+  const sparkCount = 42;
+  const sparkArr = new Float32Array(sparkCount * 3);
+  const sparkGeo = new THREE.BufferGeometry();
+  const sparkAttr = new THREE.BufferAttribute(sparkArr, 3);
+  sparkAttr.setUsage(THREE.DynamicDrawUsage);
+  sparkGeo.setAttribute('position', sparkAttr);
+  const sparkMat = new THREE.PointsMaterial({
+    color: 0xb8fbff,
+    map: glowTex,
+    size: 0.085,
+    transparent: true,
+    opacity: 0.62,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const sparkPoints = new THREE.Points(sparkGeo, sparkMat);
+  root.add(sparkPoints);
+  disposables.push(sparkGeo, sparkMat);
+  const sparkMeta = Array.from({ length: sparkCount }, (_, i) => ({
+    curveIdx: i % bridgeCurves.length,
+    speed: (i % 2 === 0 ? 1 : -1) * (0.09 + rng() * 0.14),
+    offset: rng(),
+  }));
+  const _bridgeTmp = new THREE.Vector3();
+
   // =========================================================================
-  // Shared Shader Factory for Focus/Blur-Aware Quantum Particle Systems
+  // 2. DUAL-MORPHING QUANTUM STATE BUILDER (Focused Photon <-> Superposition)
   // =========================================================================
-  const createFieldParticleMaterial = (mode: 'photon' | 'chaos') => {
-    return new THREE.ShaderMaterial({
+  const cOrbCyan = new THREE.Color(0x00ffff);
+  const cOrbIce = new THREE.Color(0xe0ffff);
+  const cDeep = new THREE.Color(0x0b7b9e);
+  const cAqua = new THREE.Color(0x38ffe8);
+  const cTmp = new THREE.Color();
+
+  const ORBIT_BANK_A = [
+    { rx: 1.56, rz: 0.68, rot: [0.32, 0.18, 0.56], speed: 0.72, phase: 0.4 },
+    { rx: 1.56, rz: 0.68, rot: [0.32, 0.18, -0.56], speed: -0.66, phase: 2.3 },
+    { rx: 1.54, rz: 0.66, rot: [0.28, 0.25, 1.54], speed: 0.58, phase: 4.1 },
+    { rx: 1.72, rz: 0.74, rot: [1.34, 0.12, 0.08], speed: 0.48, phase: 1.2 },
+  ];
+  const ORBIT_BANK_B = [
+    { rx: 1.58, rz: 0.68, rot: [0.42, -0.22, 0.48], speed: -0.7, phase: 0.9 },
+    { rx: 1.58, rz: 0.68, rot: [-0.36, 0.24, -0.62], speed: 0.64, phase: 2.7 },
+    { rx: 1.52, rz: 0.66, rot: [0.24, -0.28, 1.48], speed: 0.56, phase: 4.4 },
+    { rx: 1.7, rz: 0.72, rot: [1.28, -0.18, -0.14], speed: -0.5, phase: 1.6 },
+  ];
+
+  const subGeo = new THREE.SphereGeometry(0.068, 16, 16);
+  const subRingGeo = new THREE.RingGeometry(0.084, 0.098, 28);
+  disposables.push(subGeo, subRingGeo);
+
+  const createQuantumEntity = (variant: 0 | 1) => {
+    const entityGroup = new THREE.Group();
+    entityGroup.position.copy(variant === 0 ? PRIMARY_POS : SECONDARY_POS);
+    root.add(entityGroup);
+
+    // Raycast Hit Sphere
+    const hitGeo = new THREE.SphereGeometry(1.72, 16, 16);
+    const hitMat = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      colorWrite: false,
+    });
+    const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+    hitMesh.userData.quantumStateIndex = variant;
+    entityGroup.add(hitMesh);
+    disposables.push(hitGeo, hitMat);
+
+    const orbitCfgs = variant === 0 ? ORBIT_BANK_A : ORBIT_BANK_B;
+    const accentHex = variant === 0 ? 0x00ffff : 0x30f7ff;
+
+    // -----------------------------------------------------------------------
+    // A) Morphing 2,400-Particle Cloud (Superposition Chaos <-> Positioned Orbits)
+    // -----------------------------------------------------------------------
+    const pCount = 2400;
+    const pChaos = new Float32Array(pCount * 3);
+    const pOrbit = new Float32Array(pCount * 3);
+    const pColor = new Float32Array(pCount * 3);
+    const pSize = new Float32Array(pCount);
+    const pSeed = new Float32Array(pCount * 3);
+
+    const tmpEuler = new THREE.Euler();
+    const tmpVec = new THREE.Vector3();
+
+    for (let i = 0; i < pCount; i++) {
+      // 1. Unobserved Superposition Position (multi-lobe irregular quantum uncertainty)
+      const theta = rng() * Math.PI * 2;
+      const phi = Math.acos(2 * rng() - 1);
+      const lobe =
+        0.72 +
+        0.42 * Math.sin(theta * 2.0 + phi * 3.0 + variant * 1.4) +
+        0.26 * Math.cos(theta * 5.0 - phi * 2.0);
+      const radiusBias = i < 480 ? 0.22 + rng() * 0.64 : 0.64 + rng() * 0.74;
+      const rad = Math.max(0.14, lobe * radiusBias);
+
+      pChaos[i * 3] = rad * Math.sin(phi) * Math.cos(theta) * 1.18;
+      pChaos[i * 3 + 1] = rad * Math.cos(phi) * 0.94;
+      pChaos[i * 3 + 2] = rad * Math.sin(phi) * Math.sin(theta);
+
+      // 2. Focused / Positioned Photon Coordinate (75% dusted on the 4 ellipses, 25% inner photon corona)
+      if (i < Math.floor(pCount * 0.75)) {
+        const orb = orbitCfgs[i % orbitCfgs.length];
+        const ang = rng() * Math.PI * 2;
+        const spreadR = (rng() - 0.5) * 0.13;
+        const spreadY = (rng() - 0.5) * 0.08;
+        tmpVec.set(
+          Math.cos(ang) * (orb.rx + spreadR),
+          spreadY,
+          Math.sin(ang) * (orb.rz + spreadR * 0.6)
+        );
+        tmpEuler.set(orb.rot[0], orb.rot[1], orb.rot[2]);
+        tmpVec.applyEuler(tmpEuler);
+        pOrbit[i * 3] = tmpVec.x;
+        pOrbit[i * 3 + 1] = tmpVec.y;
+        pOrbit[i * 3 + 2] = tmpVec.z;
+      } else {
+        const cr = 0.48 + rng() * 0.28;
+        const ct = rng() * Math.PI * 2;
+        const cp = Math.acos(2 * rng() - 1);
+        pOrbit[i * 3] = cr * Math.sin(cp) * Math.cos(ct);
+        pOrbit[i * 3 + 1] = cr * Math.cos(cp);
+        pOrbit[i * 3 + 2] = cr * Math.sin(cp) * Math.sin(ct);
+      }
+
+      const k = rng();
+      cTmp
+        .copy(cDeep)
+        .lerp(variant === 0 ? cOrbCyan : cAqua, 0.35 + k * 0.65)
+        .lerp(cOrbIce, k * k * 0.52);
+      pColor[i * 3] = cTmp.r;
+      pColor[i * 3 + 1] = cTmp.g;
+      pColor[i * 3 + 2] = cTmp.b;
+
+      pSize[i] = 0.048 + rng() * 0.068;
+      pSeed[i * 3] = rng();
+      pSeed[i * 3 + 1] = rng();
+      pSeed[i * 3 + 2] = rng();
+    }
+
+    const morphGeo = new THREE.BufferGeometry();
+    morphGeo.setAttribute('position', new THREE.BufferAttribute(pChaos, 3));
+    morphGeo.setAttribute('aOrbitPos', new THREE.BufferAttribute(pOrbit, 3));
+    morphGeo.setAttribute('aColor', new THREE.BufferAttribute(pColor, 3));
+    morphGeo.setAttribute('aSize', new THREE.BufferAttribute(pSize, 1));
+    morphGeo.setAttribute('aSeed', new THREE.BufferAttribute(pSeed, 3));
+
+    const morphMat = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uFocus: { value: mode === 'photon' ? 1.0 : 0.0 },
+        uFocus: { value: variant === 0 ? 1.0 : 0.0 },
+        uCollapse: { value: variant === 0 ? 1.0 : 0.0 },
         uHover: { value: 0.0 },
         uPixelRatio: { value: Math.min(window.devicePixelRatio || 1, 2) },
         uOpacity: { value: 1.0 },
       },
       vertexShader: `
+        attribute vec3 aOrbitPos;
         attribute float aSize;
         attribute vec3 aSeed;
         attribute vec3 aColor;
         uniform float uTime;
         uniform float uFocus;
+        uniform float uCollapse;
         uniform float uPixelRatio;
         varying vec3 vColor;
         varying float vFocus;
@@ -1973,29 +2319,30 @@ export function buildResearchChamber(
         void main() {
           vColor = aColor;
           vFocus = uFocus;
-          vec3 pos = position;
 
-          ${
-            mode === 'chaos'
-              ? `
-          // Continuous organic wave evolution — stronger when unobserved, steadier when observed
-          float instability = mix(1.0, 0.56, uFocus);
-          float pulse = 1.0 + 0.14 * sin(uTime * 0.72 + aSeed.x * 6.2831) * instability;
-          pos *= pulse;
-          pos.x += sin(uTime * (0.68 + aSeed.y * 0.55) + pos.y * 2.1 + aSeed.z * 6.28) * 0.25 * instability;
-          pos.y += cos(uTime * (0.62 + aSeed.z * 0.48) + pos.z * 2.2 + aSeed.x * 6.28) * 0.22 * instability;
-          pos.z += sin(uTime * (0.74 + aSeed.x * 0.52) + pos.x * 1.9 + aSeed.y * 6.28) * 0.24 * instability;
-          `
-              : `
-          // Subtle orderly shimmer along photon orbital planes
-          pos += normalize(pos + vec3(0.0001)) * sin(uTime * 1.4 + aSeed.x * 6.283) * 0.018;
-          `
-          }
+          // 1) Superposition chaotic wave advection + dual-state split echo
+          vec3 chaos = position;
+          float instability = 1.0 - uCollapse * 0.85;
+          float pulse = 1.0 + 0.16 * sin(uTime * 0.72 + aSeed.x * 6.2831) * instability;
+          chaos *= pulse;
+          chaos.x += sin(uTime * (0.72 + aSeed.y * 0.55) + chaos.y * 2.1 + aSeed.z * 6.28) * 0.26 * instability;
+          chaos.y += cos(uTime * (0.64 + aSeed.z * 0.48) + chaos.z * 2.2 + aSeed.x * 6.28) * 0.23 * instability;
+          chaos.z += sin(uTime * (0.76 + aSeed.x * 0.52) + chaos.x * 1.9 + aSeed.y * 6.28) * 0.24 * instability;
+
+          // Subtle superposition spatial offset between two quantum phase lobes
+          float lobeShift = (step(0.5, aSeed.z) - 0.5) * 0.48 * (1.0 - uCollapse);
+          chaos.x += lobeShift * cos(uTime * 0.45 + aSeed.x);
+          chaos.y += lobeShift * 0.45 * sin(uTime * 0.52 + aSeed.y);
+
+          // 2) Focused / Positioned photon state with delicate luminous shimmer
+          vec3 orbit = aOrbitPos + normalize(aOrbitPos + vec3(0.0001)) * sin(uTime * 1.5 + aSeed.x * 6.283) * 0.016;
+
+          vec3 pos = mix(chaos, orbit, uCollapse);
 
           vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
           gl_Position = projectionMatrix * mvPos;
-          float blurExpand = mix(1.65, 0.96, uFocus);
-          gl_PointSize = aSize * uPixelRatio * blurExpand * (290.0 / max(1.0, -mvPos.z));
+          float blurExpand = mix(1.78, 0.86, uFocus);
+          gl_PointSize = aSize * uPixelRatio * blurExpand * (285.0 / max(1.0, -mvPos.z));
         }
       `,
       fragmentShader: `
@@ -2009,13 +2356,12 @@ export function buildResearchChamber(
           float d = length(uv) * 2.0;
           if (d > 1.0) discard;
 
-          // Unobserved (uFocus=0): soft Gaussian bokeh cloud; Observed (uFocus=1): sharp luminous core
-          float sharpCore = smoothstep(1.0, 0.05, d);
-          float focusPower = mix(1.35, 3.1, vFocus);
+          float sharpCore = smoothstep(1.0, 0.04, d);
+          float focusPower = mix(1.25, 3.35, vFocus);
           float radial = pow(max(0.0, 1.0 - d), focusPower);
-          float alpha = radial * mix(0.44 + uHover * 0.22, 1.0, vFocus) * uOpacity;
-          vec3 col = vColor * mix(0.72 + uHover * 0.25, 1.25, vFocus);
-          col += vec3(0.85, 1.0, 1.0) * sharpCore * 0.35 * vFocus;
+          float alpha = radial * mix(0.38 + uHover * 0.26, 0.96, vFocus) * uOpacity;
+          vec3 col = vColor * mix(0.68 + uHover * 0.28, 1.25, vFocus);
+          col += vec3(0.85, 1.0, 1.0) * sharpCore * 0.36 * vFocus;
 
           gl_FragColor = vec4(col, alpha);
         }
@@ -2024,470 +2370,585 @@ export function buildResearchChamber(
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
+    const morphPoints = new THREE.Points(morphGeo, morphMat);
+    entityGroup.add(morphPoints);
+    disposables.push(morphGeo, morphMat);
+
+    // -----------------------------------------------------------------------
+    // B) Focused / Positioned Photon Assembly (scales & locks in when selected)
+    // -----------------------------------------------------------------------
+    const focusedGroup = new THREE.Group();
+    entityGroup.add(focusedGroup);
+
+    // Translucent outer glass sphere with Fresnel + hexagonal quantum interference shimmer
+    const glassGeo = new THREE.SphereGeometry(0.49, 40, 40);
+    const glassMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uFocus: { value: variant === 0 ? 1.0 : 0.0 },
+        uTime: { value: 0 },
+        uTint: { value: new THREE.Color(accentHex) },
+      },
+      vertexShader: `
+        varying vec3 vNormalV;
+        varying vec3 vViewDir;
+        varying vec3 vLocalPos;
+        void main() {
+          vLocalPos = position;
+          vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+          vNormalV = normalize(normalMatrix * normal);
+          vViewDir = normalize(-mvPos.xyz);
+          gl_Position = projectionMatrix * mvPos;
+        }
+      `,
+      fragmentShader: `
+        uniform float uFocus;
+        uniform float uTime;
+        uniform vec3 uTint;
+        varying vec3 vNormalV;
+        varying vec3 vViewDir;
+        varying vec3 vLocalPos;
+
+        void main() {
+          float ndotv = clamp(dot(normalize(vNormalV), normalize(vViewDir)), 0.0, 1.0);
+          float fresnel = pow(1.0 - ndotv, 2.3);
+          float innerGlow = pow(ndotv, 2.1) * (0.26 + 0.06 * sin(uTime * 1.9));
+
+          // Delicate quantum lattice interference bands across glass surface
+          float wavePattern =
+            sin(vLocalPos.x * 22.0 + uTime * 1.4) *
+            sin(vLocalPos.y * 22.0 - uTime * 1.1) *
+            sin(vLocalPos.z * 22.0 + uTime * 0.9);
+          float microLattice = smoothstep(0.35, 0.9, abs(wavePattern)) * 0.16 * uFocus;
+
+          vec3 col = mix(uTint, vec3(0.88, 1.0, 1.0), fresnel * 0.76 + microLattice);
+          float alpha = (fresnel * 0.92 + innerGlow + microLattice + 0.06) * uFocus;
+          gl_FragColor = vec4(col, alpha);
+        }
+      `,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    focusedGroup.add(new THREE.Mesh(glassGeo, glassMat));
+    disposables.push(glassGeo, glassMat);
+
+    // Inner precision lattice geometry (Icosahedron geodesic for 01, dual Octahedron lattice for 02)
+    const innerBase =
+      variant === 0 ? new THREE.IcosahedronGeometry(0.465, 2) : new THREE.OctahedronGeometry(0.465, 2);
+    const innerWire = new THREE.WireframeGeometry(innerBase);
+    innerBase.dispose();
+    const innerWireMat = new THREE.LineBasicMaterial({
+      color: variant === 0 ? 0x72f9ff : 0x5effec,
+      transparent: true,
+      opacity: 0.46,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const innerLatticeMesh = new THREE.LineSegments(innerWire, innerWireMat);
+    focusedGroup.add(innerLatticeMesh);
+    disposables.push(innerWire, innerWireMat);
+
+    // Precision equatorial reticle ring around core glass sphere
+    const eqReticleGeo = new THREE.RingGeometry(0.56, 0.575, 72);
+    eqReticleGeo.rotateX(Math.PI / 2);
+    const eqReticleMat = new THREE.MeshBasicMaterial({
+      color: 0xb8fbff,
+      transparent: true,
+      opacity: 0.42,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const eqReticleMesh = new THREE.Mesh(eqReticleGeo, eqReticleMat);
+    eqReticleMesh.rotation.set(0.28, 0.0, variant === 0 ? 0.18 : -0.22);
+    focusedGroup.add(eqReticleMesh);
+    disposables.push(eqReticleGeo, eqReticleMat);
+
+    // Bright photon nucleus + aura glow sprite
+    const nucleusGeo = new THREE.SphereGeometry(0.155, 24, 24);
+    const nucleusMat = new THREE.MeshBasicMaterial({
+      color: 0xecffff,
+      transparent: true,
+      opacity: 0.96,
+    });
+    const nucleusMesh = new THREE.Mesh(nucleusGeo, nucleusMat);
+    focusedGroup.add(nucleusMesh);
+    disposables.push(nucleusGeo, nucleusMat);
+
+    const auraMat = new THREE.SpriteMaterial({
+      map: glowTex,
+      color: accentHex,
+      transparent: true,
+      opacity: 0.64,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const auraSprite = new THREE.Sprite(auraMat);
+    auraSprite.scale.set(2.1, 2.1, 1);
+    focusedGroup.add(auraSprite);
+    disposables.push(auraMat);
+
+    // 4 Clean Elliptical Orbital Trajectories + Haloed Sub-Spheres + 20-Point Comet Wakes
+    const trackMats: THREE.LineBasicMaterial[] = [];
+    const outerTrackMats: THREE.LineBasicMaterial[] = [];
+    const satellites: {
+      group: THREE.Group;
+      glassMat: THREE.MeshBasicMaterial;
+      ringMat: THREE.MeshBasicMaterial;
+      sparkMat: THREE.SpriteMaterial;
+      tailPoints: THREE.Points;
+      tailMat: THREE.PointsMaterial;
+      tailAttr: THREE.BufferAttribute;
+      rx: number;
+      rz: number;
+      speed: number;
+      phase: number;
+    }[] = [];
+
+    orbitCfgs.forEach((cfg) => {
+      const og = new THREE.Group();
+      og.rotation.set(cfg.rot[0], cfg.rot[1], cfg.rot[2]);
+      focusedGroup.add(og);
+
+      const pts: THREE.Vector3[] = [];
+      const segs = 128;
+      for (let s = 0; s < segs; s++) {
+        const a = (s / segs) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * cfg.rx, 0, Math.sin(a) * cfg.rz));
+      }
+      const trackGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      const trackMat = new THREE.LineBasicMaterial({
+        color: variant === 0 ? 0xa6fbff : 0x80fff2,
+        transparent: true,
+        opacity: 0.7,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      og.add(new THREE.LineLoop(trackGeo, trackMat));
+      trackMats.push(trackMat);
+      disposables.push(trackGeo, trackMat);
+
+      const outerPts = pts.map((p) => p.clone().multiplyScalar(1.016));
+      const outerGeo = new THREE.BufferGeometry().setFromPoints(outerPts);
+      const outerMat = new THREE.LineBasicMaterial({
+        color: accentHex,
+        transparent: true,
+        opacity: 0.28,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      og.add(new THREE.LineLoop(outerGeo, outerMat));
+      outerTrackMats.push(outerMat);
+      disposables.push(outerGeo, outerMat);
+
+      // Orbiting Electron Sub-Sphere + Micro Halo Ring + Spark + Comet Tail
+      const satGroup = new THREE.Group();
+      const satGlassMat = new THREE.MeshBasicMaterial({
+        color: 0x0a2e3e,
+        transparent: true,
+        opacity: 0.76,
+      });
+      satGroup.add(new THREE.Mesh(subGeo, satGlassMat));
+
+      const satRingMat = new THREE.MeshBasicMaterial({
+        color: 0xb8fcff,
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const satRingMesh = new THREE.Mesh(subRingGeo, satRingMat);
+      satRingMesh.rotation.x = Math.PI * 0.38;
+      satGroup.add(satRingMesh);
+
+      const sparkMat = new THREE.SpriteMaterial({
+        map: glowTex,
+        color: 0xe6ffff,
+        transparent: true,
+        opacity: 0.96,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const sparkSpr = new THREE.Sprite(sparkMat);
+      sparkSpr.scale.set(0.34, 0.34, 1);
+      satGroup.add(sparkSpr);
+      og.add(satGroup);
+      disposables.push(satGlassMat, satRingMat, sparkMat);
+
+      const tailLen = 20;
+      const tailArr = new Float32Array(tailLen * 3);
+      const tailGeo = new THREE.BufferGeometry();
+      const tailAttr = new THREE.BufferAttribute(tailArr, 3);
+      tailAttr.setUsage(THREE.DynamicDrawUsage);
+      tailGeo.setAttribute('position', tailAttr);
+      const tailMat = new THREE.PointsMaterial({
+        color: 0x8ef9ff,
+        map: glowTex,
+        size: 0.068,
+        transparent: true,
+        opacity: 0.74,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const tailPoints = new THREE.Points(tailGeo, tailMat);
+      og.add(tailPoints);
+      disposables.push(tailGeo, tailMat);
+
+      satellites.push({
+        group: satGroup,
+        glassMat: satGlassMat,
+        ringMat: satRingMat,
+        sparkMat,
+        tailPoints,
+        tailMat,
+        tailAttr,
+        rx: cfg.rx,
+        rz: cfg.rz,
+        speed: cfg.speed,
+        phase: cfg.phase,
+      });
+    });
+
+    // -----------------------------------------------------------------------
+    // C) Superposition State Assembly (Ghost Echoes, Morph Filaments, Constellation & Mist)
+    // -----------------------------------------------------------------------
+    const superGroup = new THREE.Group();
+    entityGroup.add(superGroup);
+
+    // 3 Offset Translucent Ghost Superposition Echoes (visualizing uncollapsed multi-position state)
+    const ghostGeo = new THREE.SphereGeometry(0.42, 20, 20);
+    disposables.push(ghostGeo);
+    const ghostEchoes: {
+      mesh: THREE.Mesh;
+      mat: THREE.MeshBasicMaterial;
+      base: THREE.Vector3;
+      phase: number;
+    }[] = [];
+    for (let g = 0; g < 3; g++) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: g === 0 ? 0x00ffff : 0x72f8ff,
+        wireframe: g === 1,
+        transparent: true,
+        opacity: 0.14,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const m = new THREE.Mesh(ghostGeo, mat);
+      const angle = (g / 3) * Math.PI * 2 + variant * 1.1;
+      const base = new THREE.Vector3(Math.cos(angle) * 0.48, Math.sin(angle * 1.3) * 0.28, Math.sin(angle) * 0.35);
+      m.position.copy(base);
+      m.scale.setScalar(0.65 + g * 0.14);
+      superGroup.add(m);
+      disposables.push(mat);
+      ghostEchoes.push({ mesh: m, mat, base, phase: rng() * Math.PI * 2 });
+    }
+
+    // 5 Continuously Morphing Curved Energy Filaments
+    const filamentCount = 5;
+    const filamentSegs = 54;
+    const morphFilaments: {
+      attr: THREE.BufferAttribute;
+      mat: THREE.LineBasicMaterial;
+      freqA: number;
+      freqB: number;
+      tiltX: number;
+      tiltZ: number;
+      phase: number;
+      radiusBase: number;
+    }[] = [];
+
+    for (let f = 0; f < filamentCount; f++) {
+      const arr = new Float32Array((filamentSegs + 1) * 3);
+      const geo = new THREE.BufferGeometry();
+      const attr = new THREE.BufferAttribute(arr, 3);
+      attr.setUsage(THREE.DynamicDrawUsage);
+      geo.setAttribute('position', attr);
+      const mat = new THREE.LineBasicMaterial({
+        color: f % 2 === 0 ? 0x9cfaff : accentHex,
+        transparent: true,
+        opacity: 0.44,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      superGroup.add(new THREE.Line(geo, mat));
+      disposables.push(geo, mat);
+      morphFilaments.push({
+        attr,
+        mat,
+        freqA: 2 + (f % 3),
+        freqB: 3 + ((f + 1) % 3),
+        tiltX: (rng() - 0.5) * 1.4,
+        tiltZ: (rng() - 0.5) * 1.4,
+        phase: rng() * Math.PI * 2,
+        radiusBase: 0.78 + rng() * 0.58,
+      });
+    }
+
+    // Fragmented Uncertainty Constellation Nodes + Intermittent Edges
+    const nodeCount = 18;
+    const nodeAnchors = Array.from({ length: nodeCount }, () => ({
+      base: new THREE.Vector3(
+        (rng() - 0.5) * 2.15,
+        (rng() - 0.5) * 1.85,
+        (rng() - 0.5) * 1.9
+      ),
+      freq: 0.55 + rng() * 0.85,
+      amp: 0.16 + rng() * 0.24,
+      phase: rng() * Math.PI * 2,
+    }));
+    const nodeLivePts = Array.from({ length: nodeCount }, () => new THREE.Vector3());
+    const edgePairs: [number, number][] = [];
+    for (let i = 0; i < nodeCount; i++) {
+      for (let j = i + 1; j < nodeCount; j++) {
+        if (nodeAnchors[i].base.distanceTo(nodeAnchors[j].base) < 1.38 && rng() > 0.35) {
+          edgePairs.push([i, j]);
+        }
+      }
+    }
+    const segArr = new Float32Array(edgePairs.length * 6);
+    const segGeo = new THREE.BufferGeometry();
+    const segAttr = new THREE.BufferAttribute(segArr, 3);
+    segAttr.setUsage(THREE.DynamicDrawUsage);
+    segGeo.setAttribute('position', segAttr);
+    const segMat = new THREE.LineBasicMaterial({
+      color: accentHex,
+      transparent: true,
+      opacity: 0.38,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    superGroup.add(new THREE.LineSegments(segGeo, segMat));
+    disposables.push(segGeo, segMat);
+
+    const nodeSprGeo = new THREE.BufferGeometry();
+    const nodeSprArr = new Float32Array(nodeCount * 3);
+    const nodeSprAttr = new THREE.BufferAttribute(nodeSprArr, 3);
+    nodeSprAttr.setUsage(THREE.DynamicDrawUsage);
+    nodeSprGeo.setAttribute('position', nodeSprAttr);
+    const nodeSprMat = new THREE.PointsMaterial({
+      color: 0xd8ffff,
+      map: glowTex,
+      size: 0.16,
+      transparent: true,
+      opacity: 0.62,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    superGroup.add(new THREE.Points(nodeSprGeo, nodeSprMat));
+    disposables.push(nodeSprGeo, nodeSprMat);
+
+    // 7 Translucent Soft Bokeh Mist Lobes in Superposition Cloud
+    const mistLobes: {
+      sprite: THREE.Sprite;
+      mat: THREE.SpriteMaterial;
+      base: THREE.Vector3;
+      speed: number;
+      phase: number;
+    }[] = [];
+    for (let m = 0; m < 7; m++) {
+      const mat = new THREE.SpriteMaterial({
+        map: glowTex,
+        color: m % 2 === 0 ? 0x00e5ff : 0x55ffff,
+        transparent: true,
+        opacity: 0.16,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const sprite = new THREE.Sprite(mat);
+      const base = new THREE.Vector3(
+        (rng() - 0.5) * 1.25,
+        (rng() - 0.5) * 1.0,
+        (rng() - 0.5) * 0.95
+      );
+      sprite.position.copy(base);
+      const sc = 1.45 + rng() * 0.95;
+      sprite.scale.set(sc, sc, 1);
+      superGroup.add(sprite);
+      disposables.push(mat);
+      mistLobes.push({ sprite, mat, base, speed: 0.45 + rng() * 0.5, phase: rng() * Math.PI * 2 });
+    }
+
+    return {
+      variant,
+      hitMesh,
+      updateEntity: (
+        animTime: number,
+        focusMix: number,
+        hoverMix: number,
+        diveProgress: number,
+        parallaxX: number,
+        parallaxY: number,
+        diveExpand: number,
+        reducedMotion: boolean
+      ) => {
+        // Collapse curves: Focused/Positioned locks cleanly above 0.25, Superposition fades out as entity focuses
+        const collapse = THREE.MathUtils.smoothstep(focusMix, 0.18, 0.94);
+        const superpose = 1.0 - THREE.MathUtils.smoothstep(focusMix, 0.06, 0.82);
+
+        const floatY = reducedMotion
+          ? 0
+          : Math.sin(animTime * (0.9 + variant * 0.15) + variant * 1.7) * 0.055;
+        entityGroup.position.lerpVectors(SECONDARY_POS, PRIMARY_POS, focusMix);
+        entityGroup.position.x += parallaxX * (0.35 + 0.65 * focusMix);
+        entityGroup.position.y += floatY + parallaxY * 0.45;
+        if (diveProgress > 0.05) {
+          entityGroup.position.z += diveProgress * 2.2;
+          entityGroup.position.x *= diveExpand;
+        }
+
+        const scale =
+          THREE.MathUtils.lerp(0.68, 1.07, focusMix) *
+          (1 + hoverMix * 0.14) *
+          (1 + diveProgress * 0.42);
+        entityGroup.scale.setScalar(scale);
+
+        const alpha = THREE.MathUtils.lerp(0.44 + hoverMix * 0.34, 1.0, focusMix);
+
+        // 1) Update Morphing Particle System (Superposition <-> Positioned Orbits)
+        morphMat.uniforms.uTime.value = animTime;
+        morphMat.uniforms.uFocus.value = focusMix;
+        morphMat.uniforms.uCollapse.value = collapse;
+        morphMat.uniforms.uHover.value = hoverMix;
+        morphMat.uniforms.uOpacity.value = alpha;
+
+        // 2) Update Focused / Positioned Photon Assembly
+        focusedGroup.visible = collapse > 0.015;
+        if (focusedGroup.visible) {
+          const focusedAlpha = collapse * alpha;
+          focusedGroup.scale.setScalar(0.55 + collapse * 0.45);
+          glassMat.uniforms.uFocus.value = collapse;
+          glassMat.uniforms.uTime.value = animTime;
+          innerLatticeMesh.rotation.y = animTime * (variant === 0 ? 0.14 : -0.16);
+          innerLatticeMesh.rotation.x = animTime * 0.09;
+          innerWireMat.opacity = 0.46 * focusedAlpha;
+          eqReticleMesh.rotation.z = animTime * 0.22;
+          eqReticleMat.opacity = 0.42 * focusedAlpha;
+          nucleusMat.opacity = 0.96 * focusedAlpha;
+          const corePulse = reducedMotion ? 1 : 1 + Math.sin(animTime * 2.1 + variant) * 0.06;
+          nucleusMesh.scale.setScalar(corePulse);
+          auraMat.opacity = 0.64 * focusedAlpha;
+
+          trackMats.forEach((m) => {
+            m.opacity = 0.72 * focusedAlpha;
+          });
+          outerTrackMats.forEach((m) => {
+            m.opacity = 0.28 * focusedAlpha;
+          });
+
+          satellites.forEach((sat) => {
+            const ang = sat.phase + animTime * sat.speed;
+            sat.group.position.set(Math.cos(ang) * sat.rx, 0, Math.sin(ang) * sat.rz);
+            sat.glassMat.opacity = 0.76 * focusedAlpha;
+            sat.ringMat.opacity = 0.7 * focusedAlpha;
+            sat.sparkMat.opacity = 0.96 * focusedAlpha;
+
+            const tArr = sat.tailAttr.array as Float32Array;
+            const dir = sat.speed >= 0 ? -1 : 1;
+            for (let k = 0; k < 20; k++) {
+              const ta = ang + dir * k * 0.04;
+              tArr[k * 3] = Math.cos(ta) * sat.rx;
+              tArr[k * 3 + 1] = 0;
+              tArr[k * 3 + 2] = Math.sin(ta) * sat.rz;
+            }
+            sat.tailAttr.needsUpdate = true;
+            sat.tailMat.opacity = 0.74 * focusedAlpha;
+          });
+        }
+
+        // 3) Update Unobserved Superposition Assembly
+        superGroup.visible = superpose > 0.015;
+        if (superGroup.visible) {
+          const supAlpha = superpose * alpha;
+          superGroup.scale.setScalar(0.88 + superpose * 0.16);
+
+          ghostEchoes.forEach((ge, gIdx) => {
+            ge.mesh.position.set(
+              ge.base.x + Math.sin(animTime * 0.65 + ge.phase) * 0.22,
+              ge.base.y + Math.cos(animTime * 0.58 + ge.phase) * 0.18,
+              ge.base.z + Math.sin(animTime * 0.5 - ge.phase) * 0.18
+            );
+            ge.mesh.rotation.y = animTime * (0.25 + gIdx * 0.1);
+            ge.mat.opacity = (0.09 + 0.05 * Math.sin(animTime * 1.1 + ge.phase)) * supAlpha;
+          });
+
+          morphFilaments.forEach((f, idx) => {
+            const arr = f.attr.array as Float32Array;
+            const tWave = animTime * (0.55 + idx * 0.08);
+            for (let s = 0; s <= filamentSegs; s++) {
+              const u = (s / filamentSegs) * Math.PI * 2;
+              const rMod =
+                f.radiusBase +
+                0.34 * Math.sin(u * f.freqA + tWave + f.phase) +
+                0.22 * Math.cos(u * f.freqB - tWave * 0.75);
+              const px = Math.cos(u + Math.sin(tWave * 0.4) * 0.35) * rMod;
+              const py =
+                Math.sin(u * f.freqB + tWave * 0.9 + f.phase) * 0.62 +
+                Math.cos(u * 2.0 - tWave) * 0.18;
+              const pz = Math.sin(u + Math.cos(tWave * 0.35) * 0.35) * rMod * 0.86;
+              arr[s * 3] = px * Math.cos(f.tiltZ) - py * Math.sin(f.tiltZ);
+              arr[s * 3 + 1] = px * Math.sin(f.tiltZ) + py * Math.cos(f.tiltZ);
+              arr[s * 3 + 2] = pz * Math.cos(f.tiltX) - py * Math.sin(f.tiltX) * 0.3;
+            }
+            f.attr.needsUpdate = true;
+            const shimmer = 0.28 + 0.34 * (0.5 + 0.5 * Math.sin(animTime * 1.15 + f.phase));
+            f.mat.opacity = shimmer * supAlpha;
+          });
+
+          const nArr = nodeSprAttr.array as Float32Array;
+          for (let i = 0; i < nodeCount; i++) {
+            const na = nodeAnchors[i];
+            const lx = na.base.x + Math.sin(animTime * na.freq + na.phase) * na.amp;
+            const ly = na.base.y + Math.cos(animTime * na.freq * 0.85 + na.phase * 1.3) * na.amp;
+            const lz = na.base.z + Math.sin(animTime * na.freq * 1.15 - na.phase) * na.amp;
+            nodeLivePts[i].set(lx, ly, lz);
+            nArr[i * 3] = lx;
+            nArr[i * 3 + 1] = ly;
+            nArr[i * 3 + 2] = lz;
+          }
+          nodeSprAttr.needsUpdate = true;
+          nodeSprMat.opacity = 0.56 * supAlpha;
+
+          const sArr = segAttr.array as Float32Array;
+          for (let e = 0; e < edgePairs.length; e++) {
+            const [aIdx, bIdx] = edgePairs[e];
+            const pa = nodeLivePts[aIdx];
+            const pb = nodeLivePts[bIdx];
+            sArr[e * 6] = pa.x;
+            sArr[e * 6 + 1] = pa.y;
+            sArr[e * 6 + 2] = pa.z;
+            sArr[e * 6 + 3] = pb.x;
+            sArr[e * 6 + 4] = pb.y;
+            sArr[e * 6 + 5] = pb.z;
+          }
+          segAttr.needsUpdate = true;
+          segMat.opacity = (0.24 + 0.16 * Math.sin(animTime * 1.35 + variant)) * supAlpha;
+
+          mistLobes.forEach((lobe) => {
+            lobe.sprite.position.set(
+              lobe.base.x + Math.sin(animTime * lobe.speed + lobe.phase) * 0.28,
+              lobe.base.y + Math.cos(animTime * lobe.speed * 0.8 + lobe.phase) * 0.24,
+              lobe.base.z + Math.sin(animTime * lobe.speed * 0.6 - lobe.phase) * 0.2
+            );
+            lobe.mat.opacity = (0.12 + 0.07 * Math.sin(animTime * 0.9 + lobe.phase)) * supAlpha;
+          });
+        }
+      },
+    };
   };
 
-  // =========================================================================
-  // 2. ARTICLE 01 — CLEAN STRUCTURED PHOTON / ATOM VISUALIZATION
-  // =========================================================================
-  const photonGroup = new THREE.Group();
-  photonGroup.position.copy(PRIMARY_POS);
-  root.add(photonGroup);
+  const quantumEntities = [createQuantumEntity(0), createQuantumEntity(1)];
 
-  const photonHitGeo = new THREE.SphereGeometry(1.68, 16, 16);
-  const photonHitMat = new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0,
-    depthWrite: false,
-    colorWrite: false,
-  });
-  const photonHitMesh = new THREE.Mesh(photonHitGeo, photonHitMat);
-  photonHitMesh.userData.quantumStateIndex = 0;
-  photonGroup.add(photonHitMesh);
-  disposables.push(photonHitGeo, photonHitMat);
-
-  // Translucent outer glass sphere with custom cyan Fresnel edge shell
-  const glassSphereGeo = new THREE.SphereGeometry(0.48, 36, 36);
-  const glassFresnelMat = new THREE.ShaderMaterial({
-    uniforms: {
-      uFocus: { value: 1.0 },
-      uTime: { value: 0 },
-    },
-    vertexShader: `
-      varying vec3 vNormalV;
-      varying vec3 vViewDir;
-      void main() {
-        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-        vNormalV = normalize(normalMatrix * normal);
-        vViewDir = normalize(-mvPos.xyz);
-        gl_Position = projectionMatrix * mvPos;
-      }
-    `,
-    fragmentShader: `
-      uniform float uFocus;
-      uniform float uTime;
-      varying vec3 vNormalV;
-      varying vec3 vViewDir;
-      void main() {
-        float ndotv = clamp(dot(normalize(vNormalV), normalize(vViewDir)), 0.0, 1.0);
-        float fresnel = pow(1.0 - ndotv, 2.35);
-        float innerGlow = pow(ndotv, 2.2) * (0.28 + 0.06 * sin(uTime * 1.8));
-        vec3 col = mix(vec3(0.0, 0.85, 1.0), vec3(0.88, 1.0, 1.0), fresnel * 0.72);
-        float alpha = (fresnel * 0.88 + innerGlow + 0.08) * mix(0.36, 0.96, uFocus);
-        gl_FragColor = vec4(col, alpha);
-      }
-    `,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const glassSphereMesh = new THREE.Mesh(glassSphereGeo, glassFresnelMat);
-  photonGroup.add(glassSphereMesh);
-  disposables.push(glassSphereGeo, glassFresnelMat);
-
-  // Geodesic luminous filament sphere inside glass shell
-  const geoBase = new THREE.IcosahedronGeometry(0.465, 2);
-  const geoWire = new THREE.WireframeGeometry(geoBase);
-  const geoWireMat = new THREE.LineBasicMaterial({
-    color: 0x6ef8ff,
-    transparent: true,
-    opacity: 0.42,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const geodesicMesh = new THREE.LineSegments(geoWire, geoWireMat);
-  photonGroup.add(geodesicMesh);
-  geoBase.dispose();
-  disposables.push(geoWire, geoWireMat);
-
-  // Inner bright cyan energy nucleus + glow halo sprite
-  const coreGeo = new THREE.SphereGeometry(0.16, 24, 24);
-  const coreMat = new THREE.MeshBasicMaterial({
-    color: 0xe6ffff,
-    transparent: true,
-    opacity: 0.95,
-  });
-  const photonNucleus = new THREE.Mesh(coreGeo, coreMat);
-  photonGroup.add(photonNucleus);
-  disposables.push(coreGeo, coreMat);
-
-  const photonAuraMat = new THREE.SpriteMaterial({
-    map: glowTex,
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.62,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const photonAuraSprite = new THREE.Sprite(photonAuraMat);
-  photonAuraSprite.scale.set(2.05, 2.05, 1);
-  photonGroup.add(photonAuraSprite);
-  disposables.push(photonAuraMat);
-
-  // 4 Clean Elliptical Orbital Trajectories + Translucent Sub-Spheres + Particle Trails
-  const orbitConfigs = [
-    { rx: 1.56, rz: 0.68, rot: [0.32, 0.18, 0.56], speed: 0.72, phase: 0.4 },
-    { rx: 1.56, rz: 0.68, rot: [0.32, 0.18, -0.56], speed: -0.66, phase: 2.3 },
-    { rx: 1.54, rz: 0.66, rot: [0.28, 0.25, 1.54], speed: 0.58, phase: 4.1 },
-    { rx: 1.72, rz: 0.74, rot: [1.34, 0.12, 0.08], speed: 0.48, phase: 1.2 },
-  ];
-
-  const orbitTrackMats: THREE.LineBasicMaterial[] = [];
-  const orbitOuterMats: THREE.LineBasicMaterial[] = [];
-  const orbitParticleMats: THREE.ShaderMaterial[] = [];
-  const orbitGroups: THREE.Group[] = [];
-  const orbitSatellites: {
-    group: THREE.Group;
-    glassMat: THREE.MeshBasicMaterial;
-    sparkSprite: THREE.Sprite;
-    tailPoints: THREE.Points;
-    tailGeo: THREE.BufferGeometry;
-    tailAttr: THREE.BufferAttribute;
-    rx: number;
-    rz: number;
-    speed: number;
-    phase: number;
-  }[] = [];
-
-  const subGeo = new THREE.SphereGeometry(0.068, 16, 16);
-  const subRingGeo = new THREE.RingGeometry(0.066, 0.075, 24);
-  disposables.push(subGeo, subRingGeo);
-
-  const cOrbCyan = new THREE.Color(0x00ffff);
-  const cOrbIce = new THREE.Color(0xd8ffff);
-  const cOrbTmp = new THREE.Color();
-
-  orbitConfigs.forEach((cfg) => {
-    const og = new THREE.Group();
-    og.rotation.set(cfg.rot[0], cfg.rot[1], cfg.rot[2]);
-    photonGroup.add(og);
-    orbitGroups.push(og);
-
-    // Primary razor-sharp orbital path
-    const pts: THREE.Vector3[] = [];
-    const segs = 128;
-    for (let s = 0; s < segs; s++) {
-      const a = (s / segs) * Math.PI * 2;
-      pts.push(new THREE.Vector3(Math.cos(a) * cfg.rx, 0, Math.sin(a) * cfg.rz));
-    }
-    const trackGeo = new THREE.BufferGeometry().setFromPoints(pts);
-    const trackMat = new THREE.LineBasicMaterial({
-      color: 0x9efaff,
-      transparent: true,
-      opacity: 0.68,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    og.add(new THREE.LineLoop(trackGeo, trackMat));
-    orbitTrackMats.push(trackMat);
-    disposables.push(trackGeo, trackMat);
-
-    // Secondary soft halo orbital ring
-    const ptsOuter = pts.map((p) => p.clone().multiplyScalar(1.015));
-    const outerGeo = new THREE.BufferGeometry().setFromPoints(ptsOuter);
-    const outerMat = new THREE.LineBasicMaterial({
-      color: 0x00ffff,
-      transparent: true,
-      opacity: 0.28,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    og.add(new THREE.LineLoop(outerGeo, outerMat));
-    orbitOuterMats.push(outerMat);
-    disposables.push(outerGeo, outerMat);
-
-    // Fine orbital particle shimmer dusted delicately along each ellipse
-    const orbDustCount = 190;
-    const dPos = new Float32Array(orbDustCount * 3);
-    const dCol = new Float32Array(orbDustCount * 3);
-    const dSize = new Float32Array(orbDustCount);
-    const dSeed = new Float32Array(orbDustCount * 3);
-    for (let i = 0; i < orbDustCount; i++) {
-      const a = rng() * Math.PI * 2;
-      const spreadR = (rng() - 0.5) * 0.14;
-      const spreadY = (rng() - 0.5) * 0.08;
-      dPos[i * 3] = Math.cos(a) * (cfg.rx + spreadR);
-      dPos[i * 3 + 1] = spreadY;
-      dPos[i * 3 + 2] = Math.sin(a) * (cfg.rz + spreadR * 0.6);
-      cOrbTmp.copy(cOrbCyan).lerp(cOrbIce, rng() * 0.65);
-      dCol[i * 3] = cOrbTmp.r;
-      dCol[i * 3 + 1] = cOrbTmp.g;
-      dCol[i * 3 + 2] = cOrbTmp.b;
-      dSize[i] = 0.045 + rng() * 0.055;
-      dSeed[i * 3] = rng();
-      dSeed[i * 3 + 1] = rng();
-      dSeed[i * 3 + 2] = rng();
-    }
-    const orbDustGeo = new THREE.BufferGeometry();
-    orbDustGeo.setAttribute('position', new THREE.BufferAttribute(dPos, 3));
-    orbDustGeo.setAttribute('aColor', new THREE.BufferAttribute(dCol, 3));
-    orbDustGeo.setAttribute('aSize', new THREE.BufferAttribute(dSize, 1));
-    orbDustGeo.setAttribute('aSeed', new THREE.BufferAttribute(dSeed, 3));
-    const orbDustMat = createFieldParticleMaterial('photon');
-    og.add(new THREE.Points(orbDustGeo, orbDustMat));
-    orbitParticleMats.push(orbDustMat);
-    disposables.push(orbDustGeo, orbDustMat);
-
-    // Translucent glass sub-sphere node + glowing photon spark traveling along the ellipse
-    const satGroup = new THREE.Group();
-    const glassMat = new THREE.MeshBasicMaterial({
-      color: 0x0b2c3b,
-      transparent: true,
-      opacity: 0.72,
-    });
-    const satGlass = new THREE.Mesh(subGeo, glassMat);
-    satGroup.add(satGlass);
-
-    const sparkMat = new THREE.SpriteMaterial({
-      map: glowTex,
-      color: 0xd8ffff,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const sparkSprite = new THREE.Sprite(sparkMat);
-    sparkSprite.scale.set(0.32, 0.32, 1);
-    satGroup.add(sparkSprite);
-    og.add(satGroup);
-    disposables.push(glassMat, sparkMat);
-
-    // Delicate trailing luminous particle wake behind orbiting electron
-    const tailLen = 18;
-    const tailArr = new Float32Array(tailLen * 3);
-    const tailGeo = new THREE.BufferGeometry();
-    const tailAttr = new THREE.BufferAttribute(tailArr, 3);
-    tailAttr.setUsage(THREE.DynamicDrawUsage);
-    tailGeo.setAttribute('position', tailAttr);
-    const tailMat = new THREE.PointsMaterial({
-      color: 0x8ef9ff,
-      map: glowTex,
-      size: 0.065,
-      transparent: true,
-      opacity: 0.72,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const tailPoints = new THREE.Points(tailGeo, tailMat);
-    og.add(tailPoints);
-    disposables.push(tailGeo, tailMat);
-
-    orbitSatellites.push({
-      group: satGroup,
-      glassMat,
-      sparkSprite,
-      tailPoints,
-      tailGeo,
-      tailAttr,
-      rx: cfg.rx,
-      rz: cfg.rz,
-      speed: cfg.speed,
-      phase: cfg.phase,
-    });
-  });
-
-  // =========================================================================
-  // 3. ARTICLE 02 — CHAOTIC UNSTABLE QUANTUM PROBABILITY FIELD
-  // =========================================================================
-  const chaosGroup = new THREE.Group();
-  chaosGroup.position.copy(SECONDARY_POS);
-  root.add(chaosGroup);
-
-  const chaosHitGeo = new THREE.SphereGeometry(1.62, 16, 16);
-  const chaosHitMat = new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0,
-    depthWrite: false,
-    colorWrite: false,
-  });
-  const chaosHitMesh = new THREE.Mesh(chaosHitGeo, chaosHitMat);
-  chaosHitMesh.userData.quantumStateIndex = 1;
-  chaosGroup.add(chaosHitMesh);
-  disposables.push(chaosHitGeo, chaosHitMat);
-
-  // A. 2,600 GPU-Advected Chaotic Quantum Cloud Particles
-  const chaosParticleCount = 2600;
-  const cPos = new Float32Array(chaosParticleCount * 3);
-  const cCol = new Float32Array(chaosParticleCount * 3);
-  const cSize = new Float32Array(chaosParticleCount);
-  const cSeed = new Float32Array(chaosParticleCount * 3);
-  const cDeep = new THREE.Color(0x0b7b9e);
-  const cBright = new THREE.Color(0x00ffff);
-  const cWhite = new THREE.Color(0xe0ffff);
-  const cTmp = new THREE.Color();
-
-  for (let i = 0; i < chaosParticleCount; i++) {
-    // Multi-lobe irregular probability pockets — asymmetric, non-spherical uncertainty
-    const theta = rng() * Math.PI * 2;
-    const phi = Math.acos(2 * rng() - 1);
-    const lobe =
-      0.72 +
-      0.42 * Math.sin(theta * 2.0 + phi * 3.0) +
-      0.26 * Math.cos(theta * 5.0 - phi * 2.0);
-    const radiusBias = i < 500 ? 0.22 + rng() * 0.65 : 0.65 + rng() * 0.72;
-    const rad = Math.max(0.14, lobe * radiusBias);
-
-    cPos[i * 3] = rad * Math.sin(phi) * Math.cos(theta) * 1.15;
-    cPos[i * 3 + 1] = rad * Math.cos(phi) * 0.92;
-    cPos[i * 3 + 2] = rad * Math.sin(phi) * Math.sin(theta);
-
-    const k = rng();
-    cTmp.copy(cDeep).lerp(cBright, k).lerp(cWhite, k * k * 0.48);
-    cCol[i * 3] = cTmp.r;
-    cCol[i * 3 + 1] = cTmp.g;
-    cCol[i * 3 + 2] = cTmp.b;
-
-    cSize[i] = 0.052 + rng() * 0.078;
-    cSeed[i * 3] = rng();
-    cSeed[i * 3 + 1] = rng();
-    cSeed[i * 3 + 2] = rng();
-  }
-  const chaosParticleGeo = new THREE.BufferGeometry();
-  chaosParticleGeo.setAttribute('position', new THREE.BufferAttribute(cPos, 3));
-  chaosParticleGeo.setAttribute('aColor', new THREE.BufferAttribute(cCol, 3));
-  chaosParticleGeo.setAttribute('aSize', new THREE.BufferAttribute(cSize, 1));
-  chaosParticleGeo.setAttribute('aSeed', new THREE.BufferAttribute(cSeed, 3));
-  const chaosParticleMat = createFieldParticleMaterial('chaos');
-  const chaosPoints = new THREE.Points(chaosParticleGeo, chaosParticleMat);
-  chaosGroup.add(chaosPoints);
-  disposables.push(chaosParticleGeo, chaosParticleMat);
-
-  // B. 5 Continuously Morphing Curved Energy Filaments (real vertex-level organic deformation)
-  const filamentCount = 5;
-  const filamentSegs = 56;
-  const morphFilaments: {
-    attr: THREE.BufferAttribute;
-    mat: THREE.LineBasicMaterial;
-    freqA: number;
-    freqB: number;
-    tiltX: number;
-    tiltZ: number;
-    phase: number;
-    radiusBase: number;
-  }[] = [];
-
-  for (let f = 0; f < filamentCount; f++) {
-    const arr = new Float32Array((filamentSegs + 1) * 3);
-    const geo = new THREE.BufferGeometry();
-    const attr = new THREE.BufferAttribute(arr, 3);
-    attr.setUsage(THREE.DynamicDrawUsage);
-    geo.setAttribute('position', attr);
-    const mat = new THREE.LineBasicMaterial({
-      color: f % 2 === 0 ? 0x9cfaff : 0x00ffff,
-      transparent: true,
-      opacity: 0.45,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const line = new THREE.Line(geo, mat);
-    chaosGroup.add(line);
-    disposables.push(geo, mat);
-
-    morphFilaments.push({
-      attr,
-      mat,
-      freqA: 2 + (f % 3),
-      freqB: 3 + ((f + 1) % 3),
-      tiltX: (rng() - 0.5) * 1.4,
-      tiltZ: (rng() - 0.5) * 1.4,
-      phase: rng() * Math.PI * 2,
-      radiusBase: 0.78 + rng() * 0.58,
-    });
-  }
-
-  // C. Fragmented Shifting Polyhedral Constellation & Intermittent Energy Connections
-  const chaosNodeCount = 18;
-  const chaosNodeAnchors = Array.from({ length: chaosNodeCount }, () => ({
-    base: new THREE.Vector3(
-      (rng() - 0.5) * 2.1,
-      (rng() - 0.5) * 1.85,
-      (rng() - 0.5) * 1.9
-    ),
-    freq: 0.55 + rng() * 0.85,
-    amp: 0.16 + rng() * 0.24,
-    phase: rng() * Math.PI * 2,
-  }));
-  const chaosNodeLivePts = Array.from({ length: chaosNodeCount }, () => new THREE.Vector3());
-
-  const chaosEdgePairs: [number, number, number][] = [];
-  for (let i = 0; i < chaosNodeCount; i++) {
-    for (let j = i + 1; j < chaosNodeCount; j++) {
-      if (chaosNodeAnchors[i].base.distanceTo(chaosNodeAnchors[j].base) < 1.38 && rng() > 0.35) {
-        chaosEdgePairs.push([i, j, rng() * Math.PI * 2]);
-      }
-    }
-  }
-  const chaosSegArr = new Float32Array(chaosEdgePairs.length * 6);
-  const chaosSegGeo = new THREE.BufferGeometry();
-  const chaosSegAttr = new THREE.BufferAttribute(chaosSegArr, 3);
-  chaosSegAttr.setUsage(THREE.DynamicDrawUsage);
-  chaosSegGeo.setAttribute('position', chaosSegAttr);
-  const chaosSegMat = new THREE.LineBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.42,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  chaosGroup.add(new THREE.LineSegments(chaosSegGeo, chaosSegMat));
-  disposables.push(chaosSegGeo, chaosSegMat);
-
-  const chaosNodeSprGeo = new THREE.BufferGeometry();
-  const chaosNodeSprArr = new Float32Array(chaosNodeCount * 3);
-  const chaosNodeSprAttr = new THREE.BufferAttribute(chaosNodeSprArr, 3);
-  chaosNodeSprAttr.setUsage(THREE.DynamicDrawUsage);
-  chaosNodeSprGeo.setAttribute('position', chaosNodeSprAttr);
-  const chaosNodeSprMat = new THREE.PointsMaterial({
-    color: 0xd8ffff,
-    map: glowTex,
-    size: 0.16,
-    transparent: true,
-    opacity: 0.65,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  chaosGroup.add(new THREE.Points(chaosNodeSprGeo, chaosNodeSprMat));
-  disposables.push(chaosNodeSprGeo, chaosNodeSprMat);
-
-  // D. Translucent Mist Energy Lobes inside Unobserved Probability Field
-  const chaosMistLobes: {
-    sprite: THREE.Sprite;
-    mat: THREE.SpriteMaterial;
-    base: THREE.Vector3;
-    speed: number;
-    phase: number;
-  }[] = [];
-  for (let m = 0; m < 6; m++) {
-    const mat = new THREE.SpriteMaterial({
-      map: glowTex,
-      color: m % 2 === 0 ? 0x00e5ff : 0x55ffff,
-      transparent: true,
-      opacity: 0.16,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const sprite = new THREE.Sprite(mat);
-    const base = new THREE.Vector3(
-      (rng() - 0.5) * 1.15,
-      (rng() - 0.5) * 0.95,
-      (rng() - 0.5) * 0.9
-    );
-    sprite.position.copy(base);
-    sprite.scale.set(1.35 + rng() * 0.85, 1.35 + rng() * 0.85, 1);
-    chaosGroup.add(sprite);
-    disposables.push(mat);
-    chaosMistLobes.push({ sprite, mat, base, speed: 0.45 + rng() * 0.5, phase: rng() * Math.PI * 2 });
-  }
-
-  // Smooth damped transition trackers
+  // Smooth damped focus & hover trackers
   let prevElapsed = 0;
-  let photonFocusMix = 1.0;
-  let chaosFocusMix = 0.0;
-  let photonHoverMix = 0.0;
-  let chaosHoverMix = 0.0;
+  let focusMixA = 1.0;
+  let focusMixB = 0.0;
+  let hoverMixA = 0.0;
+  let hoverMixB = 0.0;
 
   return {
     root,
-    getPickTargets: () => [photonHitMesh, chaosHitMesh] as THREE.Object3D[],
+    getPickTargets: () => quantumEntities.map((e) => e.hitMesh) as THREE.Object3D[],
     update: (
       elapsed: number,
       pointerX: number,
@@ -2501,188 +2962,90 @@ export function buildResearchChamber(
       prevElapsed = elapsed;
 
       const animTime = reducedMotion ? elapsed * 0.12 : elapsed;
-      const dampRate = reducedMotion ? 18 : 3.8;
+      const dampRate = reducedMotion ? 18 : 3.6;
 
-      const isPhotonSelected = activeState !== 1;
-      photonFocusMix = THREE.MathUtils.damp(photonFocusMix, isPhotonSelected ? 1 : 0, dampRate, dt);
-      chaosFocusMix = THREE.MathUtils.damp(chaosFocusMix, isPhotonSelected ? 0 : 1, dampRate, dt);
+      const isZeroSelected = activeState !== 1;
+      focusMixA = THREE.MathUtils.damp(focusMixA, isZeroSelected ? 1 : 0, dampRate, dt);
+      focusMixB = THREE.MathUtils.damp(focusMixB, isZeroSelected ? 0 : 1, dampRate, dt);
 
-      photonHoverMix = THREE.MathUtils.damp(
-        photonHoverMix,
-        hoveredState === 0 && !isPhotonSelected ? 1 : 0,
-        7.5,
-        dt
-      );
-      chaosHoverMix = THREE.MathUtils.damp(
-        chaosHoverMix,
-        hoveredState === 1 && isPhotonSelected ? 1 : 0,
-        7.5,
-        dt
-      );
+      hoverMixA = THREE.MathUtils.damp(hoverMixA, hoveredState === 0 && !isZeroSelected ? 1 : 0, 7.5, dt);
+      hoverMixB = THREE.MathUtils.damp(hoverMixB, hoveredState === 1 && isZeroSelected ? 1 : 0, 7.5, dt);
 
       const parallaxX = reducedMotion ? 0 : pointerX * 0.14 * (1 - diveProgress * 0.75);
       const parallaxY = reducedMotion ? 0 : pointerY * 0.08 * (1 - diveProgress * 0.75);
       const diveExpand = 1 + diveProgress * 0.72;
 
-      // 1. Update Environment
+      // 1. Update Quantum Environment & Holographic Platform
       ambientDust.rotation.y = animTime * 0.022 + parallaxX * 0.04;
       ambientDust.rotation.x = parallaxY * 0.025;
+      depthBokehSprites.forEach((b) => {
+        b.sprite.position.set(
+          b.base.x + Math.sin(animTime * b.speed + b.phase) * 0.45,
+          b.base.y + Math.cos(animTime * b.speed * 0.8 + b.phase) * 0.25,
+          b.base.z
+        );
+      });
       bgTrailMats.forEach((m, idx) => {
         m.opacity = 0.09 + Math.sin(animTime * 0.4 + idx) * 0.025;
       });
 
+      waveShaderMat.uniforms.uTime.value = animTime;
+      waveShaderMat.uniforms.uOpacity.value = 0.58 * (1 - diveProgress * 0.55);
+
       platformGroup.scale.setScalar(1 + diveProgress * 0.78);
-      poolMat.opacity = (0.44 + (reducedMotion ? 0 : Math.sin(animTime * 1.4) * 0.05)) * (1 - diveProgress * 0.5);
+      const platformVis = 1 - diveProgress * 0.55;
+      quantumDiscMat.uniforms.uTime.value = animTime;
+      quantumDiscMat.uniforms.uOpacity.value = platformVis;
+      fluxMat.uniforms.uTime.value = animTime;
+      fluxMat.uniforms.uOpacity.value = platformVis;
+      beamMat.opacity = 0.36 * platformVis;
+
       platformRings.forEach((ring, idx) => {
         ring.rotation.y = animTime * (0.08 + idx * 0.03) * (idx % 2 === 0 ? 1 : -1);
-        platformRingMats[idx].opacity = (0.72 - idx * 0.13) * (1 - diveProgress * 0.45);
+        platformRingMats[idx].opacity = (0.76 - idx * 0.13) * platformVis;
+      });
+      containmentArcs.forEach((arc, idx) => {
+        arc.mesh.rotation.y += dt * arc.speed * (reducedMotion ? 0.15 : 1);
+        arc.mat.opacity = (0.58 - (idx % 3) * 0.1) * platformVis;
       });
 
-      // 2. Update ARTICLE 01 — Structured Photon / Atom Visualization
-      const photonFloatY = reducedMotion ? 0 : Math.sin(animTime * 0.95) * 0.055;
-      photonGroup.position.lerpVectors(SECONDARY_POS, PRIMARY_POS, photonFocusMix);
-      photonGroup.position.x += parallaxX * (0.35 + 0.65 * photonFocusMix);
-      photonGroup.position.y += photonFloatY + parallaxY * 0.45;
-      if (diveProgress > 0.05) {
-        photonGroup.position.z += diveProgress * 2.2;
-        photonGroup.position.x *= diveExpand;
+      // Entanglement bridges & traveling quantum sparks
+      bridgeMats.forEach((bm, idx) => {
+        bm.opacity = (0.11 + 0.05 * Math.sin(animTime * 1.1 + idx * 1.4)) * platformVis;
+      });
+      const spArr = sparkAttr.array as Float32Array;
+      for (let i = 0; i < sparkCount; i++) {
+        const sm = sparkMeta[i];
+        const u = ((sm.offset + animTime * sm.speed) % 1 + 1) % 1;
+        bridgeCurves[sm.curveIdx].getPointAt(u, _bridgeTmp);
+        spArr[i * 3] = _bridgeTmp.x;
+        spArr[i * 3 + 1] = _bridgeTmp.y;
+        spArr[i * 3 + 2] = _bridgeTmp.z;
       }
+      sparkAttr.needsUpdate = true;
+      sparkMat.opacity = 0.62 * platformVis;
 
-      const photonScale =
-        THREE.MathUtils.lerp(0.64, 1.06, photonFocusMix) *
-        (1 + photonHoverMix * 0.14) *
-        (1 + diveProgress * 0.42);
-      photonGroup.scale.setScalar(photonScale);
-
-      const photonAlpha = THREE.MathUtils.lerp(0.4 + photonHoverMix * 0.34, 1.0, photonFocusMix);
-      glassFresnelMat.uniforms.uFocus.value = photonFocusMix;
-      glassFresnelMat.uniforms.uTime.value = animTime;
-      geodesicMesh.rotation.y = animTime * 0.14;
-      geodesicMesh.rotation.x = animTime * 0.08;
-      geoWireMat.opacity = 0.42 * photonAlpha;
-      coreMat.opacity = 0.96 * photonAlpha;
-      const corePulse = reducedMotion ? 1 : 1 + Math.sin(animTime * 2.1) * 0.06;
-      photonNucleus.scale.setScalar(corePulse);
-      photonAuraMat.opacity = 0.62 * photonAlpha;
-
-      orbitParticleMats.forEach((m) => {
-        m.uniforms.uTime.value = animTime;
-        m.uniforms.uFocus.value = photonFocusMix;
-        m.uniforms.uHover.value = photonHoverMix;
-        m.uniforms.uOpacity.value = photonAlpha;
-      });
-      orbitTrackMats.forEach((m) => {
-        m.opacity = 0.68 * photonAlpha;
-      });
-      orbitOuterMats.forEach((m) => {
-        m.opacity = 0.28 * photonAlpha;
-      });
-
-      orbitSatellites.forEach((sat) => {
-        const ang = sat.phase + animTime * sat.speed;
-        sat.group.position.set(Math.cos(ang) * sat.rx, 0, Math.sin(ang) * sat.rz);
-        sat.glassMat.opacity = 0.72 * photonAlpha;
-        sat.sparkSprite.material.opacity = 0.96 * photonAlpha;
-
-        const tArr = sat.tailAttr.array as Float32Array;
-        const dir = sat.speed >= 0 ? -1 : 1;
-        for (let k = 0; k < 18; k++) {
-          const ta = ang + dir * k * 0.042;
-          tArr[k * 3] = Math.cos(ta) * sat.rx;
-          tArr[k * 3 + 1] = 0;
-          tArr[k * 3 + 2] = Math.sin(ta) * sat.rz;
-        }
-        sat.tailAttr.needsUpdate = true;
-        (sat.tailPoints.material as THREE.PointsMaterial).opacity = 0.72 * photonAlpha;
-      });
-
-      // 3. Update ARTICLE 02 — Chaotic Unstable Quantum Probability Field
-      const chaosFloatY = reducedMotion ? 0 : Math.cos(animTime * 0.78 + 1.1) * 0.06;
-      chaosGroup.position.lerpVectors(SECONDARY_POS, PRIMARY_POS, chaosFocusMix);
-      chaosGroup.position.x += parallaxX * (0.35 + 0.65 * chaosFocusMix);
-      chaosGroup.position.y += chaosFloatY + parallaxY * 0.45;
-      if (diveProgress > 0.05) {
-        chaosGroup.position.z += diveProgress * 2.2;
-        chaosGroup.position.x *= diveExpand;
-      }
-
-      const chaosScale =
-        THREE.MathUtils.lerp(0.7, 1.06, chaosFocusMix) *
-        (1 + chaosHoverMix * 0.14) *
-        (1 + diveProgress * 0.42);
-      chaosGroup.scale.setScalar(chaosScale);
-
-      const chaosAlpha = THREE.MathUtils.lerp(0.46 + chaosHoverMix * 0.34, 1.0, chaosFocusMix);
-      chaosParticleMat.uniforms.uTime.value = animTime;
-      chaosParticleMat.uniforms.uFocus.value = chaosFocusMix;
-      chaosParticleMat.uniforms.uHover.value = chaosHoverMix;
-      chaosParticleMat.uniforms.uOpacity.value = chaosAlpha;
-
-      // Morph curved energy filaments organically over time
-      morphFilaments.forEach((f, idx) => {
-        const arr = f.attr.array as Float32Array;
-        const tWave = animTime * (0.55 + idx * 0.08);
-        for (let s = 0; s <= filamentSegs; s++) {
-          const u = (s / filamentSegs) * Math.PI * 2;
-          const rMod =
-            f.radiusBase +
-            0.34 * Math.sin(u * f.freqA + tWave + f.phase) +
-            0.22 * Math.cos(u * f.freqB - tWave * 0.75);
-          const px = Math.cos(u + Math.sin(tWave * 0.4) * 0.35) * rMod;
-          const py =
-            Math.sin(u * f.freqB + tWave * 0.9 + f.phase) * 0.62 +
-            Math.cos(u * 2.0 - tWave) * 0.18;
-          const pz = Math.sin(u + Math.cos(tWave * 0.35) * 0.35) * rMod * 0.86;
-          arr[s * 3] = px * Math.cos(f.tiltZ) - py * Math.sin(f.tiltZ);
-          arr[s * 3 + 1] = px * Math.sin(f.tiltZ) + py * Math.cos(f.tiltZ);
-          arr[s * 3 + 2] = pz * Math.cos(f.tiltX) - py * Math.sin(f.tiltX) * 0.3;
-        }
-        f.attr.needsUpdate = true;
-        // Filaments subtly brighten and dim intermittently as unobserved states shift
-        const shimmer = 0.3 + 0.35 * (0.5 + 0.5 * Math.sin(animTime * 1.15 + f.phase));
-        f.mat.opacity = shimmer * chaosAlpha;
-      });
-
-      // Evolve fragmented geometric nodes and intermittent wireframe connections
-      const nArr = chaosNodeSprAttr.array as Float32Array;
-      for (let i = 0; i < chaosNodeCount; i++) {
-        const na = chaosNodeAnchors[i];
-        const lx = na.base.x + Math.sin(animTime * na.freq + na.phase) * na.amp;
-        const ly = na.base.y + Math.cos(animTime * na.freq * 0.85 + na.phase * 1.3) * na.amp;
-        const lz = na.base.z + Math.sin(animTime * na.freq * 1.15 - na.phase) * na.amp;
-        chaosNodeLivePts[i].set(lx, ly, lz);
-        nArr[i * 3] = lx;
-        nArr[i * 3 + 1] = ly;
-        nArr[i * 3 + 2] = lz;
-      }
-      chaosNodeSprAttr.needsUpdate = true;
-      chaosNodeSprMat.opacity = (0.48 + chaosFocusMix * 0.35) * chaosAlpha;
-
-      const sArr = chaosSegAttr.array as Float32Array;
-      for (let e = 0; e < chaosEdgePairs.length; e++) {
-        const [aIdx, bIdx] = chaosEdgePairs[e];
-        const pa = chaosNodeLivePts[aIdx];
-        const pb = chaosNodeLivePts[bIdx];
-        sArr[e * 6] = pa.x;
-        sArr[e * 6 + 1] = pa.y;
-        sArr[e * 6 + 2] = pa.z;
-        sArr[e * 6 + 3] = pb.x;
-        sArr[e * 6 + 4] = pb.y;
-        sArr[e * 6 + 5] = pb.z;
-      }
-      chaosSegAttr.needsUpdate = true;
-      chaosSegMat.opacity =
-        (0.24 + 0.2 * Math.sin(animTime * 1.4)) * chaosAlpha * (0.65 + chaosFocusMix * 0.35);
-
-      chaosMistLobes.forEach((lobe) => {
-        lobe.sprite.position.set(
-          lobe.base.x + Math.sin(animTime * lobe.speed + lobe.phase) * 0.28,
-          lobe.base.y + Math.cos(animTime * lobe.speed * 0.8 + lobe.phase) * 0.24,
-          lobe.base.z + Math.sin(animTime * lobe.speed * 0.6 - lobe.phase) * 0.2
-        );
-        lobe.mat.opacity =
-          (0.11 + 0.07 * Math.sin(animTime * 0.9 + lobe.phase)) * chaosAlpha;
-      });
+      // 2. Update Both Quantum Entities (Focused Positioned Photon <-> Unfocused Superposition)
+      quantumEntities[0].updateEntity(
+        animTime,
+        focusMixA,
+        hoverMixA,
+        diveProgress,
+        parallaxX,
+        parallaxY,
+        diveExpand,
+        reducedMotion
+      );
+      quantumEntities[1].updateEntity(
+        animTime,
+        focusMixB,
+        hoverMixB,
+        diveProgress,
+        parallaxX,
+        parallaxY,
+        diveExpand,
+        reducedMotion
+      );
     },
     dispose: () => {
       disposables.forEach((d) => d.dispose());
