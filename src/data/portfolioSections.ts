@@ -1,0 +1,49 @@
+export interface ChamberConfig {
+  index: string;
+  id: 'summit' | 'drift' | 'iris' | 'pedestal';
+  hudTitle: string;
+  sectionTag: string;
+  scrollAt: number;
+  camPos: [number, number, number];
+  camTarget: [number, number, number];
+}
+
+export const DETAILED_CHAMBERS: ChamberConfig[] = [
+  {
+    index: '01',
+    id: 'summit',
+    hudTitle: 'CH.01 // GENESIS',
+    sectionTag: 'BLOCKCHAIN MONUMENT',
+    scrollAt: 0.0,
+    camPos: [0.0, 2.35, 11.4],
+    camTarget: [0.0, 1.35, 0.0],
+  },
+  {
+    index: '02',
+    id: 'drift',
+    hudTitle: 'CH.02 // ABOUT ME',
+    sectionTag: 'NEURAL CORE',
+    scrollAt: 0.33,
+    camPos: [0.0, 1.56, 0.52],
+    camTarget: [0.0, 1.55, 0.0],
+  },
+  {
+    index: '03',
+    id: 'iris',
+    hudTitle: 'CH.03 // WORK',
+    sectionTag: 'PROJECTS & EXPERIENCE',
+    scrollAt: 0.64,
+    camPos: [-4.2, -21.2, -0.4],
+    camTarget: [-4.0, -24.0, -12.0],
+  },
+  {
+    index: '04',
+    id: 'pedestal',
+    hudTitle: 'CH.04 // CONTACT',
+    sectionTag: 'DIRECT UPLINK',
+    scrollAt: 0.86,
+    camPos: [3.4, -49.05, -2.0],
+    camTarget: [3.2, -51.1, -12.0],
+  },
+];
+
